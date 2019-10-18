@@ -31,10 +31,10 @@ public class Conversion {
      */
     protected double height;
     
-    /**
-     * A list of indices of the affected sites in the alignment. 
-     */
-    protected List<Integer> affectedSites;
+//    /**
+//     * A list of indices of the affected sites in the alignment. 
+//     */
+//    protected List<Integer> affectedSites;
 
     public Conversion() { }
 
@@ -44,15 +44,16 @@ public class Conversion {
      * @param node1
      * @param node2
      * @param height
-     * @param affectedSites
+//     * @param affectedSites
      * @param acg
      */
     public Conversion(Node node1, Node node2, double height,
-            List<Integer> affectedSites, ConversionGraph acg) {
+//            List<Integer> affectedSites,
+            ConversionGraph acg) {
         this.node1 = node1;
         this.node2 = node2;
         this.height = height;
-        this.affectedSites = affectedSites;
+//        this.affectedSites = affectedSites;
         this.acg = acg;
     }
 
@@ -83,23 +84,30 @@ public class Conversion {
         return height;
     }
     
-    /**
-     * Return the list of indices of the sites affected by the conversion event.
-     * @return affectedSites
-     */
-    public List<Integer> getAffectedSites() {
-        return affectedSites;
-    }
-
-    /**
-     * Set the list of indices of the sites affected by the conversion event.
-     * 
-     * @param affectedSites
-     */
-    public void setStartSite(List<Integer> affectedSites) {
-        startEditing();
-        this.affectedSites = affectedSites;
-    }
+//    /**
+//     * Return the list of indices of the sites affected by the conversion event.
+//     * @return affectedSites
+//     */
+//    public List<Integer> getAffectedSites() {
+//        return affectedSites;
+//    }
+//
+//    /**
+//     * Set the list of indices of the sites affected by the conversion event.
+//     * 
+//     * @param affectedSites
+//     */
+//    public void setAffectedSites(List<Integer> affectedSites) {
+//        startEditing();
+//        this.affectedSites = affectedSites;
+//    }
+//
+//    /**
+//     * @return total number of sites affected by the conversion event.
+//     */
+//    public int getSiteCount() {
+//        return affectedSites.size();
+//    }
     
     /**
      * Set node below the starting-point of the conversion edge.
@@ -130,13 +138,6 @@ public class Conversion {
         startEditing();
         this.height = height;
     }
-
-    /**
-     * @return total number of sites affected by the conversion event.
-     */
-    public int getSiteCount() {
-        return affectedSites.size();
-    }
     
     /**
      * Check validity of recombination specification: whether specified heights
@@ -159,27 +160,27 @@ public class Conversion {
         if (node1.isRoot() || node2.isRoot())
             return false;
         
-        for (Integer idx : affectedSites) {
-	        if (idx < 0)
-	            return false;
-        	if (idx >= acg.siteCount)
-        		return false;
-        }
-
-        // affectedSite list must be sorted (and unique elements)
-        // TODO Is this really necessary? 
-        // TODO Use guava or move to util!
-        if (affectedSites.size() > 1) {
-	        Iterator<Integer> it = affectedSites.iterator();
-	        Integer i, j;
-	        i = it.next();
-	        while (it.hasNext()) {
-	        	j = it.next();
-	        	if (i >= j)
-	        		return false;
-	        	i = j;
-	        }
-        }
+//        for (Integer idx : affectedSites) {
+//	        if (idx < 0)
+//	            return false;
+//        	if (idx >= acg.siteCount)
+//        		return false;
+//        }
+//
+//        // affectedSite list must be sorted (and unique elements)
+//        // TODO Is this really necessary? 
+//        // TODO Use guava or move to util!
+//        if (affectedSites.size() > 1) {
+//	        Iterator<Integer> it = affectedSites.iterator();
+//	        Integer i, j;
+//	        i = it.next();
+//	        while (it.hasNext()) {
+//	        	j = it.next();
+//	        	if (i >= j)
+//	        		return false;
+//	        	i = j;
+//	        }
+//        }
         return true;
     }
     
@@ -210,7 +211,7 @@ public class Conversion {
         copy.node1 = node1;
         copy.node2 = node2;
         copy.height = height;
-        copy.affectedSites = affectedSites;
+//        copy.affectedSites = affectedSites;
         copy.acg = acg;
         
 //        copy.newickMetaDataBottom = newickMetaDataBottom;
@@ -233,14 +234,14 @@ public class Conversion {
         if (acg != null ? !acg.equals(that.acg) : that.acg != null)
             return false;
         
-        // Check whether affectedSites match (length and all elements)
-        if (that.affectedSites.size() != affectedSites.size()) return false;
-        Iterator<Integer> iter = affectedSites.iterator();
-        Iterator<Integer> iterThat = that.affectedSites.iterator();
-        while (iterThat.hasNext() && iter.hasNext()) {
-        	if (iter.next() != iterThat.next())
-        		return false;
-        }
+//        // Check whether affectedSites match (length and all elements)
+//        if (that.affectedSites.size() != affectedSites.size()) return false;
+//        Iterator<Integer> iter = affectedSites.iterator();
+//        Iterator<Integer> iterThat = that.affectedSites.iterator();
+//        while (iterThat.hasNext() && iter.hasNext()) {
+//        	if (iter.next() != iterThat.next())
+//        		return false;
+//        }
         
         return true;
     }
@@ -255,17 +256,19 @@ public class Conversion {
         temp = Double.doubleToLongBits(height);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         
-        // TODO implement caching for affectedSites list. 
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+//        // Implement caching for affectedSites list. 
+//        throw new java.lang.UnsupportedOperationException("Not supported yet.");
         
-//        return result;
+        return result;
     }
 
     @Override
     public String toString() {
-        return String.format("Conversion edge at height %d from node %d to node %d. "
-                + "Affected sites: %s" ,
-                height, node1.getNr(), node2.getNr(), affectedSites.toString());
+        return String.format("Conversion edge at height %d from node %d to node %d. ",
+//                + "Affected sites: %s" ,
+                height, node1.getNr(), node2.getNr()
+//                , affectedSites.toString()
+                );
     }
     
 
