@@ -6,6 +6,7 @@ package contactrees;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -99,7 +100,7 @@ public class ConversionGraph extends Tree {
      *
      * @return Number of conversions.
      */
-    public int getTotalConvCount() {
+    public int getConvCount() {
         return convs.size();
     }
 
@@ -124,7 +125,7 @@ public class ConversionGraph extends Tree {
     public List<CFEventList.Event> getCFEvents() {
         return cfEventList.getCFEvents();
     }
-
+    
     /**
      * @return Total length of all edges in clonal frame.
      */
@@ -156,6 +157,41 @@ public class ConversionGraph extends Tree {
         }
         
         return length;
+    }
+    
+    /**
+     * Obtain the set of lineages active at the specified height.
+     * @param height
+     * @return Set of active lineages
+     */
+    public HashSet<Node> getLineagesAtHeight(double height) {
+    	HashSet<Node> lineages = new HashSet<>();
+    	
+        List<CFEventList.Event> events = getCFEvents();
+        for (int i=0; i<events.size()-1; i++) {
+        	CFEventList.Event event = events.get(i);
+        	Node node = event.getNode();
+        	
+        	if (event.getHeight() > height) {
+        		// We found the interval of "height"
+        		break;
+        	}
+        	
+        	// Add new node (for COALESCNECE and SAMPLE events)
+        	lineages.add(node);
+        	// Remove children on COALESCENCE events
+        	if (event.getType() == CFEventList.EventType.COALESCENCE) {
+        		for (Node child : node.getChildren()) {
+            		lineages.remove(child);	
+        		}
+        	}
+        }
+        
+        return lineages;
+    }
+    
+    public int countLineagesAtHeight(double height) {
+    	return cfEventList.getEventAtHeight(height).lineages;
     }
     
     /**
