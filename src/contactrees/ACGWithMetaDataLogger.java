@@ -153,14 +153,25 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
                         convs.indexOf(event.conv),
                         affectedBlocks.get(event.conv).size()/(double) movesSet.blockCount
                 );
+//                String meta =  String.format(Locale.ENGLISH,
+//                        "[&conv=%d, region={%d,%d}, locus=\"%s\", relSize=%g",
+//                        convs.indexOf(event.conv),
+//                        0, 1, 0, 1.);
 
                 if (includeSiteStats) {
-                	int affectedSiteCount = movesSet.countAffectedBlocks();
-        			double affectedSiteFraction = affectedSiteCount / (double) movesSet.blockCount;
+                	int affectedBlockCount = movesSet.countAffectedBlocks();
+        			double affectedBlockFraction = affectedBlockCount / (double) movesSet.blockCount;
+        			
+//        			System.out.println(String.format(
+//        					"affectedSites=%d, affectedSiteFraction=%g",
+//        					affectedBlockCount, affectedBlockFraction));
+//        			affectedBlockCount = 1;
+        			affectedBlockFraction = 1.0;
+        			
                     meta += String.format(Locale.ENGLISH,
                             ", affectedSites=%d, uselessSiteFraction=%g",
-                            affectedSiteCount,
-                            1.0-affectedSiteFraction);
+                            affectedBlockCount,
+                            1.0-affectedBlockFraction);
                 }
 
                 if (event.conv.newickMetaDataMiddle != null)
@@ -176,7 +187,7 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
 
                 sb.insert(cursor, "(,#" + acg.getConversionIndex(event.conv)
                         + meta
-                        + ":0.0" // TODO Is that allowed? Old version:  
+                        + ":1E-10" // TODO Is that allowed? Old version:  
 //                        + (event.conv.height2-event.conv.height1) 
                         + ")"
                         + parentMeta
