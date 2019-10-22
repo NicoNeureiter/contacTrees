@@ -31,16 +31,18 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
 			"The moves each local tree takes along the conversion graph.",
 			Input.Validate.REQUIRED);
 	
+	protected ConversionGraph acg;
+	protected BlockSet blockSet;
+	
 	@Override
 	public void initAndValidate() {
-		// TODO Anything to do here?
+		blockSet = blockSetInput.get();
+		acg = networkInput.get();
 	}
 
     @Override
     public void init(PrintStream out) {
-    	BlockSet movesSet = blockSetInput.get();
-    	ConversionGraph acg = networkInput.get();
-        Node node = acg.getRoot();
+    	Node node = acg.getRoot();
         
         out.println("#NEXUS\n");
         out.println("Begin taxa;");
@@ -52,7 +54,7 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
 
         out.println("Begin bacter;");
         out.print("\tmovesSet");
-        for (Block moves: movesSet.blocks)
+        for (Block moves: blockSet.blocks)
             out.print(" " + moves.getID());
         out.println(";\nEnd;\n");
 
@@ -64,7 +66,7 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
 
 	@Override
 	public void close(PrintStream out) {
-		networkInput.get().close(out);
+		acg.close(out);
 	}
 
     /**
@@ -87,16 +89,14 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
      * @return Extended Newick string.
      */
     public String getExtendedNewick(boolean includeSiteStats) {
-        Node root = networkInput.get().getRoot();
+        Node root = acg.getRoot();
         return extendedNewickTraverse(root, includeSiteStats) + ";";
     }
     
     private String extendedNewickTraverse(Node node,
                                           boolean includeSiteStats) {
-    	BlockSet movesSet = blockSetInput.get();
-    	ConversionGraph acg = networkInput.get();
-    	List<Conversion> convs = acg.convs;
-    	HashMap<Conversion, List<Block>> affectedBlocks = movesSet.getAffectedBlocks();
+    	ConversionList convs = acg.convs;
+    	HashMap<Conversion, List<Block>> affectedBlocks = blockSet.getAffectedBlocks();
         
         StringBuilder sb = new StringBuilder();
         
@@ -150,8 +150,8 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
             if (event.isArrival) {
                 String meta =  String.format(Locale.ENGLISH,
                         "[&conv=%d, relSize=%g",
-                        convs.indexOf(event.conv),
-                        affectedBlocks.get(event.conv).size()/(double) movesSet.blockCount
+                        event.conv.getID(),
+                        affectedBlocks.get(event.conv).size()/(double) blockSet.getBlockCount()
                 );
 //                String meta =  String.format(Locale.ENGLISH,
 //                        "[&conv=%d, region={%d,%d}, locus=\"%s\", relSize=%g",
@@ -159,8 +159,8 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
 //                        0, 1, 0, 1.);
 
                 if (includeSiteStats) {
-                	int affectedBlockCount = movesSet.countAffectedBlocks();
-        			double affectedBlockFraction = affectedBlockCount / (double) movesSet.blockCount;
+                	int affectedBlockCount = blockSet.countAffectedBlocks();
+        			double affectedBlockFraction = affectedBlockCount / (double) blockSet.getBlockCount();
         			
 //        			System.out.println(String.format(
 //        					"affectedSites=%d, affectedSiteFraction=%g",
@@ -185,7 +185,7 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
                 else
                     parentMeta = "";
 
-                sb.insert(cursor, "(,#" + acg.getConversionIndex(event.conv)
+                sb.insert(cursor, "(,#" + event.conv.getID()
                         + meta
                         + ":1E-10" // TODO Is that allowed? Old version:  
 //                        + (event.conv.height2-event.conv.height1) 
@@ -200,7 +200,7 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
                 else
                     meta = "";
 
-                sb.insert(cursor, "()#" + acg.getConversionIndex(event.conv)
+                sb.insert(cursor, "()#" + event.conv.getID()
                         + meta
                         + ":" + thisLength);
                 cursor += 1;
