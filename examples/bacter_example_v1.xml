@@ -61,34 +61,30 @@
 
 
 <stateNode id="allBlocks" spec="BlockSet" network="@ACG">
-	<!-- 
- 		<block id="block.I" spec="Block" network="@ACG"/>
-		<block id="block.thou" spec="Block" network="@ACG"/>
-		<block id="block.we" spec="Block" network="@ACG"/>
-		<block id="block.this" spec="Block" network="@ACG"/>
-	-->
-</stateNode>
+	<block id="block_A" spec="Block"/>
+	<block id="block_B" spec="Block"/>
+ </stateNode>
 
 <run id="mcmc" spec="MCMC" chainLength="2000000">
     <state id="state" storeEvery="5000">
-    
+    	
+    	<!-- Define the conversion graph -->
         <stateNode id="ACG" spec="ConversionGraph">
             <taxonset id="TaxonSet.simulated_data_A" spec="TaxonSet">
                 <alignment idref="simulated_data_A"/>
             </taxonset>
         </stateNode>
-        
-        <!-- Brainstorming  *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* -->
-        <!-- 
-	        <block id="@block.I"/>
-	        <block id="block.thou" spec="Block" network="@ACG"/>
-			<block id="block.we" spec="Block" network="@ACG"/>
-			<block id="block.this" spec="Block" network="@ACG"/>
-		 -->
-		<parameter id="pMove" name="stateNode" estimate="false">0.05</parameter>
-		<parameter id="conversionRate" name="stateNode" estimate="false">0.01</parameter>
-        <!-- /Brainstorming *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* -->
-    
+
+		<!-- Add block objects to state space -->
+        <stateNode idref="block_A"/>
+		<stateNode idref="block_B"/>		
+  
+  		<!-- Define parameters for rate of conversion edges and 
+  		probability of blocks moving over a conversion edge -->
+        <parameter id="pMove" name="stateNode" estimate="false">0.05</parameter>
+		<parameter id="conversionRate" name="stateNode" estimate="false">0.005</parameter>
+		
+		<!-- Tree model parameters (independent the of contactrees model) -->
         <parameter id="ePopSize.t:treeSim" name="stateNode">0.3</parameter>
         <parameter id="growthRate.t:treeSim" name="stateNode">3.0E-4</parameter>
     </state>
@@ -134,12 +130,13 @@
                     <parameter id="RealParameter.12" estimate="false" lower="0.0" name="S" upper="5.0">2.0</parameter>
                 </LogNormal>
             </prior>
+            <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@ACG" conversionRate="@conversionRate"/>
         </distribution>
         <distribution id="likelihood" spec="util.CompoundDistribution" useThreads="true">
             <distribution id="treeLikelihood.simulated_data_A" spec="ThreadedTreeLikelihood" data="@simulated_data_A">
             
 	            <!-- Brainstorming  *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* -->
-                <!-- <tree spec="LocalTree" network="ACG" moves="moves.I"/> -->
+                <!-- <tree spec="LocalTree" network="ACG" moves="block_A"/> -->
                 <tree idref="ACG"/>
 	            <!-- /Brainstorming *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* -->
             
@@ -168,10 +165,11 @@
     <operator id="CoalescentExponentialWide.t:treeSim" spec="Exchange" isNarrow="false" tree="@ACG" weight="3.0"/>
     <operator id="CoalescentExponentialWilsonBalding.t:treeSim" spec="WilsonBalding" tree="@ACG" weight="3.0"/>
  -->
- 	<operator id="ACGscale.t:simulated_data_A" spec="contactrees.operators.ACGScaler" acg="@ACG" scaleFactor="0.8" weight="1.0"/>
+ 	<operator id="ACGscale.t:simulated_data_A" spec="contactrees.operators.ACGScaler" acg="@ACG" scaleFactor="0.5" weight="5.0"/>
+    <operator id="ACGscale.t:simulated_data_A.rootOnly" spec="contactrees.operators.ACGScaler" acg="@ACG" scaleFactor="0.8" weight="5.0" rootOnly="true"/>
     <operator id="ePopSizeScaler.t:treeSim" spec="ScaleOperator" parameter="@ePopSize.t:treeSim" scaleFactor="0.75" weight="3.0"/>
     <operator id="GrowthRateRandomWalk.t:treeSim" spec="RealRandomWalkOperator" parameter="@growthRate.t:treeSim" weight="3.0" windowSize="1.0"/>
-	<operator id="AddRemoveConversion.t:treeSim" spec="contactrees.operators.AddRemoveConversion" acg="@ACG" pMove="@pMove" conversionRate="@conversionRate" weight="10.0"/>
+	<operator id="AddRemoveConversion.t:treeSim" spec="contactrees.operators.AddRemoveConversion" acg="@ACG" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" weight="2.0"/>
     <!-- <operator id="MovesGibbsOperator.t:treeSim" spec="MovesGibbsOperator" parameter="@block.I" weight="3.0" windowSize="1.0"/> -->
 
     <logger id="tracelog" fileName="simulated_data_A.log" logEvery="1000" model="@posterior" sanitiseHeaders="true" sort="smart">
