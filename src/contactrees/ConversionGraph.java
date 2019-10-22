@@ -17,13 +17,10 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import beast.core.Description;
-import beast.core.Input;
 import beast.core.Operator;
 import beast.core.StateNode;
-import beast.evolution.alignment.Alignment;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
-import contactrees.CFEventList.Event;
 import contactrees.util.parsers.ExtendedNewickBaseVisitor;
 import contactrees.util.parsers.ExtendedNewickLexer;
 import contactrees.util.parsers.ExtendedNewickParser;
@@ -37,8 +34,7 @@ public class ConversionGraph extends Tree {
     /**
      * List of conversion edges on graph (and a copy for restore).
      */
-    protected List<Conversion> convs;
-    protected List<Conversion> storedConvs;
+    protected ConversionList convs, storedConvs;
       
     /**
      * Clonal frame event list.
@@ -48,8 +44,8 @@ public class ConversionGraph extends Tree {
     @Override
     public void initAndValidate() {
     	// Initialise conversions lists
-        convs = new ArrayList<Conversion>();
-        storedConvs = new ArrayList<Conversion>();
+        convs = new ConversionList(this);
+        storedConvs = new ConversionList(this);
         
         cfEventList = new CFEventList(this);
         
@@ -57,22 +53,23 @@ public class ConversionGraph extends Tree {
     }
     
     /**
-     * Add conversion event to graph, ensuring conversions list
-     * remains sorted (by height).
+     * Add conversion event to graph.
      *
      * @param conv conversion events to add
      */
     public void addConversion(Conversion conv) {
         startEditing(null);
         
-        conv.setConversionGraph(this);
-
-        int i;
-        for (i=0; i<convs.size(); i++)
-            if (convs.get(i).height > conv.height)
-                break;
-        
-        convs.add(i, conv);
+        conv.setConversionGraph(this);        
+        convs.add(conv);
+    }
+    
+    public Conversion addNewConversion() {
+    	startEditing(null);
+    	
+    	Conversion conv = convs.addNewConversion();
+    	conv.setConversionGraph(this);
+    	return conv;
     }
    
     /**
@@ -91,7 +88,7 @@ public class ConversionGraph extends Tree {
      * @param locus locus with which conversions are associated
      * @return List of conversions.
      */
-    public List<Conversion> getConversions() {
+    public ConversionList getConversions() {
         return convs;
     }
     
@@ -102,17 +99,6 @@ public class ConversionGraph extends Tree {
      */
     public int getConvCount() {
         return convs.size();
-    }
-
-    /**
-     * Obtain index of conversion when conversions are listed in order
-     * of height.
-     *
-     * @param conv conversion whose index is required
-     * @return Conversion index
-     */
-    public int getConversionIndex(Conversion conv) {
-        return convs.indexOf(conv);
     }
 
     /**
@@ -177,7 +163,7 @@ public class ConversionGraph extends Tree {
         		break;
         	}
         	
-        	// Add new node (for COALESCNECE and SAMPLE events)
+        	// Add new node (for COALESCENCE and SAMPLE events)
         	lineages.add(node);
         	// Remove children on COALESCENCE events
         	if (event.getType() == CFEventList.EventType.COALESCENCE) {
@@ -209,25 +195,6 @@ public class ConversionGraph extends Tree {
         }
         return false;
     }
-  
-//
-// TODO Do we need to implement this, if we are not directly logging this class?
-//
-//    /**
-//     * Produces an extended Newick representation of this ACG.  This
-//     * method is also used to serialize the state to a state file.
-//     *
-//     * @return an extended Newick representation of ACG.
-//     */
-//    @Override
-//    public String toString() {
-//        return getExtendedNewick();
-//    }
-
-//    @Override
-//    public void fromXML(final org.w3c.dom.Node node) {
-//        fromExtendedNewick(node.getTextContent().replaceAll("&amp", "&"));
-//    }
 
     @Override
     public ConversionGraph copy() {
@@ -244,22 +211,25 @@ public class ConversionGraph extends Tree {
         acg.initArrays();
         acg.m_taxonset.setValue(m_taxonset.get(), acg);
         
-        acg.convs = new ArrayList<>();
-        acg.storedConvs = new ArrayList<>();
+        acg.convs = new ConversionList(this);
+        acg.storedConvs = new ConversionList(this);
 
         for (Conversion conv : convs) {
             Conversion convCopy = conv.getCopy();
             convCopy.setConversionGraph(acg);
             convCopy.setNode1(acg.m_nodes[conv.getNode1().getNr()]);
             convCopy.setNode2(acg.m_nodes[conv.getNode2().getNr()]);
-            acg.convs.add(convCopy);
+            acg.convs.convs.put(convCopy.getID(), convCopy);
         }
         for (Conversion conv : storedConvs) {
             Conversion convCopy = conv.getCopy();
             convCopy.setConversionGraph(acg);
             convCopy.setNode1(acg.m_nodes[conv.getNode1().getNr()]);
             convCopy.setNode2(acg.m_nodes[conv.getNode2().getNr()]);
-            acg.storedConvs.add(convCopy);
+            // TODO Shouldn't this use m_stiredNodes?
+//            convCopy.setNode1(acg.m_storedNodes[conv.getNode1().getNr()]);
+//            convCopy.setNode2(acg.m_storedNodes[conv.getNode2().getNr()]);
+            acg.storedConvs.convs.put(convCopy.getID(), convCopy);
         }
 
         return acg;
@@ -282,7 +252,7 @@ public class ConversionGraph extends Tree {
                 convCopy.setConversionGraph(this);
                 convCopy.setNode1(m_nodes[conv.getNode1().getNr()]);
                 convCopy.setNode2(m_nodes[conv.getNode2().getNr()]);
-                convs.add(convCopy);
+                convs.convs.put(convCopy.getID(), convCopy);
             }
             
             // TODO what about copying storedConvs?
@@ -314,39 +284,36 @@ public class ConversionGraph extends Tree {
     */
     
     @Override
-    protected void store () {
+//    protected void store() {
+    public void store() {
         super.store();
+
+        // Copy the conversion list
+        storedConvs = convs.copy();
         
-        storedConvs.clear();
-
-        for (Conversion conv : convs) {
-        	Conversion convCopy = conv.getCopy();
-        	
-        	// TODO Why not do this in Conversion.getCopy() ?
-        	convCopy.newickMetaDataBottom = conv.newickMetaDataBottom;
-        	convCopy.newickMetaDataMiddle = conv.newickMetaDataMiddle;
-        	convCopy.newickMetaDataTop = conv.newickMetaDataTop;
-
-        	// Adapt the stored conversion to reference the stored nodes
-            convCopy.setNode1(m_storedNodes[conv.getNode1().getNr()]);
-            convCopy.setNode2(m_storedNodes[conv.getNode2().getNr()]);
-
-            convCopy.setConversionGraph(this);
-
-            storedConvs.add(convCopy);
+        // Change copied node references from m_nodes to m_storedNodes 
+        for (Conversion conv : storedConvs) {
+        	Conversion original = convs.get(conv.id);
+            conv.setNode1(m_storedNodes[conv.getNode1().getNr()]);
+            conv.setNode2(m_storedNodes[conv.getNode2().getNr()]);
+            conv.newickMetaDataBottom = original.newickMetaDataBottom;
+            conv.newickMetaDataMiddle = original.newickMetaDataMiddle;
+            conv.newickMetaDataTop = original.newickMetaDataTop;
         }
     }
     
     @Override
     public void restore() {
-        super.restore();
-        
+
+    	super.restore();
+    	
         // Swap conversions with storedConversions
-        List<Conversion> tmp = storedConvs;
+        ConversionList tmp = storedConvs;
         storedConvs = convs;
         convs = tmp;
 
         cfEventList.makeDirty();
+
     }
 
     @Override
@@ -372,6 +339,11 @@ public class ConversionGraph extends Tree {
 //    /*
 //    * Parsing functions 
 //    */
+//    
+//    @Override
+//    public void fromXML(final org.w3c.dom.Node node) {
+//        fromExtendedNewick(node.getTextContent().replaceAll("&amp", "&"));
+//    }
 //    
 //    /**
 //     * Read in an ACG from a string in extended newick format.  Assumes
