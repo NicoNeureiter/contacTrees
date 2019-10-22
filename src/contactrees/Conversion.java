@@ -240,7 +240,7 @@ public class Conversion {
 
     @Override
     public String toString() {
-        return String.format("Conversion edge at height %a from node %d to node %d. ",
+        return String.format("Conversion edge at height %f from node %d to node %d. ",
                 			 height, node1.getNr(), node2.getNr());
     }
     
