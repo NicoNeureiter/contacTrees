@@ -68,7 +68,7 @@ public class ACGScaler extends ACGOperator {
         int count = 0;
 
         // Choose scaling factor:
-        double f = scaleParam + Randomizer.nextDouble()*(1.0/scaleParam - scaleParam);
+        double f = Randomizer.uniform(scaleParam, 1.0/scaleParam);
         
         // Scale clonal frame:
         if (rootOnly) {

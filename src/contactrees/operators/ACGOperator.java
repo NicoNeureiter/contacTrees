@@ -17,8 +17,12 @@
 
 package contactrees.operators;
 
+import contactrees.BlockSet;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
+
+import javax.naming.directory.InvalidAttributesException;
+
 import beast.core.Input;
 import beast.core.Operator;
 import beast.evolution.tree.Node;
@@ -35,8 +39,8 @@ public abstract class ACGOperator extends Operator {
             "acg",
             "Ancestral conversion graph.",
             Input.Validate.REQUIRED);
-    
-    protected ConversionGraph acg;
+	
+	protected ConversionGraph acg;
 
     @Override
     public void initAndValidate() {
@@ -76,6 +80,7 @@ public abstract class ACGOperator extends Operator {
         Node parent = node.getParent();
         Node sister = getSibling(node);
 
+        // Remove parent and replace edges [grandparent -> parent -> sister] by [grandparent -> sister]
         if (parent.isRoot()) {
             parent.removeChild(sister);
             sister.setParent(null);
@@ -87,7 +92,7 @@ public abstract class ACGOperator extends Operator {
             grandParent.addChild(sister);
         }
 
-        
+        // Move all conversions that attached to removed "parent" branch to the "sister" branch
         for (Conversion conv : acg.getConversions()){
             if (conv.getNode1() == parent)
                 conv.setNode1(sister);
@@ -115,6 +120,7 @@ public abstract class ACGOperator extends Operator {
             throw new IllegalArgumentException("Programmer error: "
                     + "root argument passed to connectEdge().");
 
+        // Old parent of "node" is moved to the destination 
         Node parent = node.getParent();
         
         if (destEdgeBase.isRoot()) {
@@ -128,6 +134,7 @@ public abstract class ACGOperator extends Operator {
 
         parent.setHeight(destTime);
 
+        // Some conversion may have to be moved from "destinationBase" to "parent"
         for (Conversion conv : acg.getConversions()) {
             if (conv.getNode1() == destEdgeBase && conv.getHeight() > destTime)
                 conv.setNode1(parent);
@@ -139,10 +146,10 @@ public abstract class ACGOperator extends Operator {
 
     /**
      * @return conversion selected uniformly at random
+     * @throws InvalidAttributesException 
      */
-    protected Conversion chooseConversion() {
-        int idx = Randomizer.nextInt(acg.getConvCount());
-        return acg.getConversions().get(idx);
+    protected Conversion chooseConversion() throws InvalidAttributesException {
+		return acg.getConversions().getRandomConversion();
     }
 
     /**

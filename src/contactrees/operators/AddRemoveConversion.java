@@ -17,15 +17,11 @@
 package contactrees.operators;
 
 import contactrees.Conversion;
-import contactrees.ConversionGraph;
-import beast.core.Description;
-import beast.core.parameter.RealParameter;
-import beast.evolution.alignment.Taxon;
-import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.coalescent.ConstantPopulation;
-import beast.util.Randomizer;
 
-import java.io.PrintStream;
+import javax.naming.directory.InvalidAttributesException;
+
+import beast.core.Description;
+import beast.util.Randomizer;
 
 /**
  * @author Nico Neureiter <nico.neureiter@gmail.com>
@@ -54,17 +50,23 @@ public class AddRemoveConversion extends ConversionCreationOperator {
                 return Double.NEGATIVE_INFINITY;
             
             // Select conversion to remove:
-            Conversion conv = chooseConversion();
+            Conversion conv;
+            try {
+            	conv = chooseConversion();
+            } catch (InvalidAttributesException e) {
+            	assert false : "This should never happen."; 
+            	return Double.NEGATIVE_INFINITY;
+            }
 
             // Calculate HGF
             logHGF += getConversionProb(conv);
             logHGF -= Math.log(1.0/acg.getConvCount());
             
             // Remove conversion
-            acg.deleteConversion(conv);
-
+            removeConversion(conv);
+            
         }
-
+        
         assert !acg.isInvalid() : "AddRemoveConv produced invalid state.";
 
         return logHGF;
@@ -77,12 +79,10 @@ public class AddRemoveConversion extends ConversionCreationOperator {
      * @return log of proposal density
      */
     public double drawNewConversion() {
-        Conversion newConversion = new Conversion();
+        Conversion newConversion = addNewConversion();
 
         double logP = attachEdge(newConversion) + drawAffectedBlocks(newConversion);
 
-        acg.addConversion(newConversion);
-        
         return logP;
     }
       

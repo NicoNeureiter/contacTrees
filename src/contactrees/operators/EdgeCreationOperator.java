@@ -17,6 +17,7 @@
 
 package contactrees.operators;
 
+import contactrees.BlockSet;
 import contactrees.Conversion;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
@@ -32,14 +33,41 @@ import java.util.Set;
  */
 public abstract class EdgeCreationOperator extends ACGOperator {
 
-    public Input<RealParameter> conversionRateInput = new Input<>(
+	final public Input<BlockSet> blockSetInput = new Input<>(
+			"blockSet",
+			"Block of site which are either inherited or passed via a conversion edge.",
+			Input.Validate.REQUIRED);
+
+	public Input<RealParameter> conversionRateInput = new Input<>(
             "conversionRate", 
             "Rate at which conversions happen along pairs of edges on the clonal frame.",
             Input.Validate.REQUIRED);
-    
+
+	protected BlockSet blockSet;
+	
     @Override
     public void initAndValidate() {
         super.initAndValidate();
+        blockSet = blockSetInput.get();
+    }
+    
+    /**
+     * Add and return a new conversion edge.
+     * @return The new conversion.
+     */
+    protected Conversion addNewConversion() {
+    	Conversion conv = acg.addNewConversion();
+    	blockSet.addConversion(conv);
+    	return conv;
+    }
+    
+    /**
+     * Remove the specified conversion
+     * @param The conversion to be removed
+     */
+    protected void removeConversion(Conversion conv) {
+    	acg.deleteConversion(conv);
+    	blockSet.removeConversion(conv);
     }
 
     /**
@@ -63,8 +91,8 @@ public abstract class EdgeCreationOperator extends ACGOperator {
                 continue;
             
             if (u<node.getLength()) {
-                conv.setNode1(node);
                 conv.setHeight(node.getHeight() + u);
+                conv.setNode1(node);
 //                System.out.print(conv.getHeight());
 //                System.out.print("  \t");
 //                System.out.println(acg.getRoot().getHeight());
