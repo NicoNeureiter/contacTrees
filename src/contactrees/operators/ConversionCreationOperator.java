@@ -16,6 +16,8 @@
  */
 package contactrees.operators;
 
+import contactrees.Block;
+import contactrees.BlockSet;
 import contactrees.Conversion;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
@@ -28,7 +30,7 @@ import beast.util.Randomizer;
  * @author Nico Neureiter (nico.neureiter@gmail.com)
  */
 public abstract class ConversionCreationOperator extends EdgeCreationOperator {
-
+	
     public Input<RealParameter> pMoveInput = new Input<>(
             "pMove",
             "Probability for a block to follow a conversion edge.",
@@ -46,7 +48,16 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      * @return log probability density of chosen attachment.
      */
     public double drawAffectedBlocks(Conversion conv) {
-        // TODO Implement sampling of affected blocks-
+    	BlockSet blocks = blockSetInput.get();
+        double pMove = pMoveInput.get().getValue();
+        double logP = 0;
+        
+        for (Block block : blocks.getBlocks()) {
+        	if (Randomizer.nextDouble() < pMove) {
+        		block.addMove(conv);
+        		logP += Math.log(pMove);
+        	}
+        }
     	return 0;
     }
 
@@ -58,8 +69,13 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      * @return log probability density
      */
     public double getAffectedBlocksProb(Conversion conv) {
-        // TODO Implement the log PMF
-    	return 0;
+        BlockSet blocks = blockSetInput.get();
+        double pMove = pMoveInput.get().getValue();
+
+        int affectedBlockCount = blocks.getAffectedBlocks(conv).size();
+        int unaffectedBlockCount = blocks.getBlockCount() - affectedBlockCount;
+        
+    	return affectedBlockCount*Math.log(pMove) + unaffectedBlockCount*Math.log(1-pMove);
     }
 
 }
