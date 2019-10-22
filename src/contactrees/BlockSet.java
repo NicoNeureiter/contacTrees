@@ -3,6 +3,8 @@ package contactrees;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -14,7 +16,7 @@ import beast.core.Input;
  * @author Nico Neureiter <nico.neureiter@gmail.com>
  */
 @Description("A container for multiple Block objects.")
-public class BlockSet extends CalculationNode {
+public class BlockSet extends CalculationNode implements Iterable<Block> {
 
 	final public Input<List<Block>> blocksInput = new Input<>(
 			"block",
@@ -25,32 +27,64 @@ public class BlockSet extends CalculationNode {
 			"The network on which the conversion moves are defined.",
 			Input.Validate.REQUIRED);
 	
-	List<Block> blocks;
-	ConversionGraph acg;
-	int blockCount;
+	protected List<Block> blocks;
+	protected ConversionGraph acg;
 	
 	@Override
 	public void initAndValidate() {
 		blocks = blocksInput.get();	
 		acg = networkInput.get();
-		blockCount = blocks.size(); 
 	}
 	
+	public List<Block> getBlocks(){
+		return blocks;
+	}
+	
+	public int getBlockCount() {
+		return blocks.size();
+	}
+	
+	@Override
+    protected boolean requiresRecalculation() {
+		// TODO Remove this
+		return true;
+    }
+	
+	public void removeConversion(Conversion conv) {
+		for (Block block : blocks) {
+			if (block.convIds.contains(conv.id)) {
+				block.convIds.remove(conv.id);
+			}
+		}
+	}
+	
+	public void addConversion(Conversion conv) {
+	}
+	
+	public void addBlockMove(Conversion conv, Block block) {
+		block.convIds.add(conv.id);
+	}
+	
+	public void removeBlockMove(Conversion conv, Block block) {
+		block.convIds.remove(conv.id);
+	}
+
 	/**
-	 * Obtain the block currently affected by the given conversion.
+	 * Obtain the blocks currently affected by the given conversion.
 	 * @return List of affected blocks.
 	 */
+
 	public List<Block> getAffectedBlocks(Conversion conv){
 		List<Block> affectedBlocks = new ArrayList<>();
 		
 		for (Block block : blocks) {
-			if (block.convs.contains(conv)) {
+			if (block.convIds.contains(conv.id))
 				affectedBlocks.add(block);
-			}
 		}
+		
 		return affectedBlocks;
 	}
-	
+
 	/**
 	 * Obtain a hash-map, mapping each conversion to the currently affected blocks.
 	 * @return Map from conversion to affected blocks.
@@ -60,17 +94,10 @@ public class BlockSet extends CalculationNode {
 		
 		for (Conversion conv : acg.convs) {
 			affectedBlocksByConv.put(conv, getAffectedBlocks(conv));
+			
 		}
 		
 		return affectedBlocksByConv;
-	}
-	
-	/**
-	 * Count the number of blocks affected by the given conversion.
-	 * @return Number of affected blocks.
-	 */
-	public int countAffectedBlocks(Conversion conv){
-		return getAffectedBlocks(conv).size();
 	}
 	
 	/**
@@ -81,7 +108,7 @@ public class BlockSet extends CalculationNode {
     public int countAffectedBlocks() {
     	int affectedCount = 0;
     	for (Block block : blocks) {
-    		if (!block.convs.isEmpty())
+    		if (!block.convIds.isEmpty())
     			affectedCount++;
     	}
     	
@@ -94,14 +121,14 @@ public class BlockSet extends CalculationNode {
      * @return The edges without an affected blocks.
      */
     public HashSet<Conversion> getUselessConversions() {
-        HashSet<Conversion> uselessConvs = new HashSet<>(acg.convs);
+        HashSet<Conversion> uselessConvs = new HashSet<>(acg.convs.getConversions());
         
         for (Block block : blocks) {
-	        for (Conversion conv : block.convs) {
-	            uselessConvs.remove(conv);
+	        for (int convId : block.convIds) {
+	            uselessConvs.remove(acg.convs.get(convId));
 	        }
         }
-
+        
         return uselessConvs;
     }
 
@@ -113,5 +140,10 @@ public class BlockSet extends CalculationNode {
     public int countUselessConversion() {
         return getUselessConversions().size();
     }
+
+	@Override
+	public Iterator<Block> iterator() {
+		return blocks.iterator();
+	}
 
 }
