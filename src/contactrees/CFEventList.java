@@ -183,15 +183,8 @@ public class CFEventList {
      * @throws InvalidAttributeValueException 
      */
     public Event getEventAtHeight(double height) {
-//        System.out.println(height);
-//    	Node root = acg.getRoot();
-//    	if (height > root.getHeight()) {
-//    		return events.get(events.size()-1);
-//    	}
-    	
     	int startIdx = 0;
-//    	while ((startIdx < events.size()-1) && (events.get(startIdx+1).getHeight()<height))
-		while (events.get(startIdx+1).getHeight()<height)
+    	while ((startIdx < events.size()-1) && (events.get(startIdx+1).getHeight()<height))
             startIdx += 1;
         
         return events.get(startIdx);
