@@ -50,13 +50,7 @@ public class AddRemoveConversion extends ConversionCreationOperator {
                 return Double.NEGATIVE_INFINITY;
             
             // Select conversion to remove:
-            Conversion conv;
-            try {
-            	conv = chooseConversion();
-            } catch (InvalidAttributesException e) {
-            	assert false : "This should never happen."; 
-            	return Double.NEGATIVE_INFINITY;
-            }
+            Conversion conv = chooseConversion();
 
             // Calculate HGF
             logHGF += getConversionProb(conv);
@@ -68,7 +62,7 @@ public class AddRemoveConversion extends ConversionCreationOperator {
         }
         
         assert !acg.isInvalid() : "AddRemoveConv produced invalid state.";
-
+        
         return logHGF;
     }
     

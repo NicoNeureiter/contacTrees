@@ -48,17 +48,18 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      * @return log probability density of chosen attachment.
      */
     public double drawAffectedBlocks(Conversion conv) {
-    	BlockSet blocks = blockSetInput.get();
-        double pMove = pMoveInput.get().getValue();
-        double logP = 0;
+//    	BlockSet blocks = blockSetInput.get();
+//        double pMove = pMoveInput.get().getValue();
+//        double logP = 0;
+//        
+//        for (Block block : blocks.getBlocks()) {
+//        	if (Randomizer.nextDouble() < pMove) {
+//        		block.addMove(conv);
+//        		logP += Math.log(pMove);
+//        	}
+//        }
         
-        for (Block block : blocks.getBlocks()) {
-        	if (Randomizer.nextDouble() < pMove) {
-        		block.addMove(conv);
-        		logP += Math.log(pMove);
-        	}
-        }
-    	return 0;
+    	return 0; // TODO return actual probability when in use!
     }
 
     /**
@@ -69,13 +70,14 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      * @return log probability density
      */
     public double getAffectedBlocksProb(Conversion conv) {
-        BlockSet blocks = blockSetInput.get();
-        double pMove = pMoveInput.get().getValue();
-
-        int affectedBlockCount = blocks.getAffectedBlocks(conv).size();
-        int unaffectedBlockCount = blocks.getBlockCount() - affectedBlockCount;
+//        BlockSet blocks = blockSetInput.get();
+//        double pMove = pMoveInput.get().getValue();
+//
+//        int affectedBlockCount = blocks.getAffectedBlocks(conv).size();
+//        int unaffectedBlockCount = blocks.getBlockCount() - affectedBlockCount;
         
-    	return affectedBlockCount*Math.log(pMove) + unaffectedBlockCount*Math.log(1-pMove);
+        return 0;
+//    	return affectedBlockCount*Math.log(pMove) + unaffectedBlockCount*Math.log(1-pMove);
     }
 
 }

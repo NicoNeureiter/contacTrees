@@ -148,7 +148,7 @@ public abstract class ACGOperator extends Operator {
      * @return conversion selected uniformly at random
      * @throws InvalidAttributesException 
      */
-    protected Conversion chooseConversion() throws InvalidAttributesException {
+    protected Conversion chooseConversion() {
 		return acg.getConversions().getRandomConversion();
     }
 

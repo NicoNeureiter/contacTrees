@@ -62,7 +62,7 @@ public class ACGScaler extends ACGOperator {
     
     @Override
     public double proposal() {
-        
+
         // Keep track of number of positively scaled elements minus
         // negatively scaled elements.
         int count = 0;
@@ -101,9 +101,11 @@ public class ACGScaler extends ACGOperator {
             }
 
             if (conv.getHeight() < node1.getHeight()
-                    || conv.getHeight() < node2.getHeight())
+                    || conv.getHeight() < node2.getHeight()) {
             	// Conversion below its node -> Illegal move
+            	assert rootOnly : "This should never happen if we rescale the whole graph!";
                 return Double.NEGATIVE_INFINITY;
+            }
         }
         
         // Check for illegal node heights:
@@ -114,8 +116,9 @@ public class ACGScaler extends ACGOperator {
             }
         } else {
             for (Node node : acg.getExternalNodes()) {
-                if (node.getHeight()>node.getParent().getHeight())
+                if (node.getHeight()>node.getParent().getHeight()) {
                     return Double.NEGATIVE_INFINITY;
+                }
             }
         }
         
@@ -126,7 +129,6 @@ public class ACGScaler extends ACGOperator {
                 param.startEditing(null);
                 param.scale(f);
             } catch (Exception e) {
-                
                 // Scale throws Exception if param has been scaled outside its
                 // bounds.  Needs to change!
                 return Double.NEGATIVE_INFINITY;
@@ -140,7 +142,6 @@ public class ACGScaler extends ACGOperator {
                 paramInv.startEditing(null);
                 paramInv.scale(1.0/f);
             } catch (Exception e) {
-                
                 // Scale throws Exception if param has been scaled outside its
                 // bounds.  Needs to change!
                 return Double.NEGATIVE_INFINITY;
