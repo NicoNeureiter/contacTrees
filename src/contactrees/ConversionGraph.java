@@ -40,7 +40,7 @@ public class ConversionGraph extends Tree {
      * Clonal frame event list.
      */
     protected CFEventList cfEventList;
-
+    
     @Override
     public void initAndValidate() {
     	// Initialise conversions lists
@@ -77,7 +77,7 @@ public class ConversionGraph extends Tree {
      *
      * @param conv conversion to remove.
      */
-    public void deleteConversion(Conversion conv) {
+    public void removeConversion(Conversion conv) {
         startEditing(null);
         convs.remove(conv);
     }
@@ -139,7 +139,6 @@ public class ConversionGraph extends Tree {
         	double dt = eEnd.t - eStart.t;
         	int k = eStart.lineages;
         	length += dt * k * (k-1);
-        	// TODO check whehter k and dt match! Should we use eEnd.lineages?
         }
         
         return length;
@@ -154,11 +153,11 @@ public class ConversionGraph extends Tree {
     	HashSet<Node> lineages = new HashSet<>();
     	
         List<CFEventList.Event> events = getCFEvents();
-        for (int i=0; i<events.size()-1; i++) {
+        for (int i=0; i<events.size(); i++) {
         	CFEventList.Event event = events.get(i);
         	Node node = event.getNode();
         	
-        	if (event.getHeight() > height) {
+        	if (event.getHeight() >= height) {
         		// We found the interval of "height"
         		break;
         	}
@@ -177,6 +176,7 @@ public class ConversionGraph extends Tree {
     }
     
     public int countLineagesAtHeight(double height) {
+    	getCFEvents();
     	return cfEventList.getEventAtHeight(height).lineages;
     }
     
@@ -187,7 +187,12 @@ public class ConversionGraph extends Tree {
      * 
      * @return true if all conversions are valid w.r.t. clonal frame.
      */
-    public boolean isInvalid() {
+    public boolean isInvalid() {    	
+    	// A node is the root iff it is at the last index of m_nodes array
+        for (int i=0; i<m_nodes.length; i++)
+        	if ((m_nodes[i].isRoot()) != (i == m_nodes.length-1))
+        		return true;
+        
         for (Conversion conv : convs) {
             if (!conv.isValid()) {
                 return true;
@@ -226,9 +231,6 @@ public class ConversionGraph extends Tree {
             convCopy.setConversionGraph(acg);
             convCopy.setNode1(acg.m_nodes[conv.getNode1().getNr()]);
             convCopy.setNode2(acg.m_nodes[conv.getNode2().getNr()]);
-            // TODO Shouldn't this use m_stiredNodes?
-//            convCopy.setNode1(acg.m_storedNodes[conv.getNode1().getNr()]);
-//            convCopy.setNode2(acg.m_storedNodes[conv.getNode2().getNr()]);
             acg.storedConvs.convs.put(convCopy.getID(), convCopy);
         }
 
@@ -284,10 +286,9 @@ public class ConversionGraph extends Tree {
     */
     
     @Override
-//    protected void store() {
-    public void store() {
+    protected void store() {
         super.store();
-
+        
         // Copy the conversion list
         storedConvs = convs.copy();
         
@@ -300,11 +301,11 @@ public class ConversionGraph extends Tree {
             conv.newickMetaDataMiddle = original.newickMetaDataMiddle;
             conv.newickMetaDataTop = original.newickMetaDataTop;
         }
+
     }
     
     @Override
     public void restore() {
-
     	super.restore();
     	
         // Swap conversions with storedConversions
@@ -313,7 +314,8 @@ public class ConversionGraph extends Tree {
         convs = tmp;
 
         cfEventList.makeDirty();
-
+        
+        assert !isInvalid();
     }
 
     @Override
@@ -335,255 +337,251 @@ public class ConversionGraph extends Tree {
 
         return false;
     }
+
+
+    /*
+    * Parsing functions 
+    */
     
-//    /*
-//    * Parsing functions 
-//    */
-//    
-//    @Override
-//    public void fromXML(final org.w3c.dom.Node node) {
-//        fromExtendedNewick(node.getTextContent().replaceAll("&amp", "&"));
-//    }
-//    
-//    /**
-//     * Read in an ACG from a string in extended newick format.  Assumes
-//     * that the network is stored with exactly the same metadata as written
-//     * by the getExtendedNewick() method.
-//     *
-//     * @param string extended newick representation of ACG
-//     */
-//    public void fromExtendedNewick(String string) {
-//        fromExtendedNewick(string, false, taxaTranslationOffset);
-//    }
-//    /**
-//     * Read in an ACG from a string in extended newick format.  Assumes
-//     * that the network is stored with exactly the same metadata as written
-//     * by the getExtendedNewick() method.
-//     *
-//     * @param string extended newick representation of ACG
-//     * @param numbered true indicates that the ACG is numbered.
-//     */
-//    public void fromExtendedNewick(String string, boolean numbered, int nodeNumberoffset) {
-//
-//        // Spin up ANTLR
-//        CharStream input = CharStreams.fromString(string);
-//        ExtendedNewickLexer lexer = new ExtendedNewickLexer(input);
-//        CommonTokenStream tokens = new CommonTokenStream(lexer);
-//        ExtendedNewickParser parser = new ExtendedNewickParser(tokens);
-//        ParseTree parseTree = parser.tree();
-//
-//        Map<String, Conversion> convIDMap = new HashMap<>();
-//        Node root = new ExtendedNewickBaseVisitor<Node>() {
-//
-//            /**
-//             * Convert branch lengths to node heights for all nodes in clade.
-//             *
-//             * @param node clade parent
-//             * @return minimum height assigned in clade.
-//             */
-//            private double branchLengthsToHeights(Node node) {
-//                if (node.isRoot())
-//                    node.setHeight(0.0);
-//                else
-//                    node.setHeight(node.getParent().getHeight() - node.getHeight());
-//
-//                double minHeight = node.getHeight();
-//
-//                for (Node child : node.getChildren()) {
-//                    minHeight = Math.min(minHeight, branchLengthsToHeights(child));
-//                }
-//
-//                return minHeight;
-//            }
-//
-//            /**
-//             * Remove height offset from all nodes in clade
-//             * @param node parent of clade
-//             * @param offset offset to remove
-//             */
-//            private void removeOffset(Node node, double offset) {
-//                node.setHeight(node.getHeight() - offset);
-//
-//                for (Node child : node.getChildren())
-//                    removeOffset(child, offset);
-//            }
-//
-//            private Node getTrueNode(Node node) {
-//                if (node.isLeaf()) {
-//                    assert !convIDMap.containsKey(node.getID());
-//                    return node;
-//                }
-//
-//                if (convIDMap.containsKey(node.getID()))
-//                    return getTrueNode(node.getChild(0));
-//
-//                int hybridIdx = -1;
-//                int nonHybridIdx = -1;
-//                for (int i=0; i<node.getChildCount(); i++) {
-//                    if (node.getChild(i).isLeaf() && convIDMap.containsKey(node.getChild(i).getID()))
-//                        hybridIdx = i;
-//                    else
-//                        nonHybridIdx = i;
-//                }
-//
-//                if (hybridIdx>0)
-//                    return getTrueNode(node.getChild(nonHybridIdx));
-//
-//                return node;
-//            }
-//
-//            /**
-//             * Traverse the newly constructed tree looking for
-//             * hybrid nodes and using these to set the heights of
-//             * Conversion objects.
-//             *
-//             * @param node parent of clade
-//             */
-//            private void findConversionAttachments(Node node) {
-//                if (convIDMap.containsKey(node.getID())) {
-//                    Conversion conv = convIDMap.get(node.getID());
-//                    if (node.isLeaf()) {
-//                        conv.setHeight(node.getHeight());
-////                        conv.setHeight2(node.getParent().getHeight());
-//                        conv.setNode2(getTrueNode(node.getParent()));
-//                    } else
-//                        conv.setNode1(getTrueNode(node));
-//                }
-//
-//                for (Node child : node.getChildren())
-//                    findConversionAttachments(child);
-//            }
-//
-//            /**
-//             * Remove all conversion-associated nodes, leaving only
-//             * the clonal frame.
-//             *
-//             * @param node parent of clade
-//             * @return new parent of same clade
-//             */
-//            private Node stripHybridNodes(Node node) {
-//                Node trueNode = getTrueNode(node);
-//                List<Node> trueChildren = new ArrayList<>();
-//
-//                for (Node child : trueNode.getChildren()) {
-//                    trueChildren.add(stripHybridNodes(child));
-//                }
-//
-//                trueNode.removeAllChildren(false);
-//                for (Node trueChild : trueChildren)
-//                    trueNode.addChild(trueChild);
-//
-//                return trueNode;
-//            }
-//
-//            private int numberInternalNodes(Node node, int nextNr) {
-//                if (node.isLeaf())
-//                    return nextNr;
-//
-//                for (Node child : node.getChildren())
-//                    nextNr = numberInternalNodes(child, nextNr);
-//
-//                node.setNr(nextNr);
-//
-//                return nextNr + 1;
-//            }
-//
-//
-//            @Override
-//            public Node visitTree(ExtendedNewickParser.TreeContext ctx) {
-//                Node root =  visitNode(ctx.node());
-//
-//                double minHeight = branchLengthsToHeights(root);
-//                removeOffset(root, minHeight);
-//
-//                findConversionAttachments(root);
-//
-//                root = stripHybridNodes(root);
-//                root.setParent(null);
-//
-//                if (!numbered)
-//                    numberInternalNodes(root, root.getAllLeafNodes().size());
-//
-//                return root;
-//            }
-//
-//            @Override
-//            public Node visitNode(ExtendedNewickParser.NodeContext ctx) {
-//                Node node = new Node();
-//
-//                if (ctx.post().hybrid() != null) {
-//                    String convID = ctx.post().hybrid().getText();
-//                    node.setID(convID);
-//
-//                    Conversion conv;
-//                    if (convIDMap.containsKey(convID))
-//                        conv = convIDMap.get(convID);
-//                    else {
-//                        conv = new Conversion();
-//                        convIDMap.put(convID, conv);
-//                    }
-//
-//                    if (ctx.node().isEmpty()) {
-//                        String locusID;
-//                        for (ExtendedNewickParser.AttribContext attribCtx : ctx.post().meta().attrib()) {
-//                            switch (attribCtx.attribKey.getText()) {
-//                                case "region":
-//                                    conv.setStartSite(Integer.parseInt(
-//                                            attribCtx.attribValue().vector().attribValue(0).getText()));
-//                                    conv.setEndSite(Integer.parseInt(
-//                                            attribCtx.attribValue().vector().attribValue(1).getText()));
-//                                    break;
-//
-//                                case "locus":
-//                                    locusID = attribCtx.attribValue().getText();
-//                                    if (locusID.startsWith("\""))
-//                                        locusID = locusID.substring(1,locusID.length()-1);
-//
-//                                    Locus locus = null;
-//                                    for (Locus thisLocus : getConvertibleLoci()) {
-//                                        if (thisLocus.getID().equals(locusID))
-//                                            locus = thisLocus;
-//                                    }
-//
-//                                    if (locus == null)
-//                                        throw new IllegalArgumentException(
-//                                                "Locus with ID " + locusID + " not found.");
-//
-//                                    conv.setLocus(locus);
-//                                    break;
-//
-//                                default:
-//                                    break;
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                for (ExtendedNewickParser.NodeContext childCtx : ctx.node())
-//                    node.addChild(visitNode(childCtx));
-//
-//                if (ctx.post().label() != null) {
-//                    node.setID(ctx.post().label().getText());
-//                    node.setNr(Integer.parseInt(ctx.post().label().getText())
-//                            - nodeNumberoffset);
-//                }
-//
-//                node.setHeight(Double.parseDouble(ctx.post().length.getText()));
-//
-//                return node;
-//            }
-//        }.visit(parseTree);
-//
-//        m_nodes = root.getAllChildNodesAndSelf().toArray(m_nodes);
-//        nodeCount = m_nodes.length;
-//        leafNodeCount = root.getAllLeafNodes().size();
-//
-//        setRoot(root);
-//        initArrays();
-//
-//        for (Conversion conv : convIDMap.values())
-//            addConversion(conv);
-//
-//    }
-   
+    @Override
+    public void fromXML(final org.w3c.dom.Node node) {
+        fromExtendedNewick(node.getTextContent().replaceAll("&amp", "&"));
+    }
+    
+    /**
+     * Read in an ACG from a string in extended newick format.  Assumes
+     * that the network is stored with exactly the same metadata as written
+     * by the getExtendedNewick() method.
+     *
+     * @param string extended newick representation of ACG
+     */
+    public void fromExtendedNewick(String string) {
+        fromExtendedNewick(string, false, taxaTranslationOffset);
+    }
+    /**
+     * Read in an ACG from a string in extended newick format.  Assumes
+     * that the network is stored with exactly the same metadata as written
+     * by the getExtendedNewick() method.
+     *
+     * @param string extended newick representation of ACG
+     * @param numbered true indicates that the ACG is numbered.
+     */
+    public void fromExtendedNewick(String string, boolean numbered, int nodeNumberoffset) {
+
+        // Spin up ANTLR
+        CharStream input = CharStreams.fromString(string);
+        ExtendedNewickLexer lexer = new ExtendedNewickLexer(input);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        ExtendedNewickParser parser = new ExtendedNewickParser(tokens);
+        ParseTree parseTree = parser.tree();
+
+        Map<String, Conversion> convIDMap = new HashMap<>();
+        Node root = new ExtendedNewickBaseVisitor<Node>() {
+
+            /**
+             * Convert branch lengths to node heights for all nodes in clade.
+             *
+             * @param node clade parent
+             * @return minimum height assigned in clade.
+             */
+            private double branchLengthsToHeights(Node node) {
+                if (node.isRoot())
+                    node.setHeight(0.0);
+                else
+                    node.setHeight(node.getParent().getHeight() - node.getHeight());
+
+                double minHeight = node.getHeight();
+
+                for (Node child : node.getChildren()) {
+                    minHeight = Math.min(minHeight, branchLengthsToHeights(child));
+                }
+
+                return minHeight;
+            }
+
+            /**
+             * Remove height offset from all nodes in clade
+             * @param node parent of clade
+             * @param offset offset to remove
+             */
+            private void removeOffset(Node node, double offset) {
+                node.setHeight(node.getHeight() - offset);
+
+                for (Node child : node.getChildren())
+                    removeOffset(child, offset);
+            }
+
+            /**
+             * Get the next clonal frame node (at or below the given node).
+             * @param node
+             * @return Clonal frame node.
+             */
+            private Node getTrueNode(Node node) {
+                if (node.isLeaf()) {
+                    assert !convIDMap.containsKey(node.getID());
+                    return node;
+                }
+
+                if (convIDMap.containsKey(node.getID()))
+                    return getTrueNode(node.getChild(0));
+
+                int hybridIdx = -1;
+                int nonHybridIdx = -1;
+                for (int i=0; i<node.getChildCount(); i++) {
+                    if (node.getChild(i).isLeaf() && convIDMap.containsKey(node.getChild(i).getID()))
+                        hybridIdx = i;
+                    else
+                        nonHybridIdx = i;
+                }
+
+                if (hybridIdx>0)
+                    return getTrueNode(node.getChild(nonHybridIdx));
+
+                return node;
+            }
+
+            /**
+             * Traverse the newly constructed tree looking for
+             * hybrid nodes and using these to set the heights of
+             * Conversion objects.
+             *
+             * @param node parent of clade
+             */
+            private void findConversionAttachments(Node node) {
+                if (convIDMap.containsKey(node.getID())) {
+                    Conversion conv = convIDMap.get(node.getID());
+                    if (node.isLeaf()) {
+                        conv.setHeight(node.getParent().getHeight());
+                        conv.setNode2(getTrueNode(node.getParent()));
+                    } else
+                        conv.setNode1(getTrueNode(node));
+                }
+
+                for (Node child : node.getChildren())
+                    findConversionAttachments(child);
+            }
+
+            /**
+             * Remove all conversion-associated nodes, leaving only
+             * the clonal frame.
+             *
+             * @param node parent of clade
+             * @return new parent of same clade
+             */
+            private Node stripHybridNodes(Node node) {
+                Node trueNode = getTrueNode(node);
+                List<Node> trueChildren = new ArrayList<>();
+
+                for (Node child : trueNode.getChildren()) {
+                    trueChildren.add(stripHybridNodes(child));
+                }
+
+                trueNode.removeAllChildren(false);
+                for (Node trueChild : trueChildren)
+                    trueNode.addChild(trueChild);
+
+                return trueNode;
+            }
+
+            private int numberInternalNodes(Node node, int nextNr) {
+                if (node.isLeaf())
+                    return nextNr;
+
+                for (Node child : node.getChildren())
+                    nextNr = numberInternalNodes(child, nextNr);
+
+                node.setNr(nextNr);
+
+                return nextNr + 1;
+            }
+
+
+            @Override
+            public Node visitTree(ExtendedNewickParser.TreeContext ctx) {
+                Node root =  visitNode(ctx.node());
+
+                double minHeight = branchLengthsToHeights(root);
+                removeOffset(root, minHeight);
+
+                findConversionAttachments(root);
+
+                root = stripHybridNodes(root);
+                root.setParent(null);
+
+                if (!numbered)
+                    numberInternalNodes(root, root.getAllLeafNodes().size());
+
+                return root;
+            }
+
+            @Override
+            public Node visitNode(ExtendedNewickParser.NodeContext ctx) {
+                Node node = new Node();
+
+                if (ctx.post().hybrid() != null) {
+                    String convID = ctx.post().hybrid().getText();
+                    node.setID(convID);
+
+                    Conversion conv;
+                    if (convIDMap.containsKey(convID))
+                        conv = convIDMap.get(convID);
+                    else {
+                        conv = new Conversion(parseConvID(convID));
+                        convIDMap.put(convID, conv);
+                    }
+
+                    if (ctx.node().isEmpty()) {
+                        for (ExtendedNewickParser.AttribContext attribCtx : ctx.post().meta().attrib()) {
+                            switch (attribCtx.attribKey.getText()) {
+                                default:
+                                	// Once we write more information in the Ext.Newick, we could parse it here.
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+                for (ExtendedNewickParser.NodeContext childCtx : ctx.node())
+                    node.addChild(visitNode(childCtx));
+
+                if (ctx.post().label() != null) {
+                    node.setID(ctx.post().label().getText());
+                    node.setNr(Integer.parseInt(ctx.post().label().getText())
+                            - nodeNumberoffset);
+                }
+
+                node.setHeight(Double.parseDouble(ctx.post().length.getText()));
+
+                return node;
+            }
+        }.visit(parseTree);
+        
+        initAfterParsingFromNewick(root, m_nodes);
+
+        for (Conversion conv : convIDMap.values())
+            addConversion(conv);
+
+    }
+
+    public int _getNodeCount() {
+    	return nodeCount;
+    }
+    
+    public void initAfterParsingFromNewick(Node root, Node[] mnodes) {
+        m_nodes = root.getAllChildNodesAndSelf().toArray(m_nodes);
+        nodeCount = m_nodes.length;
+        leafNodeCount = root.getAllLeafNodes().size();
+        setRoot(root);
+        initArrays();
+    }
+
+    public void initTreeArrays() {
+    	initArrays();
+    }
+    
+
+    protected int parseConvID(String sConvID) {
+    	return Integer.parseInt(sConvID.substring(1));
+    }
+    
 }
