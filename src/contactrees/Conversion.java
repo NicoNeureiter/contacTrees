@@ -153,14 +153,18 @@ public class Conversion {
      * @return true if specification is valid
      */
     public boolean isValid() {
+        assert ((node1.getHeight() < height) && (node2.getHeight() < height));
         if ((node1.getHeight() > height) || (node2.getHeight() > height))
             return false;
         
+        assert (node1.getParent().getHeight() > height);
+        assert (node2.getParent().getHeight() > height);
         if (node1.getParent().getHeight() < height)
         	return false;
         if (node2.getParent().getHeight() < height)
         	return false;
         
+        assert (node1 != node2);
         if (node1 == node2)
         	return false;
         

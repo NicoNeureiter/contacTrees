@@ -3,6 +3,7 @@
  */
 package contactrees;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -12,6 +13,7 @@ import javax.naming.directory.InvalidAttributesException;
 import javax.xml.crypto.dsig.keyinfo.RetrievalMethod;
 
 import beast.util.Randomizer;
+import contactrees.util.Util;
 
 /**
  * A container class for conversion edges.
@@ -22,6 +24,7 @@ public class ConversionList implements Iterable<Conversion> {
 
 	HashMap<Integer, Conversion> convs;
 	ConversionGraph acg;
+	Conversion _lastAdded;
 	
 	public ConversionList(ConversionGraph acg) {
 		this.convs = new HashMap<>();
@@ -33,7 +36,7 @@ public class ConversionList implements Iterable<Conversion> {
 	 * @return The chosen conversion ID.
 	 */
 	private int getFreeKey() {
-		int key = Randomizer.nextInt(Integer.MAX_VALUE);
+		int key = Randomizer.nextInt(10000);
 		while (convs.containsKey(key)) {
 			key = Randomizer.nextInt(Integer.MAX_VALUE);
 		}
@@ -46,9 +49,10 @@ public class ConversionList implements Iterable<Conversion> {
 	 */
 	public Conversion addNewConversion() {
 		startEditing();
-		int key = getFreeKey();
-		Conversion conv = new Conversion(key);
-		convs.put(key, conv);
+		
+		Conversion conv = new Conversion(getFreeKey());		
+		add(conv);
+		
 		return conv;
 	}
 	
@@ -56,12 +60,14 @@ public class ConversionList implements Iterable<Conversion> {
 	 * Add a conversion to the list and set the hash code as the conversion ID.
 	 * @param Conversion to be added.
 	 */
-	public void add(Conversion conv) {
-		assert conv.id == 0;
+	public void add(Conversion conv) { 
 		startEditing();
-		int key = getFreeKey();
-		conv.setID(key);
-		convs.put(key, conv);
+		
+		if (conv.id == 0)
+			conv.setID(getFreeKey());
+		
+		convs.put(conv.id, conv);
+		_lastAdded = conv;
 	}
 	
 	/**
@@ -159,15 +165,8 @@ public class ConversionList implements Iterable<Conversion> {
 	 * @return Random conversion.
 	 * @throws InvalidAttributesException
 	 */
-	public Conversion getRandomConversion() throws InvalidAttributesException {
-		int z = Randomizer.nextInt(getConvCount());
-		for (Conversion conv : convs.values()) {
-			if (z == 0)
-				return conv;
-			z--;
-		}
-		assert convs.size() == 0;
-		throw new InvalidAttributesException("No conversions to choose from.");
+	public Conversion getRandomConversion() {
+		return Util.sampleFrom(convs.values());
 	}
 
 
@@ -178,5 +177,30 @@ public class ConversionList implements Iterable<Conversion> {
         if (acg != null)
             acg.startEditing(null);
     }
+    
+    /** 
+     * @return An array containing the conversions.
+     */
+    public Conversion[] asArray() {
+      Conversion[] convArray = new Conversion[size()];
+      int i = 0;
+      for (Conversion conv : this)
+    	  convArray[i++] = conv;
+      
+      return convArray;
+    }
 	
+    /**
+     * 
+     */
+    public Conversion[] asSortedArray() {
+    	Conversion[] convArray = asArray();
+    	Arrays.sort(convArray, 
+        		(c1, c2) -> { 
+        			if (c1.height < c2.height) return -1;
+        			if (c1.height > c2.height) return 1;
+        			return 0; 
+		});
+    	return convArray;
+    }
 }

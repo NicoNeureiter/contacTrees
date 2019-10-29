@@ -6,11 +6,21 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import beast.core.CalculationNode;
 import beast.core.Description;
 import beast.core.Input;
+import beast.evolution.tree.Node;
+import contactrees.util.parsers.ExtendedNewickBaseVisitor;
+import contactrees.util.parsers.ExtendedNewickLexer;
+import contactrees.util.parsers.ExtendedNewickParser;
 
 /**
  * @author Nico Neureiter <nico.neureiter@gmail.com>
@@ -18,7 +28,7 @@ import beast.core.Input;
 @Description("A container for multiple Block objects.")
 public class BlockSet extends CalculationNode implements Iterable<Block> {
 
-	final public Input<List<Block>> blocksInput = new Input<>(
+	final public Input<ArrayList<Block>> blocksInput = new Input<>(
 			"block",
 			"A containter for multiple Block objects.",
 			new ArrayList<>());
@@ -27,7 +37,7 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 			"The network on which the conversion moves are defined.",
 			Input.Validate.REQUIRED);
 	
-	protected List<Block> blocks;
+	protected ArrayList<Block> blocks;
 	protected ConversionGraph acg;
 	
 	@Override
@@ -36,7 +46,7 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 		acg = networkInput.get();
 	}
 	
-	public List<Block> getBlocks(){
+	public ArrayList<Block> getBlocks(){
 		return blocks;
 	}
 	
@@ -58,9 +68,6 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 		}
 	}
 	
-	public void addConversion(Conversion conv) {
-	}
-	
 	public void addBlockMove(Conversion conv, Block block) {
 		block.convIds.add(conv.id);
 	}
@@ -68,18 +75,26 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 	public void removeBlockMove(Conversion conv, Block block) {
 		block.convIds.remove(conv.id);
 	}
+	
+	public void addBlockMove(Conversion conv, int blockID) {
+		addBlockMove(conv, blocks.get(blockID));
+	}
+	
+	public void removeBlockMove(Conversion conv, int blockID) {
+		removeBlockMove(conv, blocks.get(blockID));
+	}
 
 	/**
 	 * Obtain the blocks currently affected by the given conversion.
 	 * @return List of affected blocks.
 	 */
 
-	public List<Block> getAffectedBlocks(Conversion conv){
-		List<Block> affectedBlocks = new ArrayList<>();
+	public List<Integer> getAffectedBlocks(Conversion conv){
+		List<Integer> affectedBlocks = new ArrayList<>();
 		
-		for (Block block : blocks) {
-			if (block.convIds.contains(conv.id))
-				affectedBlocks.add(block);
+		for (int i = 0; i<blocks.size(); i++) {
+			if (blocks.get(i).convIds.contains(conv.id))
+				affectedBlocks.add(i);
 		}
 		
 		return affectedBlocks;
@@ -89,14 +104,13 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 	 * Obtain a hash-map, mapping each conversion to the currently affected blocks.
 	 * @return Map from conversion to affected blocks.
 	 */
-	public HashMap<Conversion, List<Block>> getAffectedBlocks(){
-		HashMap<Conversion, List<Block>> affectedBlocksByConv = new HashMap<>();
+	public HashMap<Conversion, List<Integer>> getAffectedBlocks(){
+		HashMap<Conversion, List<Integer>> affectedBlocksByConv = new HashMap<>();
 		
 		for (Conversion conv : acg.convs) {
 			affectedBlocksByConv.put(conv, getAffectedBlocks(conv));
-			
 		}
-		
+
 		return affectedBlocksByConv;
 	}
 	
@@ -146,4 +160,23 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 		return blocks.iterator();
 	}
 
+	
+	/*
+	 * TESTING INTERFACE
+	 */
+	static public BlockSet getBlockSet(ConversionGraph acg, ArrayList<Block> blocks) {
+		BlockSet bs = new BlockSet();
+		bs.initAndValidate();
+		bs.acg = acg;
+		bs.blocks = blocks;
+		return bs;
+	}
+
+	static public BlockSet getBlockSet(ConversionGraph acg) {
+		return getBlockSet(acg, new ArrayList<>());
+	}
+
+	
 }
+
+

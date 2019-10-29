@@ -39,39 +39,53 @@ public class ConversionPrior extends Distribution {
 	final public Input<Integer> upperCCBoundInput = new Input<>("upperConvCountBound",
             "Upper bound on conversion count.", Integer.MAX_VALUE);
 	
+	ConversionGraph acg;
+	
+	@Override
+	public void initAndValidate() {
+		super.initAndValidate();
+		acg = networkInput.get();
+	}
+	
 	@Override
 	public double calculateLogP() {
 		double logP = 0.0;
-		ConversionGraph acg = networkInput.get();
 		double convRate = conversionRateInput.get().getValue();
 		
         // Check whether conversion count exceeds bounds.
         if (acg.getConvCount()<lowerCCBoundInput.get()
-                || acg.getConvCount()>upperCCBoundInput.get())
-            return Double.NEGATIVE_INFINITY;
+                || acg.getConvCount()>upperCCBoundInput.get()) {
+        	return Double.NEGATIVE_INFINITY;
+        }
         
         // Poisson prior on the number of conversions
         double poissonMean = convRate * acg.getClonalFramePairedLength();
-        logP += -poissonMean + acg.getConvCount() * Math.log(poissonMean);  
-        if (poissonMean <= 0.0) // Should never happen!
-        	return Double.NEGATIVE_INFINITY;
+        logP += -poissonMean + acg.getConvCount() * Math.log(poissonMean);
+        
+        assert poissonMean >= 0.0;
+        if (poissonMean == 0) {
+        	if (acg.getConvCount() == 0)
+        		return 0.0;
+    		else
+    			return Double.NEGATIVE_INFINITY;
+        }
         		
         // Probability density of each conversion placement
 		for (Conversion conv : acg.getConversions())
 			logP += calculateConversionLogP(conv);
 
-		// Correct for probability mass outside the specified bounds (on number of conversions)
-		if (lowerCCBoundInput.get()>0 || upperCCBoundInput.get()<Integer.MAX_VALUE) {
-            try {
-                logP -= new PoissonDistributionImpl(poissonMean)
-                        .cumulativeProbability(
-                                lowerCCBoundInput.get(),
-                                upperCCBoundInput.get());
-            } catch (MathException e) {
-                throw new RuntimeException("Error computing modification to ARG " +
-                        "prior density required by conversion number constraint.");
-            }
-        }
+//		// Correct for probability mass outside the specified bounds (on number of conversions)
+//		if (lowerCCBoundInput.get()>0 || upperCCBoundInput.get()<Integer.MAX_VALUE) {
+//            try {
+//                logP -= new PoissonDistributionImpl(poissonMean)
+//                        .cumulativeProbability(
+//                                lowerCCBoundInput.get(),
+//                                upperCCBoundInput.get());
+//            } catch (MathException e) {
+//                throw new RuntimeException("Error computing modification to ARG " +
+//                        "prior density required by conversion number constraint.");
+//            }
+//        }
 
 		return logP;
 	}

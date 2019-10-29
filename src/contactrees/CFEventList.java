@@ -150,7 +150,7 @@ public class CFEventList {
             events.add(event);
         }
         
-        // Sort events in increasing order of their times
+        // Sort events in increasing order of their heights
         Collections.sort(events, (Event o1, Event o2) -> {
             if (o1.t<o2.t)
                 return -1;
