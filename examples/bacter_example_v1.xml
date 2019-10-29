@@ -82,7 +82,7 @@
   		<!-- Define parameters for rate of conversion edges and 
   		probability of blocks moving over a conversion edge -->
         <parameter id="pMove" name="stateNode" estimate="false">0.05</parameter>
-		<parameter id="conversionRate" name="stateNode" estimate="false">0.005</parameter>
+		<parameter id="conversionRate" name="stateNode" estimate="false">0.05</parameter>
 		
 		<!-- Tree model parameters (independent the of contactrees model) -->
         <parameter id="ePopSize.t:treeSim" name="stateNode">0.3</parameter>
@@ -136,7 +136,7 @@
             <distribution id="treeLikelihood.simulated_data_A" spec="ThreadedTreeLikelihood" data="@simulated_data_A">
             
 	            <!-- Brainstorming  *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* -->
-                <!-- <tree spec="LocalTree" network="ACG" moves="block_A"/> -->
+                <!-- <tree spec="MarginalTree" network="@ACG" block="block_A"/> -->
                 <tree idref="ACG"/>
 	            <!-- /Brainstorming *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* -->
             
@@ -155,18 +155,12 @@
             </distribution>
         </distribution>
     </distribution>
-    
-<!-- 
-    <operator id="CoalescentExponentialTreeScaler.t:treeSim" spec="ScaleOperator" scaleFactor="0.5" tree="@ACG" weight="3.0"/>
-    <operator id="CoalescentExponentialTreeRootScaler.t:treeSim" spec="ScaleOperator" rootOnly="true" scaleFactor="0.5" tree="@ACG" weight="3.0"/>
-    <operator id="CoalescentExponentialUniformOperator.t:treeSim" spec="Uniform" tree="@ACG" weight="30.0"/>
-    <operator id="CoalescentExponentialSubtreeSlide.t:treeSim" spec="SubtreeSlide" tree="@ACG" weight="15.0"/>
-    <operator id="CoalescentExponentialNarrow.t:treeSim" spec="Exchange" tree="@ACG" weight="15.0"/>
-    <operator id="CoalescentExponentialWide.t:treeSim" spec="Exchange" isNarrow="false" tree="@ACG" weight="3.0"/>
-    <operator id="CoalescentExponentialWilsonBalding.t:treeSim" spec="WilsonBalding" tree="@ACG" weight="3.0"/>
- -->
- 	<operator id="ACGscale.t:simulated_data_A" spec="contactrees.operators.ACGScaler" acg="@ACG" scaleFactor="0.5" weight="5.0"/>
-    <operator id="ACGscale.t:simulated_data_A.rootOnly" spec="contactrees.operators.ACGScaler" acg="@ACG" scaleFactor="0.8" weight="5.0" rootOnly="true"/>
+ 
+ 	<operator id="CFWilsonBalding.t:simulated_data_A" spec="contactrees.operators.CFWilsonBalding" acg="@ACG" alpha="0.1" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" weight="10.0"/>
+ 	<operator id="CFUniform.t:simulated_data_A" spec="contactrees.operators.CFUniform" acg="@ACG" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" weight="10.0"/>
+ 	<operator id="CFNarrowExchange.t:simulated_data_A" spec="contactrees.operators.CFSubtreeExchange" isNarrow="true" acg="@ACG" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" weight="10.0"/>
+ 	<operator id="CFWideExchange.t:simulated_data_A" spec="contactrees.operators.CFSubtreeExchange" isNarrow="false" acg="@ACG" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" weight="3.0"/>
+ 	<operator id="ACGscale.t:simulated_data_A" spec="contactrees.operators.ACGScaler" acg="@ACG" scaleFactor="0.8" weight="5.0"/>
     <operator id="ePopSizeScaler.t:treeSim" spec="ScaleOperator" parameter="@ePopSize.t:treeSim" scaleFactor="0.75" weight="3.0"/>
     <operator id="GrowthRateRandomWalk.t:treeSim" spec="RealRandomWalkOperator" parameter="@growthRate.t:treeSim" weight="3.0" windowSize="1.0"/>
 	<operator id="AddRemoveConversion.t:treeSim" spec="contactrees.operators.AddRemoveConversion" acg="@ACG" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" weight="2.0"/>
@@ -192,9 +186,7 @@
 
     <logger id="treelog.t:treeSim" fileName="$(tree).trees" logEvery="1000" mode="tree">
         <!-- <log id="TreeWithMetaDataLogger.t:treeSim" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@ACG"/> -->        
-        <!-- Brainstorming  *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* -->
-        <log id="ACGWithMetaDataLogger.ACG" spec="ACGWithMetaDataLogger" network="@ACG" blockSet="@allBlocks"/>
-        <!-- /Brainstorming *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* -->
+        <log spec="ACGWithMetaDataLogger" network="@ACG" blockSet="@allBlocks"/>
     </logger>
 
 </run>
