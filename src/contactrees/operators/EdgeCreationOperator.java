@@ -18,11 +18,17 @@
 package contactrees.operators;
 
 import contactrees.BlockSet;
+import contactrees.CFEventList;
+import contactrees.CFEventList.Event;
 import contactrees.Conversion;
+import contactrees.util.Util;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.util.Randomizer;
+
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -57,7 +63,7 @@ public abstract class EdgeCreationOperator extends ACGOperator {
      */
     protected Conversion addNewConversion() {
     	Conversion conv = acg.addNewConversion();
-    	blockSet.addConversion(conv);
+//    	blockSet.addConversion(conv);
     	return conv;
     }
     
@@ -66,8 +72,59 @@ public abstract class EdgeCreationOperator extends ACGOperator {
      * @param The conversion to be removed
      */
     protected void removeConversion(Conversion conv) {
-    	acg.deleteConversion(conv);
+    	acg.removeConversion(conv);
     	blockSet.removeConversion(conv);
+    }
+    
+    /**
+     * Attach chosen recombination to the clonal frame.  Note that only the
+     * attachment points (nodes and heights) are set, the affected region of
+     * the alignment is not modified.
+     * 
+     * @param conv conversion
+     * @return log probability density of chosen attachment.
+     */
+    public double attachEdge(Conversion conv) {
+        
+        double logP = 0.0;
+        
+        // Select departure point
+        double u = Randomizer.nextDouble()*acg.getClonalFramePairedLength();
+        logP += Math.log(1.0/acg.getClonalFramePairedLength());
+        
+        List<Event> eventList = acg.getCFEvents(); 
+        
+        for (int i=0; i<eventList.size()-1; i++) {
+        	Event start = eventList.get(i);
+        	int k = start.getLineageCount();
+        	double intervalLength = eventList.get(i+1).getHeight() - start.getHeight(); 
+        	double pairedLength = intervalLength * k * (k-1); 
+        	if (u < pairedLength) {
+        		// Pick height uniformly at random
+        		double height = Randomizer.uniform(0, intervalLength);
+        		conv.setHeight(height);
+        		
+        		// Pick pair of lineages uniformly from active interval
+        		HashSet<Node> lineages = acg.getLineagesAtHeight(height);
+        		Node node1 = Util.sampleFrom(lineages);
+        		conv.setNode1(node1);
+        		
+        		lineages.remove(node1);
+        		Node node2 = Util.sampleFrom(lineages);
+        		conv.setNode2(node2);
+        		
+        		break;
+        	}
+        	u -= pairedLength;
+        }
+        assert conv.getNode1() != null;
+        assert conv.getNode2() != null;
+        assert conv.getNode1() != conv.getNode2();
+        assert !conv.getNode1().isRoot();
+        assert !conv.getNode2().isRoot();
+        assert conv.isValid();
+        
+        return logP;
     }
 
     /**
@@ -78,7 +135,7 @@ public abstract class EdgeCreationOperator extends ACGOperator {
      * @param conv conversion
      * @return log probability density of chosen attachment.
      */
-    public double attachEdge(Conversion conv) {
+    public double attachEdge_old(Conversion conv) {
         
         double logP = 0.0;
         
@@ -93,9 +150,6 @@ public abstract class EdgeCreationOperator extends ACGOperator {
             if (u<node.getLength()) {
                 conv.setHeight(node.getHeight() + u);
                 conv.setNode1(node);
-//                System.out.print(conv.getHeight());
-//                System.out.print("  \t");
-//                System.out.println(acg.getRoot().getHeight());
                 break;
             } else
                 u -= node.getLength();
@@ -103,6 +157,8 @@ public abstract class EdgeCreationOperator extends ACGOperator {
         
         // Select arrival point
         logP += coalesceEdge(conv);
+        
+        assert logP == -Math.log(acg.getClonalFramePairedLength());
         
         return logP;
     }
@@ -117,8 +173,8 @@ public abstract class EdgeCreationOperator extends ACGOperator {
     public double getEdgeAttachmentProb(Conversion conv) {
         double logP = 0.0;
         
-        logP += Math.log(1.0/acg.getClonalFrameLength());
-        logP += getEdgeCoalescenceProb(conv);
+        logP += Math.log(1.0/acg.getClonalFramePairedLength());
+//        logP += getEdgeCoalescenceProb(conv);
         
         return logP;
     }
