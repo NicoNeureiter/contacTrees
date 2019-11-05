@@ -113,6 +113,17 @@ public class ConversionGraph extends Tree {
     }
     
     /**
+     * Obtain the CFEventList object, containting the ordered list of events 
+     * that make up the clonal frame and some convenience methods.
+     * 
+     * @return cfEventList.
+     */
+    public CFEventList getCFEventList() {
+    	cfEventList.updateEvents();
+        return cfEventList;
+    }
+    
+    /**
      * @return Total length of all edges in clonal frame.
      */
     public double getClonalFrameLength() {
@@ -153,11 +164,18 @@ public class ConversionGraph extends Tree {
     	HashSet<Node> lineages = new HashSet<>();
     	
         List<CFEventList.Event> events = getCFEvents();
+        
         for (int i=0; i<events.size(); i++) {
         	CFEventList.Event event = events.get(i);
-        	Node node = event.getNode();
+        	if (i < events.size()-1)
+        		assert event.t <= events.get(i+1).t;
+        	if (i < events.size()-1)
+        		assert event.getNode().getHeight() <= events.get(i+1).getNode().getHeight();
         	
-        	if (event.getHeight() >= height) {
+        	Node node = event.getNode();
+        	assert event.t == node.getHeight();
+        	
+        	if (event.getHeight() > height) {
         		// We found the interval of "height"
         		break;
         	}
@@ -169,6 +187,8 @@ public class ConversionGraph extends Tree {
         		for (Node child : node.getChildren()) {
             		lineages.remove(child);	
         		}
+        	} else {
+        		assert node.isLeaf();
         	}
         }
         
@@ -189,9 +209,20 @@ public class ConversionGraph extends Tree {
      */
     public boolean isInvalid() {    	
     	// A node is the root iff it is at the last index of m_nodes array
-        for (int i=0; i<m_nodes.length; i++)
-        	if ((m_nodes[i].isRoot()) != (i == m_nodes.length-1))
+        for (int i=0; i<m_nodes.length; i++) {
+        	Node node = m_nodes[i];
+    		Node parent = node.getParent();
+        	if (node.isRoot())
+        		assert i == m_nodes.length - 1;
+        	if (!node.isRoot())
+        		assert i != m_nodes.length - 1;
+        	if ((node.isRoot()) != (i == m_nodes.length-1))
         		return true;
+        	if (!node.isRoot())
+        		assert m_nodes[parent.getNr()] == parent;
+        	if (!node.isRoot())
+        		assert node.getLength() > 0;
+        }
         
         for (Conversion conv : convs) {
             if (!conv.isValid()) {
@@ -256,13 +287,14 @@ public class ConversionGraph extends Tree {
                 convCopy.setNode2(m_nodes[conv.getNode2().getNr()]);
                 convs.convs.put(convCopy.getID(), convCopy);
             }
-            
-            // TODO what about copying storedConvs?
 
             if (cfEventList == null)
                 cfEventList = new CFEventList(this);
-            
         }
+        
+//        nodeCount = m_nodes.length;
+//        initArrays();
+        assert !isInvalid();
     }
 
     /**
@@ -286,7 +318,8 @@ public class ConversionGraph extends Tree {
     */
     
     @Override
-    protected void store() {
+    public void store() {
+//    	System.out.println("Store");
         super.store();
         
         // Copy the conversion list
@@ -306,6 +339,7 @@ public class ConversionGraph extends Tree {
     
     @Override
     public void restore() {
+//    	System.out.println("Restore");
     	super.restore();
     	
         // Swap conversions with storedConversions
