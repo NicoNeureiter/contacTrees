@@ -4,23 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import beast.core.CalculationNode;
 import beast.core.Description;
 import beast.core.Input;
-import beast.evolution.tree.Node;
-import contactrees.util.parsers.ExtendedNewickBaseVisitor;
-import contactrees.util.parsers.ExtendedNewickLexer;
-import contactrees.util.parsers.ExtendedNewickParser;
 
 /**
  * @author Nico Neureiter <nico.neureiter@gmail.com>
@@ -127,6 +115,20 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
     	}
     	
     	return affectedCount;
+    }
+
+	/**
+     * Count the number of times a block is affected by a conversion edge.
+     *
+     * @return Number of moves
+     */
+    public int countMoves() {
+        int moveCount = 0;
+
+        for (Block block : blocks)
+            moveCount += block.countMoves();
+
+        return moveCount;
     }
 
     /**

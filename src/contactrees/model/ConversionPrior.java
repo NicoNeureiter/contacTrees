@@ -9,8 +9,10 @@ import java.util.Random;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.PoissonDistributionImpl;
 
+import contactrees.CFEventList;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
+import contactrees.util.Util;
 import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.State;
@@ -40,24 +42,25 @@ public class ConversionPrior extends Distribution {
             "Upper bound on conversion count.", Integer.MAX_VALUE);
 	
 	ConversionGraph acg;
+	double convRate;
 	
 	@Override
 	public void initAndValidate() {
 		super.initAndValidate();
 		acg = networkInput.get();
+		convRate = conversionRateInput.get().getValue();
 	}
 	
 	@Override
 	public double calculateLogP() {
 		double logP = 0.0;
-		double convRate = conversionRateInput.get().getValue();
-		
+
         // Check whether conversion count exceeds bounds.
         if (acg.getConvCount()<lowerCCBoundInput.get()
                 || acg.getConvCount()>upperCCBoundInput.get()) {
-        	return Double.NEGATIVE_INFINITY;
+            return Double.NEGATIVE_INFINITY;
         }
-        
+
         // Poisson prior on the number of conversions
         double poissonMean = convRate * acg.getClonalFramePairedLength();
         logP += -poissonMean + acg.getConvCount() * Math.log(poissonMean);
@@ -74,18 +77,18 @@ public class ConversionPrior extends Distribution {
 		for (Conversion conv : acg.getConversions())
 			logP += calculateConversionLogP(conv);
 
-//		// Correct for probability mass outside the specified bounds (on number of conversions)
-//		if (lowerCCBoundInput.get()>0 || upperCCBoundInput.get()<Integer.MAX_VALUE) {
-//            try {
-//                logP -= new PoissonDistributionImpl(poissonMean)
-//                        .cumulativeProbability(
-//                                lowerCCBoundInput.get(),
-//                                upperCCBoundInput.get());
-//            } catch (MathException e) {
-//                throw new RuntimeException("Error computing modification to ARG " +
-//                        "prior density required by conversion number constraint.");
-//            }
-//        }
+        // Correct for probability mass outside the specified bounds (on number of conversions)
+        if (lowerCCBoundInput.get()>0 || upperCCBoundInput.get()<Integer.MAX_VALUE) {
+            try {
+                logP -= new PoissonDistributionImpl(poissonMean)
+                        .cumulativeProbability(
+                                lowerCCBoundInput.get(),
+                                upperCCBoundInput.get());
+            } catch (MathException e) {
+                throw new RuntimeException("Error computing modification to ARG " +
+                        "prior density required by conversion number constraint.");
+            }
+        }
 
 		return logP;
 	}
@@ -94,7 +97,7 @@ public class ConversionPrior extends Distribution {
 		ConversionGraph acg = networkInput.get();
 		
 		// For now, a uniform distribution over time and pairs of lineages
-		return - Math.log(acg.getClonalFramePairedLength());
+		return -Math.log(acg.getClonalFramePairedLength());
 	}
 	
 	@Override
