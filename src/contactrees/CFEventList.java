@@ -18,6 +18,7 @@
 package contactrees;
 
 import beast.evolution.tree.Node;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -123,8 +124,16 @@ public class CFEventList {
      */
     public List<Event> getCFEvents() {
         updateEvents();
-        
         return events;
+    }
+
+    /**
+     * Obtain the number of events in the list.
+     *
+     * @return Number of events
+     */
+    public int countEvents() {
+        return events.size();
     }
 
     /**
@@ -157,7 +166,13 @@ public class CFEventList {
             
             if (o2.t<o1.t)
                 return 1;
-            
+
+            if (o1.getNode().getParent() == o2.getNode())
+                return -1;
+
+            if (o1.getNode() == o2.getNode().getParent())
+                return 1;
+
             return 0;
         });
         
@@ -183,10 +198,28 @@ public class CFEventList {
      * @throws InvalidAttributeValueException 
      */
     public Event getEventAtHeight(double height) {
-    	int startIdx = 0;
-    	while ((startIdx < events.size()-1) && (events.get(startIdx+1).getHeight()<height))
+        updateEvents();
+        int startIdx = 0;
+        while ((startIdx < events.size()-1) && (events.get(startIdx+1).getHeight()<height))
             startIdx += 1;
         
         return events.get(startIdx);
     }
+    
+    public double getIntervalVolume(int i) {
+        int k = events.get(i).lineages;
+        double dt = events.get(i+1).t - events.get(i).t;
+        return dt * k * (k-1);
+    }
+
+    public double[] getIntervalVolumes() {
+        int nEvents = events.size();
+        double[] volumes = new double[nEvents-1];
+        for (int i=0; i<nEvents-1; i++) {
+            volumes[i] = getIntervalVolume(i);
+        }
+        
+        return volumes;
+    }
+    
 }
