@@ -1,0 +1,44 @@
+<beast version='2.0'
+       namespace='beast.evolution.tree.coalescent
+                 :beast.evolution.alignment
+                 :contactrees
+                 :contactrees.model
+                 :contactrees.util
+                 :beast.util'>
+
+	<run spec="ACGSimulator" nSims="$(nSims)">
+	    <simACG spec="SimulatedACGWithBlocks" id="acgWithBlocks"
+	            conversionRate="$(convRate)" moveProb="$(pMove)">
+	            <!-- height="$(height)" sampleHeight="$(sampleHeight)"> -->
+           <network spec="ConversionGraph" id="acg">
+            <taxonset spec="TaxonSet">
+                <taxon spec="Taxon" id="A"/>
+                <taxon spec="Taxon" id="B"/>
+                <taxon spec="Taxon" id="C"/>
+                <taxon spec="Taxon" id="D"/>
+                <taxon spec="Taxon" id="E"/>
+            </taxonset>
+           </network>
+       	<blockSet spec="BlockSet" id="blockSet" network="@acg">
+       		<block spec="Block" id="block.0"/>
+       		<block spec="Block" id="block.1"/>
+       		<block spec="Block" id="block.2"/>
+       		<block spec="Block" id="block.3"/>
+       		<block spec="Block" id="block.4"/>
+       		<block spec="Block" id="block.5"/>
+       		<block spec="Block" id="block.6"/>
+       		<block spec="Block" id="block.7"/>
+       		<block spec="Block" id="block.8"/>
+       		<block spec="Block" id="block.9"/>
+       	</blockSet>
+	    <populationModel spec="ConstantPopulation" popSize="$(popSize)"/>
+        <!-- <clonalFrame spec='TreeParser' newick="(((1:1.0,2:1.0):2.0,3:3.0):1.0,(4:2.0,5:2.0):2.0):0.0;"/> -->
+        <clonalFrame spec='TreeParser' newick="(((1:10.0,2:10.0):20.0,3:30.0):10.0,(4:20.0,5:20.0):20.0):0.0;"/>
+		</simACG>
+		    
+		<logger logEvery="1" fileName="$(filebase).trees">
+	    	<log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@blockSet"/>
+		</logger>
+	</run>
+  
+</beast>

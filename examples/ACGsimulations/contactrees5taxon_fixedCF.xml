@@ -1,0 +1,82 @@
+<beast version='2.0'
+       namespace='beast.evolution.tree.coalescent
+                 :beast.evolution.alignment
+                 :beast.evolution.operators
+                 :beast.core
+                 :beast.core.parameter
+                 :contactrees
+                 :contactrees.model
+                 :contactrees.util
+                 :contactrees.operators'>
+
+<data id="data:nodata" name="alignment">
+    <sequence id="seq_A" taxon="A" totalcount="4" value="ACGT"/>
+    <sequence id="seq_B" taxon="B" totalcount="4" value="ACGT"/>
+    <sequence id="seq_C" taxon="C" totalcount="4" value="ACGT"/>
+    <sequence id="seq_D" taxon="D" totalcount="4" value="ACGT"/>
+    <sequence id="seq_E" taxon="E" totalcount="4" value="ACGT"/>
+</data>
+
+<stateNode spec="BlockSet" id="allBlocks" network="@acg">
+	<plate var="n" range="b0,b1,b2,b3,b4,b5,b6,b7,b8,b9">
+		<block spec="Block" id="$(n)"/>
+	</plate>
+</stateNode>
+
+<run id="mcmc" spec="MCMC" chainLength="$(chainLength)">
+ 	<state id="state" storeEvery="$(logInterval)">
+    	<!-- Define the conversion graph -->
+        <stateNode id="acg" spec="ConversionGraph">
+	        <taxonset id="taxa" spec="TaxonSet" alignment="@data:nodata"/>
+        </stateNode>
+    	
+		<plate var="n" range="b0,b1,b2,b3,b4,b5,b6,b7,b8,b9">
+			<stateNode idref="$(n)"/>
+		</plate>
+        
+        <stateNode id="pMove" spec="RealParameter" estimate="false" value="$(moveProb)"/>
+		<stateNode id="conversionRate" spec="RealParameter" estimate="false" value="$(convRate)"/>
+        <stateNode id="popSize" spec="RealParameter" estimate="false" value="$(popSize)"/>
+ 	</state>
+ 	
+ 	<!-- <init id="NewickTree" spec="beast.util.TreeParser" estimate="false" initial="@acg" taxa="@data:nodata" newick="(((1:1.0,2:1.0):2.0,3:3.0):1.0,(4:2.0,5:2.0):2.0):0.0;"/> -->
+ 	<init id="NewickTree" spec="beast.util.TreeParser" estimate="false" initial="@acg" taxa="@data:nodata" newick="(((1:10.0,2:10.0):20.0,3:30.0):10.0,(4:20.0,5:20.0):20.0):0.0;"/>
+
+   <distribution id="posterior" spec="util.CompoundDistribution">
+        <distribution id="prior" spec="util.CompoundDistribution">
+            <distribution id="CoalescentConstant.t:treeSim" spec="Coalescent">
+                <populationModel id="ConstantPopulation.t" spec="ConstantPopulation" popSize="@popSize"/>
+                <treeIntervals id="TreeIntervals.t:treeSim" spec="TreeIntervals" tree="@acg"/>
+            </distribution>
+            
+            <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
+			
+			<!--        
+            <distribution id="MovePrior.this" spec="MovePrior" network="@acg" moves="@block.this" p="@pMove"/>
+			 -->    
+        </distribution>
+    </distribution>
+	
+	<operator id="AddRemoveConversion.t" spec="AddRemoveConversion" acg="@acg" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" weight="1.0"/> 	 
+ 	<!-- <operator id="ACGscale.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="50.0"/> -->
+  	     
+    <logger id="screenlog" logEvery="10000">
+        <log idref="posterior"/>
+        <log idref="prior"/>
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="popSize"/>
+    </logger>
+
+    <logger logEvery="10000" fileName="$(filebase).stats">
+        <log idref="posterior"/>
+        <log idref="prior"/>
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="popSize"/>
+    </logger>
+
+    <logger logEvery="$(logInterval)" fileName="$(filebase).trees">
+    	<log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
+    </logger>
+</run>
+  
+</beast>
