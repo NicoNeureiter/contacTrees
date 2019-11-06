@@ -10,6 +10,7 @@ import java.util.List;
 import org.w3c.dom.Node;
 
 import beast.core.Description;
+import beast.core.Operator;
 import beast.core.StateNode;
 import contactrees.util.Util;
 
@@ -21,12 +22,12 @@ import contactrees.util.Util;
 public class Block extends StateNode { 
 
     // The indices (in the ConversionList) of the conversions affecting this block. 
-    List<Integer> convIds, convIdsStored;
+    List<Integer> convIDs, convIDsStored;
 
     @Override
     public void initAndValidate() {
-        convIds = new ArrayList<Integer>();
-        convIdsStored = new ArrayList<>();
+        convIDs = new ArrayList<Integer>();
+        convIDsStored = new ArrayList<>();
     }
 
     /**
@@ -34,7 +35,10 @@ public class Block extends StateNode {
      * @param The new conversion.
      */
     public void addMove(Conversion conv) {
-        convIds.add(conv.getID());
+        startEditing(null);
+        assert conv != null;
+        assert convIDs != null;
+        convIDs.add(conv.getID());
     }
     
     
@@ -43,7 +47,8 @@ public class Block extends StateNode {
      * @param The conversion to be removed.
      */
     public void removeMove(Conversion conv) {
-        convIds.remove(conv.getID());
+        startEditing(null);
+        convIDs.remove((Integer) conv.getID());
     }
 
     /**
@@ -53,11 +58,11 @@ public class Block extends StateNode {
      */
     public boolean isAffected(Conversion conv) {
         // TODO resolve overshadowed conversions somewhere
-        return convIds.contains(conv.getID()); 
+        return convIDs.contains(conv.getID()); 
     }
 
     public int countMoves() {
-        return convIds.size();
+        return convIDs.size();
     }
 
     /**
@@ -65,7 +70,11 @@ public class Block extends StateNode {
      * @return Number of conversions.
      */
     public int size() {
-        return convIds.size();
+        return convIDs.size();
+    }
+    
+    public List<Integer> getConversionIDs(){
+        return convIDs;
     }
 
     
@@ -94,8 +103,8 @@ public class Block extends StateNode {
         Block copy = new Block();
         
         copy.setID(getID());
-        copy.convIds = Util.deepCopyIntegers(convIds);
-        copy.convIdsStored = Util.deepCopyIntegers(convIdsStored);
+        copy.convIDs = Util.deepCopyIntegers(convIDs);
+        copy.convIDsStored = Util.deepCopyIntegers(convIDsStored);
         
         return copy;
     }
@@ -104,51 +113,35 @@ public class Block extends StateNode {
     public void assignTo(StateNode other) {
         final Block block = (Block) other;
         block.setID(getID());
-        block.convIds = Util.deepCopyIntegers(convIds);
-        block.convIdsStored = Util.deepCopyIntegers(convIdsStored);
+        block.convIDs = Util.deepCopyIntegers(convIDs);
+        block.convIDsStored = Util.deepCopyIntegers(convIDsStored);
     }
 
     @Override
     public void assignFrom(StateNode other) {
         final Block block = (Block) other;
         setID(block.getID());
-        convIds = Util.deepCopyIntegers(block.convIds);
-        convIdsStored = Util.deepCopyIntegers(block.convIdsStored);
+        convIDs = Util.deepCopyIntegers(block.convIDs);
+        convIDsStored = Util.deepCopyIntegers(block.convIDsStored);
     }
 
     @Override
     protected void store() {
-        convIdsStored = Util.deepCopyIntegers(convIds);
+        convIDsStored = Util.deepCopyIntegers(convIDs);
     }
 
     @Override
     public void restore() {
-        List<Integer> tmp = convIds;
-        convIds = convIdsStored;
-        convIdsStored = tmp;
-        
-//        ConversionList convList = acg.getConversions();
-//        List<Integer> toStore = convIdsStored;
-//        
-//        // Remove all active conversion that are not stored
-//        for (int id : convIds) {
-//            if (!convIdsStored.contains(id)) {
-//                toStore.add(id);
-//                removeConversion(convList.get(id));
-//            }
-//        }
-//        
-//        // Add all stored conversions that are not active
-//        for (int id : convIdsStored) {
-//            if (!convIds.contains(id)) {
-//                addConversion(convList.get(id));
-//            }
-//        }
-//        
-//        // Add the removed conversions to the stored ones
-//        for (int id : toStore) {
-//            convIdsStored.add(id);
-//        }
+//        System.out.println("Block restore");
+        List<Integer> tmp = convIDs;
+        convIDs = convIDsStored;
+        convIDsStored = tmp;
+    }
+    
+    @Override
+    public void startEditing(Operator operator) {
+        if (state != null)
+            super.startEditing(operator);
     }
 
     @Override
@@ -158,7 +151,7 @@ public class Block extends StateNode {
     
     @Override
     public double getArrayValue(int dim) {
-        return convIds.size();
+        return convIDs.size();
     }
 
     @Override
