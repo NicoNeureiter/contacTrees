@@ -29,9 +29,11 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 	protected ConversionGraph acg;
 	
 	@Override
-	public void initAndValidate() {
-		blocks = blocksInput.get();	
-		acg = networkInput.get();
+	public void initAndValidate() {    
+        acg = networkInput.get();
+		blocks = blocksInput.get();
+		for (Block block : blocks)
+		    block.initAndValidate();
 	}
 	
 	public ArrayList<Block> getBlocks(){
@@ -48,20 +50,20 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 		return true;
     }
 	
-	public void removeConversion(Conversion conv) {
+	public void removeConversion(Conversion conv) {        
 		for (Block block : blocks) {
-			if (block.convIds.contains(conv.id)) {
-				block.convIds.remove(conv.id);
+			if (block.isAffected(conv)) {
+				removeBlockMove(conv, block);
 			}
 		}
 	}
 	
 	public void addBlockMove(Conversion conv, Block block) {
-		block.convIds.add(conv.id);
+		block.addMove(conv);
 	}
 	
 	public void removeBlockMove(Conversion conv, Block block) {
-		block.convIds.remove(conv.id);
+		block.removeMove(conv);
 	}
 	
 	public void addBlockMove(Conversion conv, int blockID) {
@@ -71,7 +73,7 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 	public void removeBlockMove(Conversion conv, int blockID) {
 		removeBlockMove(conv, blocks.get(blockID));
 	}
-
+	
 	/**
 	 * Obtain the blocks currently affected by the given conversion.
 	 * @return List of affected blocks.
@@ -81,7 +83,7 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 		List<Integer> affectedBlocks = new ArrayList<>();
 		
 		for (int i = 0; i<blocks.size(); i++) {
-			if (blocks.get(i).convIds.contains(conv.id))
+			if (blocks.get(i).convIDs.contains(conv.id))
 				affectedBlocks.add(i);
 		}
 		
@@ -110,7 +112,7 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
     public int countAffectedBlocks() {
     	int affectedCount = 0;
     	for (Block block : blocks) {
-    		if (!block.convIds.isEmpty())
+    		if (block.countMoves() > 0)
     			affectedCount++;
     	}
     	
@@ -140,7 +142,7 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
         HashSet<Conversion> uselessConvs = new HashSet<>(acg.convs.getConversions());
         
         for (Block block : blocks) {
-	        for (int convId : block.convIds) {
+	        for (int convId : block.getConversionIDs()) {
 	            uselessConvs.remove(acg.convs.get(convId));
 	        }
         }
