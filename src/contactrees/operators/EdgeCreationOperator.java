@@ -85,38 +85,30 @@ public abstract class EdgeCreationOperator extends ACGOperator {
      * @return log probability density of chosen attachment.
      */
     public double attachEdge(Conversion conv) {
-        
+    	CFEventList cfEventList = acg.getCFEventList();
+    	List<Event> cfEvents = cfEventList.getCFEvents();
         double logP = 0.0;
+
+        // Choose event interval
+    	double[] intervalVolumes = cfEventList.getIntervalVolumes();
+    	int iEvent = Util.sampleCategorical(intervalVolumes);
+        Event event = cfEvents.get(iEvent);
         
-        // Select departure point
-        double u = Randomizer.nextDouble()*acg.getClonalFramePairedLength();
-        logP += Math.log(1.0/acg.getClonalFramePairedLength());
+    	// Choose height within interval
+        double height = Randomizer.uniform(event.getHeight(), cfEvents.get(iEvent+1).getHeight());
+    	conv.setHeight(height);
+    	
+    	// Choose source lineage (given the height)
+    	Set<Node> activeLineages = acg.getLineagesAtHeight(height);
+    	Node node1 = Util.sampleFrom(activeLineages);
+    	conv.setNode1(node1);
+    	assert node1.getHeight() < height;
         
-        List<Event> eventList = acg.getCFEvents(); 
+        // Choose destination lineage (given the height and node1)
+        activeLineages.remove(node1);
+        Node node2 = Util.sampleFrom(activeLineages);
+        conv.setNode2(node2);
         
-        for (int i=0; i<eventList.size()-1; i++) {
-        	Event start = eventList.get(i);
-        	int k = start.getLineageCount();
-        	double intervalLength = eventList.get(i+1).getHeight() - start.getHeight(); 
-        	double pairedLength = intervalLength * k * (k-1); 
-        	if (u < pairedLength) {
-        		// Pick height uniformly at random
-        		double height = Randomizer.uniform(0, intervalLength);
-        		conv.setHeight(height);
-        		
-        		// Pick pair of lineages uniformly from active interval
-        		HashSet<Node> lineages = acg.getLineagesAtHeight(height);
-        		Node node1 = Util.sampleFrom(lineages);
-        		conv.setNode1(node1);
-        		
-        		lineages.remove(node1);
-        		Node node2 = Util.sampleFrom(lineages);
-        		conv.setNode2(node2);
-        		
-        		break;
-        	}
-        	u -= pairedLength;
-        }
         assert conv.getNode1() != null;
         assert conv.getNode2() != null;
         assert conv.getNode1() != conv.getNode2();
@@ -124,43 +116,52 @@ public abstract class EdgeCreationOperator extends ACGOperator {
         assert !conv.getNode2().isRoot();
         assert conv.isValid();
         
-        return logP;
-    }
-
-    /**
-     * Attach chosen recombination to the clonal frame.  Note that only the
-     * attachment points (nodes and heights) are set, the affected region of
-     * the alignment is not modified.
-     * 
-     * @param conv conversion
-     * @return log probability density of chosen attachment.
-     */
-    public double attachEdge_old(Conversion conv) {
+        return Math.log(1.0/acg.getClonalFramePairedLength());
         
-        double logP = 0.0;
-        
-        // Select departure point
-        double u = Randomizer.nextDouble()*acg.getClonalFrameLength();
-        logP += Math.log(1.0/acg.getClonalFrameLength());
-        
-        for (Node node : acg.getNodesAsArray()) {
-            if (node.isRoot())
-                continue;
-            
-            if (u<node.getLength()) {
-                conv.setHeight(node.getHeight() + u);
-                conv.setNode1(node);
-                break;
-            } else
-                u -= node.getLength();
-        }
-        
-        // Select arrival point
-        logP += coalesceEdge(conv);
-        
-        assert logP == -Math.log(acg.getClonalFramePairedLength());
-        
-        return logP;
+//        
+//        // Select departure point
+//        double u = Randomizer.nextDouble()*acg.getClonalFramePairedLength();
+//        logP += Math.log(1.0/acg.getClonalFramePairedLength());
+//        
+//        List<Event> eventList = acg.getCFEvents(); 
+//        for (int i=0; i<eventList.size()-1; i++) {
+//        	Event start = eventList.get(i);
+//        	Event end = eventList.get(i+1);
+//        	int k = start.getLineageCount();
+//        	
+//        	double intervalLength = end.getHeight() - start.getHeight(); 
+//        	double pairedLength = intervalLength * k * (k-1); 
+//        	
+//        	if (u < pairedLength) {
+//        		System.out.println(start.getNode().getNr());
+//        		System.out.println(start.getNode());
+//        		System.out.println(intervalLength);
+//        		System.out.println(start.getNode().getLength());
+//        		System.out.println(u + " < "+ pairedLength);
+//        		// Pick height uniformly at random
+//        		double height = Randomizer.uniform(0, intervalLength);
+//        		conv.setHeight(height);
+//        		
+//        		// Pick pair of lineages uniformly from active interval
+//        		HashSet<Node> lineages = acg.getLineagesAtHeight(height);
+//        		Node node1 = Util.sampleFrom(lineages);
+//        		conv.setNode1(node1);
+//        		assert node1.getParent().getHeight() > height;
+//        		
+//        		lineages.remove(node1);
+//        		Node node2 = Util.sampleFrom(lineages);
+//        		conv.setNode2(node2);
+//        		assert node2.getParent().getHeight() > height : "Parent too young: "
+//        				+ node2.getParent().getHeight() + " < " + height;
+//        		
+//        		
+//        		break;
+//        	}
+//        	u -= pairedLength;
+//        }
+//        
+//        
+//        return logP;
     }
     
     /**
@@ -191,7 +192,7 @@ public abstract class EdgeCreationOperator extends ACGOperator {
     	double height = conv.getHeight();
     	double logP = 0.0;
         
-    	// Find the other lineages at the same height as node1. 
+    	// Find the other lineages at the same height as node2. 
         Set<Node> activeLineages = acg.getLineagesAtHeight(height);
         activeLineages.remove(conv.getNode1());
         
@@ -222,30 +223,6 @@ public abstract class EdgeCreationOperator extends ACGOperator {
     public double getEdgeCoalescenceProb(Conversion conv) {
     	int nLineages = acg.countLineagesAtHeight(conv.getHeight());
     	return - Math.log(nLineages - 1);
-
-        
-//        List<CFEventList.Event> events = acg.getCFEvents();
-//        
-//        // Find event immediately below departure point
-//        int startIdx = 0;
-//        while (events.get(startIdx+1).getHeight()<conv.getHeight1())
-//            startIdx += 1;
-//        
-//        // Compute probability of edge length and arrival
-//        for (int i=startIdx; i<events.size() && events.get(i).getHeight()<conv.getHeight2(); i++) {           
-//            double t1 = Math.max(conv.getHeight1(), events.get(i).getHeight());
-//            double t2 = conv.getHeight2();
-//            if (i<events.size()-1)
-//                t2 = Math.min(t2, events.get(i+1).getHeight());
-//        
-//            double intervalArea = popFunc.getIntegral(t1, t2);
-//            logP += -intervalArea*events.get(i).getLineageCount();
-//        }
-//        
-//        // Probability of single coalescence event
-//        logP += Math.log(1.0/popFunc.getPopSize(conv.getHeight2()));
-//        
-//        return logP;
     }
     
 }

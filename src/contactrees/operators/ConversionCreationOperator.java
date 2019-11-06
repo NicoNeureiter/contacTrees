@@ -36,9 +36,14 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
             "Probability for a block to follow a conversion edge.",
             Input.Validate.REQUIRED);
 
+    double pMove;
+    BlockSet blockSet;
+    
     @Override
     public void initAndValidate() {
         super.initAndValidate();
+    	blockSet = blockSetInput.get();
+        pMove = pMoveInput.get().getValue();
     }
 
     /**
@@ -48,18 +53,23 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      * @return log probability density of chosen attachment.
      */
     public double drawAffectedBlocks(Conversion conv) {
-//    	BlockSet blocks = blockSetInput.get();
-//        double pMove = pMoveInput.get().getValue();
-//        double logP = 0;
-//        
-//        for (Block block : blocks.getBlocks()) {
-//        	if (Randomizer.nextDouble() < pMove) {
-//        		block.addMove(conv);
-//        		logP += Math.log(pMove);
-//        	}
-//        }
+        double logP = 0;
         
-    	return 0; // TODO return actual probability when in use!
+        if (pMove == 0.) {
+            assert blockSet.getAffectedBlocks(conv).isEmpty();
+            return 0;
+        }
+
+        for (Block block : blockSet.getBlocks()) {
+            if (Randomizer.nextDouble() < pMove) {
+                block.addMove(conv);
+                logP += Math.log(pMove);
+            } else {
+                logP += Math.log(1 - pMove);
+            }
+        }
+
+        return logP;
     }
 
     /**
@@ -70,14 +80,15 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      * @return log probability density
      */
     public double getAffectedBlocksProb(Conversion conv) {
-//        BlockSet blocks = blockSetInput.get();
-//        double pMove = pMoveInput.get().getValue();
-//
-//        int affectedBlockCount = blocks.getAffectedBlocks(conv).size();
-//        int unaffectedBlockCount = blocks.getBlockCount() - affectedBlockCount;
+        int affectedBlockCount = blockSet.getAffectedBlocks(conv).size();
+        int unaffectedBlockCount = blockSet.getBlockCount() - affectedBlockCount;
         
-        return 0;
-//    	return affectedBlockCount*Math.log(pMove) + unaffectedBlockCount*Math.log(1-pMove);
+        if (pMove == 0.) {
+        	assert blockSet.getAffectedBlocks(conv).isEmpty();
+        	return 0;
+        }
+        
+        return affectedBlockCount*Math.log(pMove) + unaffectedBlockCount*Math.log(1-pMove);
     }
 
 }
