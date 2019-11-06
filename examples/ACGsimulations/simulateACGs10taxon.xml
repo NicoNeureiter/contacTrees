@@ -9,7 +9,6 @@
 	<run spec="ACGSimulator" nSims="$(nSims)">
 	    <simACG spec="SimulatedACGWithBlocks" id="acgWithBlocks"
 	            conversionRate="$(convRate)" moveProb="$(pMove)">
-	            <!-- height="$(height)" sampleHeight="$(sampleHeight)"> -->
            <network spec="ConversionGraph" id="acg">
             <taxonset spec="TaxonSet">
                 <taxon spec="Taxon" id="A"/>
@@ -17,20 +16,25 @@
                 <taxon spec="Taxon" id="C"/>
                 <taxon spec="Taxon" id="D"/>
                 <taxon spec="Taxon" id="E"/>
+                <taxon spec="Taxon" id="F"/>
+                <taxon spec="Taxon" id="G"/>
+                <taxon spec="Taxon" id="H"/>
+                <taxon spec="Taxon" id="I"/>
+                <taxon spec="Taxon" id="J"/>
             </taxonset>
            </network>
-       	<blockSet spec="BlockSet" id="blockSet" network="@acg">
-       		<block spec="Block" id="block.0"/>
-       		<block spec="Block" id="block.1"/>
-       		<block spec="Block" id="block.2"/>
-       		<block spec="Block" id="block.3"/>
-       		<block spec="Block" id="block.4"/>
-       		<block spec="Block" id="block.5"/>
-       		<block spec="Block" id="block.6"/>
-       		<block spec="Block" id="block.7"/>
-       		<block spec="Block" id="block.8"/>
-       		<block spec="Block" id="block.9"/>
-       	</blockSet>
+	       	<blockSet spec="BlockSet" id="blockSet" network="@acg">
+	       		<block spec="Block" id="block.0"/>
+	       		<block spec="Block" id="block.1"/>
+	       		<block spec="Block" id="block.2"/>
+	       		<block spec="Block" id="block.3"/>
+	       		<block spec="Block" id="block.4"/>
+	       		<block spec="Block" id="block.5"/>
+	       		<block spec="Block" id="block.6"/>
+	       		<block spec="Block" id="block.7"/>
+	       		<block spec="Block" id="block.8"/>
+	       		<block spec="Block" id="block.9"/>
+	       	</blockSet>
 		    <populationModel spec="ConstantPopulation" popSize="$(popSize)"/>
 		</simACG>
 		
