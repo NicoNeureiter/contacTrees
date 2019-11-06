@@ -115,6 +115,7 @@ public class ACGScaler extends ACGOperator {
                     return Double.NEGATIVE_INFINITY;
             }
         } else {
+        	// For non-ultrametric trees the fixed leave height could lead negative edges: 
             for (Node node : acg.getExternalNodes()) {
                 if (node.getHeight()>node.getParent().getHeight()) {
                     return Double.NEGATIVE_INFINITY;

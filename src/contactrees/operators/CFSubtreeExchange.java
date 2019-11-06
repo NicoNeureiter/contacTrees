@@ -30,6 +30,7 @@ public class CFSubtreeExchange extends CFOperator {
             do {
                 srcNode = acg.getNode(Randomizer.nextInt(acg.getNodeCount()-1));
             } while (srcNode.getParent().isRoot());
+
             srcNodeP = srcNode.getParent();
             destNode = getSibling(srcNodeP);
             destNodeP = destNode.getParent();
@@ -68,6 +69,7 @@ public class CFSubtreeExchange extends CFOperator {
                 srcNodeS = srcNodeS.getParent();
 
             logHGF -= expandConversions(destNode, srcNodeS, t_srcNodeP);
+
         } else {
             Node srcNodeS = getSibling(srcNode);
 
@@ -79,7 +81,8 @@ public class CFSubtreeExchange extends CFOperator {
             logHGF += collapseConversions(destNode, srcNodeS, t_srcNodeP);
         }
         
-    	assert !acg.isInvalid() : "CFSTX proposed invalid state.";
+        if (logHGF > Double.NEGATIVE_INFINITY) 
+        	assert !acg.isInvalid() : "CFSTX proposed invalid state.";
     	
         return logHGF;
     }

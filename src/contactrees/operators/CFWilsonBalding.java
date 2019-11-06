@@ -95,7 +95,8 @@ public class CFWilsonBalding extends CFOperator {
             logHGF -= expandConversions(srcNode, destNode, newTime);
 
 
-        	assert !acg.isInvalid() : "CFWB proposed invalid state.";
+            if (logHGF > Double.NEGATIVE_INFINITY)
+                assert !acg.isInvalid() : "CFWB proposed invalid state.";
         	
         	return logHGF;
         }
@@ -122,7 +123,8 @@ public class CFWilsonBalding extends CFOperator {
             // newTime to edges ancestral to destNode.
             logHGF += collapseConversions(srcNode, destNode, newTime);
 
-        	assert !acg.isInvalid() : "CFWB proposed invalid state.";
+            if (logHGF > Double.NEGATIVE_INFINITY)
+                assert !acg.isInvalid() : "CFWB proposed invalid state.";
         	
         	return logHGF;
         }
@@ -139,18 +141,17 @@ public class CFWilsonBalding extends CFOperator {
 
         double min_newTime = Math.max(t_destNode, t_srcNode);
         double t_destNodeP = destNodeP.getHeight();
-        double newTime = min_newTime
-                + (t_destNodeP - min_newTime)*Randomizer.nextDouble();
-
+        double newTime = Randomizer.uniform(min_newTime, t_destNodeP);
         logHGF -= Math.log(1.0/(t_destNodeP - min_newTime));
+
         if (newTime < srcNodeP.getHeight()) {
             logHGF += collapseConversions(srcNode, destNode, newTime);
         } else {
             logHGF -= expandConversions(srcNode, destNode, newTime);
         }
-
         
-    	assert !acg.isInvalid() : "CFWB proposed invalid state.";
+        if (logHGF > Double.NEGATIVE_INFINITY)
+            assert !acg.isInvalid() : "CFWB proposed invalid state.";
     	
     	return logHGF;
     }
