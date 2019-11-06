@@ -13,7 +13,10 @@ import java.util.List;
 import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.apache.commons.math3.distribution.ExponentialDistribution;
 import org.apache.commons.math3.distribution.PoissonDistribution;
+import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.apache.commons.math3.stat.inference.KolmogorovSmirnovTest;
+import org.hamcrest.core.IsEqual;
+import org.hamcrest.core.IsNot;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -21,6 +24,7 @@ import org.junit.Test;
 import contactrees.ACGWithBlocksReader;
 import contactrees.Block;
 import contactrees.BlockSet;
+import contactrees.Conversion;
 import contactrees.ConversionGraph;
 import contactrees.model.ACGSimulator;
 import beast.app.BeastMCMC;
@@ -31,51 +35,201 @@ public class TestACGOperators {
 	static ArrayList<ACGWithBlocksReader> samplesSimulator;
 	static ArrayList<ACGWithBlocksReader> samplesMCMC;
 	
-	static int N_SAMPLES = 3000;
+	static int N_SAMPLES = 100;
+	static int N_SAMPLES_SIMU = N_SAMPLES;
+	static int N_SAMPLES_MCMC = N_SAMPLES;
+//
 	static int N_BLOCKS = 10;
-	static double CONV_RATE = 0.02;
-	static double MOVE_PROB = 0.0;
-	static double POP_SIZE = 12.0;
+	static double CONV_RATE = 0.1;
+	static double P_MOVE = 0.1;
+	static double POP_SIZE = 20.0;
 	static int BURNIN_SAMPLES = 10;
-	static int LOG_INTERVAL = 10000;
+	static int LOG_INTERVAL = 20000;
 	
-	// Simulator settings
-//	static String FBASE_SIM = "simulateACGs2taxon";
-//	static String FBASE_SIM = "simulateACGs2taxon_fixedCF";
-	static String FBASE_SIM = "simulateACGs5taxon";
-//	static String FBASE_SIM = "simulateACGs5taxon_fixedCF";
-	// MCMC settings 
-//	static String FBASE_MCMC = "contactrees2taxon";
-	static String FBASE_MCMC = "contactrees5taxon";
+	static boolean SAMPLE_HEIGHT = false;
+	static double HEIGHT = 40.;
+
+	static int N_TAXA = 10;
+	static boolean FIXED_CF = false;
+	
+	static String FBASE_SIM = String.format("simulateACGs%dtaxon%s", N_TAXA, FIXED_CF ? "_fixedCF" : "");
+//	static String FBASE_SIM = String.format("simulateTrees%dtaxon%s", N_TAXA, FIXED_CF ? "_fixedCF" : "");
+	static String FBASE_MCMC = String.format("contactrees%dtaxon%s", N_TAXA, FIXED_CF ? "_fixedCF" : "");
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		int chainLength = LOG_INTERVAL*N_SAMPLES;
-		String xmlParams = String.format("nSims=%d,convRate=%f,moveProb=%f,popSize=%f,chainLength=%d,logInterval=%d", 
-										 N_SAMPLES, CONV_RATE, MOVE_PROB, POP_SIZE, chainLength, LOG_INTERVAL);
+		int chainLength = LOG_INTERVAL*(N_SAMPLES_MCMC + BURNIN_SAMPLES);
+		String xmlParams = String.format("nSims=%d,convRate=%f,pMove=%f,popSize=%f,chainLength=%d,logInterval=%d,height=%f,sampleHeight=%b", 
+				N_SAMPLES_SIMU, CONV_RATE, P_MOVE, POP_SIZE, chainLength, LOG_INTERVAL, HEIGHT, SAMPLE_HEIGHT);
 		System.out.println(xmlParams);
 		String workingDir = "simulations/";
 		System.setProperty("beast.useWindow", "true"); // Trick beast into not stopping application
+		System.setProperty("beast.debug", "true");
 
+//		String seed = "1440939580";
+		String seed = String.format("%d", Randomizer.nextInt());
+		System.out.println("Seed: " + seed);
 
+		
 		// Run the simulation
 		samplesSimulator = new ArrayList<>();
 		String xmlPath = String.format("examples/ACGsimulations/%s.xml", FBASE_SIM);
-		String[] simArgs = {"-overwrite", "-D", xmlParams, "-prefix", workingDir, xmlPath};
+		System.out.println(xmlPath);
+		String[] simArgs = {"-overwrite", "-D", xmlParams, "-seed", seed, "-prefix", workingDir, xmlPath};
 		BeastMCMC.main(simArgs);
+		
 		// Read the prior samplesSimulator
-		String treesPath = workingDir + FBASE_SIM + ".trees";
-		samplesSimulator = readSamplesFromNexus(treesPath);
-
-		// Run the simulation
+		samplesSimulator = readSamplesFromNexus(workingDir + FBASE_SIM + ".trees");
+		
+		// Run the MCMC
 		samplesMCMC = new ArrayList<>();
 		xmlPath = String.format("examples/ACGsimulations/%s.xml", FBASE_MCMC);
-		String[] mcmcArgs = {"-overwrite", "-D", xmlParams, "-prefix", workingDir, xmlPath};
+		System.out.println(xmlPath);
+		String[] mcmcArgs = {"-overwrite", "-D", xmlParams, "-seed", seed, "-prefix", workingDir, xmlPath};
 		BeastMCMC.main(mcmcArgs);
-		// Read the prior samplesSimulator
-		treesPath = workingDir + FBASE_MCMC + ".trees";
-		samplesMCMC = readSamplesFromNexus(treesPath);
+		
+		// Read the prior samplesMCMC and drop the burn-in
+		ArrayList<ACGWithBlocksReader> tmp = readSamplesFromNexus(workingDir + FBASE_MCMC + ".trees");
+		samplesMCMC = new ArrayList<ACGWithBlocksReader>();
+		for (int i=0; i<N_SAMPLES_MCMC; i++) {
+			samplesMCMC.add(tmp.get(BURNIN_SAMPLES+i));
+		}
 
+	}
+
+	@Test
+	public void test() {
+		assert samplesMCMC.size() == N_SAMPLES_MCMC;
+		assert samplesSimulator.size() == N_SAMPLES_SIMU;
+		
+		// Statistics to collect
+		double[] convCounts = new double[N_SAMPLES_MCMC];
+		double[] convCountsTarget = new double[N_SAMPLES_SIMU];
+		double[] moveCounts = new double[N_SAMPLES_MCMC];
+		double[] moveCountsTarget = new double[N_SAMPLES_SIMU];
+		double[] rootHeights = new double[N_SAMPLES_MCMC];
+		double[] rootHeightsTarget = new double[N_SAMPLES_SIMU];
+		double[] meanConvHeights = new double[N_SAMPLES_MCMC];
+		double[] meanConvHeightsTarget = new double[N_SAMPLES_SIMU];
+//		List<Double> convHeights = new ArrayList<Double>();
+//		List<Double> convHeightsTarget = new ArrayList<Double>();
+
+		
+		// Evaluate statistics per sample
+		for (int i=0; i<N_SAMPLES_MCMC; i++)
+			collectStatistics(i, samplesMCMC, rootHeights, convCounts, 
+							  moveCounts, meanConvHeights);
+		for (int i=0; i<N_SAMPLES_SIMU; i++) {
+			collectStatistics(i, samplesSimulator, rootHeightsTarget, convCountsTarget, 
+							  moveCountsTarget, meanConvHeightsTarget);
+		}
+		
+		printStats(rootHeights, rootHeightsTarget, "rootHeight");
+		printStats(convCounts, convCountsTarget, "convCounts");
+		printStats(meanConvHeights, meanConvHeightsTarget, "meanConvHeights");
+		printStats(moveCounts, moveCountsTarget, "moveCounts");
+
+	}
+	
+	protected static double ksTest(double[] samples1, double[] samples2) {
+		KolmogorovSmirnovTest ksTest = new KolmogorovSmirnovTest();
+		return ksTest.kolmogorovSmirnovTest(samples1, samples2);
+	}
+	
+	protected void collectStatistics(int i, List<ACGWithBlocksReader> samples, double[] heightsArray, double[] convCountArray, 
+									 double[] moveCountsArray, double[] meanConvHeightsArray) {
+		ACGWithBlocksReader sample = samples.get(i);
+		heightsArray[i] = sample.acg.getRoot().getHeight();
+		convCountArray[i] = sample.acg.getConvCount();
+		moveCountsArray[i] = sample.blockSet.countMoves();
+		meanConvHeightsArray[i] = meanConvHeight(sample.acg);
+//		for (Conversion conv : sample.acg.getConversions()) {
+////			System.out.println(conv.getHeight());
+//			convHeightsList.add(conv.getHeight());
+//		}
+	}
+	
+	protected void printStats(double[] xMCMC, double[] xSimu, String statName) {
+		double ksStatistic = ksTest(xSimu, xMCMC);
+
+		System.out.println();
+		System.out.println(String.format("KS-test %s: %.4f", statName, ksStatistic));
+		System.out.println(String.format("MCMC %s: %.2f  \t   %.3f\t+/- %.2f", statName, 
+									     (new Median()).evaluate(xMCMC), mean(xMCMC), stdOfMean(xMCMC)));
+		System.out.println(String.format("Simu %s: %.2f  \t   %.3f\t+/- %.2f", statName, 
+										 (new Median()).evaluate(xSimu), mean(xSimu), stdOfMean(xSimu)));
+	}
+	
+	protected double[] meanArr(double[] xs, double[] ys) {
+		assert xs.length == ys.length;
+		double[] zs = new double[xs.length];
+		for (int i=0; i<xs.length; i++) {
+			zs[i] = (xs[i] + ys[i])/2.;
+		}
+		return zs;
+	}
+	
+	protected double mean(double[] xs) {
+		double sum = 0.0;
+		for (double x : xs) sum += x;
+		return sum / xs.length;
+	}
+	
+	protected double std(double[] xs) {
+		double mu = mean(xs);
+		double sum = 0.;
+		for (double x : xs) sum += (x-mu)*(x-mu);
+		return Math.sqrt(sum / xs.length);
+	}
+	
+	protected double stdOfMean(double[] xs) {
+		double mu = mean(xs);
+		double sum = 0.;
+		for (double x : xs) sum += (x-mu)*(x-mu);
+		return Math.sqrt(sum / xs.length / xs.length);
+	}
+	
+	protected double meanConvHeight(ConversionGraph acg) {
+		double sum = 0.0;
+		for (Conversion conv : acg.getConversions()) {
+			sum += conv.getHeight();
+		}
+		return sum / acg.getConvCount();
+	}
+	
+	protected static String blockNames(int nBlocks) {
+		String names = "{";
+		for (int i=0; i<nBlocks; i++) {
+			names += "block" + i;
+			if (i < nBlocks -1)
+				names += ",";
+		}
+		return names + "}";
+	}
+	
+	protected static String taxonNames(int nTaxa) {
+		String names = "";
+		char taxName = 'A';
+
+		for (int i=0; i<nTaxa; i++) {
+			names += taxName;
+			
+			taxName += 1;
+			if (i < nTaxa -1)
+				names += ",";
+		}
+		
+		return names;
+	}
+	
+	protected double[] listToArray(List<Double> list) {
+		double[] array = new double[list.size()]; 
+		int i = 0;
+		for (double value : list) {
+			array[i] = value;
+			i++;
+		}
+		return array;
 	}
 	
 	protected static ArrayList<ACGWithBlocksReader> readSamplesFromNexus(String path) throws IOException {
@@ -112,133 +266,5 @@ public class TestACGOperators {
 	@Before
 	public void setUp() throws Exception {
 	}
-
-	@Test
-	public void test() {
-		int nSamples = samplesSimulator.size(); 
-		
-		// Statistics to collect
-		double[] convCounts = new double[nSamples];
-		double[] convCountsTarget = new double[nSamples];
-		double[] moveCounts = new double[nSamples];
-		double[] moveCountsTarget = new double[nSamples];
-		double[] rootHeights = new double[nSamples];
-		double[] rootHeightsTarget = new double[nSamples];
-		List<Double> convHeights = new ArrayList<Double>();
-		List<Double> convHeightsTarget = new ArrayList<Double>();
-		
-		// Evaluate statistics per sample
-		for (int i=0; i<nSamples; i++) {
-			collectStatistics(i, samplesMCMC, rootHeights, convCounts);
-			collectStatistics(i, samplesSimulator, rootHeightsTarget, convCountsTarget);
-
-//			double iProb = i / (double) nSamples;
-//
-//			if(CONV_RATE > 0.0) {
-//				PoissonDistribution distr = new PoissonDistribution(meanConvCount(acg, CONV_RATE));
-//				convCountsTarget[i] = (double) distr.inverseCumulativeProbability(iProb);
-//			}
-
-////			// Collect empirical and target distribution for block move counts
-////			moveCounts[i] = 0;
-////			for (Block b : blockSet.getBlocks()) moveCounts[i] += b.size();
-////			int nTries = acg.getConvCount()*blockSet.getBlockCount();
-////			if (MOVE_PROB > 0.0) {
-////				BinomialDistribution distrMoves = new BinomialDistribution(nTries, MOVE_PROB);
-////				moveCountsTarget[i] = (double) distrMoves.inverseCumulativeProbability(iProb);
-////			}
-//			
-//			// Collect empirical and target distribution for root heights
-//			rootHeights[i] = acg.getRoot().getHeight();
-//			ExponentialDistribution distrHeights = new ExponentialDistribution(POP_SIZE);
-//			rootHeightsTarget[i] = distrHeights.inverseCumulativeProbability(iProb);
-		}
-		
-
-//		KolmogorovSmirnovTest ksTest = new KolmogorovSmirnovTest();
-//		double pValueKSTest = ksTest.kolmogorovSmirnovTest(convCountsTarget, convCounts);
-//
-////		ksTest = new KolmogorovSmirnovTest();
-////		double pValueKSTestMoves = ksTest.kolmogorovSmirnovTest(moveCountsTarget, moveCounts);
-////		System.out.println(pValueKSTestMoves);
-//
-//		ksTest = new KolmogorovSmirnovTest();
-//		double pValueKSTestHeights = ksTest.kolmogorovSmirnovTest(rootHeightsTarget, rootHeights);
-//		
-//		System.out.println();
-//		System.out.println("KS-test conv.-count:" + pValueKSTest);
-//		System.out.println("KS-test root-height:" + pValueKSTestHeights);
-
-		System.out.println();
-		System.out.println("Mean root-height:" + mean(rootHeights));
-		System.out.println("Stdev root-height:" + std(rootHeights));
-		System.out.println("Stdev of mean:" + stdOfMean(rootHeights));
-		System.out.println();
-		System.out.println("Mean target root-height:" + mean(rootHeightsTarget));
-		System.out.println("Stdev target root-height:" + std(rootHeightsTarget));
-		System.out.println("Stdev of mean:" + stdOfMean(rootHeightsTarget));
-
-		System.out.println();
-		System.out.println("Mean conv.-count:" + mean(convCounts));
-		System.out.println("Stdev of mean:" + stdOfMean(convCounts));
-		System.out.println();
-		System.out.println("Mean target conv.-count:" + mean(convCountsTarget));
-		System.out.println("Stdev of mean:" + stdOfMean(convCountsTarget));
-		System.out.println();
-		
-	}
 	
-	protected void collectStatistics(int i, List<ACGWithBlocksReader> samples, double[] heightsArray, double[] convCountArray) {
-		heightsArray[i] = samples.get(i).acg.getRoot().getHeight();
-		convCountArray[i] = samples.get(i).acg.getConvCount();
-	}
-	
-	protected double mean(double[] xs) {
-		double sum = 0.0;
-		for (double x : xs) sum += x;
-		return sum / xs.length;
-	}
-	
-	protected double std(double[] xs) {
-		double mu = mean(xs);
-		double sum = 0.;
-		for (double x : xs) sum += (x-mu)*(x-mu);
-		return Math.sqrt(sum / xs.length);
-	}
-	
-	protected double stdOfMean(double[] xs) {
-		double mu = mean(xs);
-		double sum = 0.;
-		for (double x : xs) sum += (x-mu)*(x-mu);
-		return Math.sqrt(sum / xs.length / xs.length);
-	}
-	
-	protected double meanConvCount(ConversionGraph acg, double conversionRate) {
-		return conversionRate * acg.getClonalFramePairedLength();
-	}
-	
-	protected static String blockNames(int nBlocks) {
-		String names = "{";
-		for (int i=0; i<nBlocks; i++) {
-			names += "block" + i;
-			if (i < nBlocks -1)
-				names += ",";
-		}
-		return names + "}";
-	}
-	
-	protected static String taxonNames(int nTaxa) {
-		String names = "";
-		char taxName = 'A';
-
-		for (int i=0; i<nTaxa; i++) {
-			names += taxName;
-			
-			taxName += 1;
-			if (i < nTaxa -1)
-				names += ",";
-		}
-		
-		return names;
-	}
 }

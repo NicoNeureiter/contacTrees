@@ -34,8 +34,6 @@ import contactrees.ConversionGraph;
  * @author Nico Neureiter <nico.neureiter@gmail.com>
  */
 public class  ConversionGraphTest extends ContactreesTest {
-
-	static final double EPS = 1E-8;
 	
 	@Test
 	public void testExtendedNewickParsing( ) {
@@ -90,7 +88,7 @@ public class  ConversionGraphTest extends ContactreesTest {
 	public void acgModification (ModificationType modification) throws InvalidAttributesException {
 		switch (modification) {
 		case ADD_CONV:
-			Conversion conv = new Conversion(node3, node2, 2.0, acg, 0);
+			Conversion conv = new Conversion(node4, node3, 2.0, acg, 0);
 			acg.addConversion(conv);
 			break;
 		case REMOVE_CONV:		
@@ -129,16 +127,16 @@ public class  ConversionGraphTest extends ContactreesTest {
 		assertEquals(3, acg.countLineagesAtHeight(0.5));
 		lineages = acg.getLineagesAtHeight(0.5);
 		assertEquals(3, lineages.size());
-		assertTrue(lineages.contains(node0));
 		assertTrue(lineages.contains(node1));
 		assertTrue(lineages.contains(node2));
-		assertFalse(lineages.contains(node3));
+		assertTrue(lineages.contains(node3));
+		assertFalse(lineages.contains(node4));
 		
 		assertEquals(2, acg.countLineagesAtHeight(1.5));
 		lineages = acg.getLineagesAtHeight(1.5);
 		assertEquals(2, lineages.size());
+		assertTrue(lineages.contains(node4));
 		assertTrue(lineages.contains(node3));
-		assertTrue(lineages.contains(node2));
 
 		assertEquals(1, acg.countLineagesAtHeight(2.75));
 		lineages = acg.getLineagesAtHeight(2.75);
@@ -166,7 +164,7 @@ public class  ConversionGraphTest extends ContactreesTest {
 //		scaleACG(0.5);
 //		assertAllValid();
 //		
-//		conv = new Conversion(node2, node3, 1.5, acg, 0);
+//		conv = new Conversion(node3, node4, 1.5, acg, 0);
 //		acg.addConversion(conv);
 //		assertAllValid();
 //
@@ -224,13 +222,13 @@ public class  ConversionGraphTest extends ContactreesTest {
 //        
 //        // Scale conversion edges:
 //        for (Conversion conv : acg.getConversions()) {
-//        	Node node1 = conv.getNode1();
-//        	Node node2 = conv.getNode2();
+//        	Node node2 = conv.getNode1();
+//        	Node node3 = conv.getNode2();
 //        	
-//        	boolean isRootChild = node1.getParent().isRoot(); 
+//        	boolean isRootChild = node2.getParent().isRoot(); 
 //        	
 //        	if (rootOnly) {
-//        		if (node2.getParent().isRoot() != isRootChild) {
+//        		if (node3.getParent().isRoot() != isRootChild) {
 //        			// One node gets rescaled, the other does not -> Illegal move
 //        			return Double.NEGATIVE_INFINITY;
 //        		}
@@ -241,8 +239,8 @@ public class  ConversionGraphTest extends ContactreesTest {
 //                count += 1;
 //            }
 //
-//            if (conv.getHeight() < node1.getHeight()
-//                    || conv.getHeight() < node2.getHeight())
+//            if (conv.getHeight() < node2.getHeight()
+//                    || conv.getHeight() < node3.getHeight())
 //            	// Conversion below its node -> Illegal move
 //                return Double.NEGATIVE_INFINITY;
 //        }

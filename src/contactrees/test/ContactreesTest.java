@@ -14,6 +14,7 @@ import org.junit.Before;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import contactrees.ACGWithMetaDataLogger;
+import contactrees.Block;
 import contactrees.BlockSet;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
@@ -25,14 +26,16 @@ import contactrees.ConversionGraph;
  */
 public class ContactreesTest {
 
+	protected static final double EPS = 1E-8;
+	
 //	List<ConversionGraph> acgs;
 //	List<TestBlockSet> blockSets;
 //	List<TestACGWithMetaDataLogger> acgLoggers;
 
-	ConversionGraph acg;
-	BlockSet blockSet;
-	ACGWithMetaDataLogger acgLogger;
-	Node node0, node1, node2, node3, root;
+	protected ConversionGraph acg;
+	protected BlockSet blockSet;
+	protected ACGWithMetaDataLogger acgLogger;
+	protected Node node1, node2, node3, node4, root;
 	
 	@Before
 	public void setup() {
@@ -61,14 +64,14 @@ public class ContactreesTest {
 
 		// Assign nodes
 		root = acg.getRoot();
-		node3 = root.getLeft();
-		node2 = root.getRight();
-		node1 = node3.getRight();
-		node0 = node3.getLeft();
+		node4 = root.getLeft();
+		node3 = root.getRight();
+		node2 = node4.getRight();
+		node1 = node4.getLeft();
 		
 		// Add conversion
-		acg.addConversion(new Conversion(node1, node2, 0.5, acg, 0));
-		acg.addConversion(new Conversion(node2, node3, 1.5, acg, 0)); 
+		acg.addConversion(new Conversion(node2, node3, 0.5, acg, 0));
+		acg.addConversion(new Conversion(node3, node4, 1.5, acg, 0)); 
 	}
 	
 	public void setupFromNewick(String newick) {
@@ -78,7 +81,17 @@ public class ContactreesTest {
 		acg.fromExtendedNewick(newick);
 
 		// Initialize BlockSet and ACG logger
-		blockSet = BlockSet.getBlockSet(acg);
+//		blockSet = BlockSet.getBlockSet(acg);
+		List<Block> blocks = new ArrayList<Block>();
+		for (int i=0; i<3; i++) {
+		    Block b = new Block();
+		    b.initAndValidate();
+		    blocks.add(b);
+		}
+		
+		blockSet = new BlockSet();
+		blockSet.initByName("network", acg, "block", blocks);
+		
 		acgLogger = ACGWithMetaDataLogger.getACGWMDLogger(acg, blockSet);		
 	}
 
