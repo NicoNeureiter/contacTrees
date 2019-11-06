@@ -23,6 +23,8 @@ import contactrees.BlockSet;
 import contactrees.CFEventList;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
+import contactrees.CFEventList.Event;
+import contactrees.util.Util;
 import beast.core.BEASTObject;
 import beast.core.Description;
 import beast.core.Input;
@@ -75,46 +77,41 @@ public class SimulatedACGWithBlocks extends BEASTObject {
 
     public Input<PopulationFunction> popFuncInput = new Input<>(
             "populationModel",
-            "Demographic model to use.");
+            "Demographic model to use.",
+            Input.Validate.REQUIRED);
     
-    public Input<Double> birthRateInput = new Input<>(
-            "birthRate",
-            "Birth rate of the Yule tree prior.",
-            Input.Validate.XOR, popFuncInput);
-
     public Input<Tree> clonalFrameInput = new Input<>(
             "clonalFrame",
             "Optional tree specifying fixed clonal frame.");
-
+    
     public Input<String> outputFileNameInput = new Input<>(
             "outputFileName",
             "If provided, simulated ARG is additionally written to this file.");
+    
 
     private ConversionGraph acg;
     private BlockSet blockSet;
-    private Double conversionRate, birthRate, moveProb;
+    private Double conversionRate, moveProb;
     private PopulationFunction popFunc;
-    
-//    public SimulatedACGWithBlocks() {
-//        acg.m_taxonset.setRule(Input.Validate.REQUIRED);
-//    }
+
     
     @Override
     public void initAndValidate() {
     	blockSet = blockSetInput.get();
         acg = networkInput.get();
         conversionRate = conversionRateInput.get();
-        birthRate = birthRateInput.get();
         moveProb = moveProbInput.get();
         popFunc = popFuncInput.get();
         
         acg.initAndValidate();
         blockSet.initAndValidate();
+        
 
-        if (clonalFrameInput.get() == null)
+        if (clonalFrameInput.get() == null) {
             simulateClonalFrame();
-        else
+        } else {
             acg.assignFromWithoutID(clonalFrameInput.get());
+        }
         
         // Need to do this here as this sets the tree object that the nodes
         // point to, so without it they point to the dummy tree created by
@@ -159,8 +156,8 @@ public class SimulatedACGWithBlocks extends BEASTObject {
                     lines.add("clonalframe_numbered " + acg.getRoot().toShortNewick(true));
                     for (Conversion conv : acg.getConversions()) {
                         lines.add("conversion"
-                        		+ " node1=" + conv.getNode1().getNr()
-                                + " node2=" + conv.getNode2().getNr()
+                        		+ " node2=" + conv.getNode1().getNr()
+                                + " node3=" + conv.getNode2().getNr()
                                 + " affectedBlocks=" + blockSet.getAffectedBlocks(conv));
                     }
 
@@ -180,85 +177,78 @@ public class SimulatedACGWithBlocks extends BEASTObject {
      * Use coalescent model to simulate clonal frame.
      */
     private void simulateClonalFrame() {
-    	if (popFunc != null) {
-	
-	        // Initialize leaf nodes
-	        List<Node> leafNodes = new ArrayList<>();
-	        for (int i=0; i<acg.m_taxonset.get().getTaxonCount(); i++) {
-	            Node leaf = new Node();
-	            leaf.setNr(i);
-	            leaf.setID(acg.m_taxonset.get().getTaxonId(i));
-	                        
-	            if (acg.hasDateTrait())
-	                leaf.setHeight(acg.getDateTrait().getValue(leaf.getID()));
-	            else
-	                leaf.setHeight(0.0);
-	            
-	            leafNodes.add(leaf);
-	        }
-	        
-	        // Create and sort list of inactive nodes
-	        List<Node> inactiveNodes = new ArrayList<>(leafNodes);
-	        Collections.sort(inactiveNodes, (Node n1, Node n2) -> {
-	            if (n1.getHeight()<n2.getHeight())
-	                return -1;
-	            
-	            if (n1.getHeight()>n2.getHeight())
-	                return 1;
-	            
-	            return 0;
-	        });
-	        
-	        List<Node> activeNodes = new ArrayList<>();
-	        
-	        double tau = 0.0;
-	        int nextNr = leafNodes.size();
-	        while (true) {
-	            
-	            // Calculate coalescence propensity
-	            int k = activeNodes.size();
-	            double chi = 0.5*k*(k-1);
-	            
-	            // Draw scaled coalescent time
-	            if (chi>0.0)
-	                tau += Randomizer.nextExponential(chi);
-	            else
-	                tau = Double.POSITIVE_INFINITY;
-	            
-	            // Convert to real time
-	            double t = popFunc.getInverseIntensity(tau);
-	            
-	            // If new time takes us past next sample time, insert that sample
-	            if (!inactiveNodes.isEmpty() && t>inactiveNodes.get(0).getHeight()) {
-	                Node nextActive = inactiveNodes.remove(0);
-	                activeNodes.add(nextActive);
-	                tau = popFunc.getIntensity(nextActive.getHeight());
-	                continue;
-	            }
-	            
-	            // Coalesce random pair of active nodes.
-	            Node node1 = activeNodes.remove(Randomizer.nextInt(k));
-	            Node node2 = activeNodes.remove(Randomizer.nextInt(k-1));
-	            
-	            Node parent = new Node();
-	            parent.addChild(node1);
-	            parent.addChild(node2);
-	            parent.setHeight(t);
-	            parent.setNr(nextNr++);
-	            
-	            activeNodes.add(parent);
-	            
-	            if (inactiveNodes.isEmpty() && activeNodes.size()<2)
-	                break;
-	        }
-	        
-	        // Remaining active node is root
-	        acg.setRoot(activeNodes.get(0));
-	        
-    	} else {
-    		assert (birthRate != null);
-    		throw new RuntimeException("Yule model not yet implemented.");
-    	}
+        // Initialize leaf nodes
+        List<Node> leafNodes = new ArrayList<>();
+        for (int i=0; i<acg.m_taxonset.get().getTaxonCount(); i++) {
+            Node leaf = new Node();
+            leaf.setNr(i);
+            leaf.setID(acg.m_taxonset.get().getTaxonId(i));
+                        
+            if (acg.hasDateTrait())
+                leaf.setHeight(acg.getDateTrait().getValue(leaf.getID()));
+            else
+                leaf.setHeight(0.0);
+            
+            leafNodes.add(leaf);
+        }
+        
+        // Create and sort list of inactive nodes
+        List<Node> inactiveNodes = new ArrayList<>(leafNodes);
+        Collections.sort(inactiveNodes, (Node n1, Node n2) -> {
+            if (n1.getHeight()<n2.getHeight())
+                return -1;
+            
+            if (n1.getHeight()>n2.getHeight())
+                return 1;
+            
+            return 0;
+        });
+        
+        List<Node> activeNodes = new ArrayList<>();
+        
+        double tau = 0.0;
+        int nextNr = leafNodes.size();
+        while (true) {
+            
+            // Calculate coalescence propensity
+            int k = activeNodes.size();
+            double chi = 0.5*k*(k-1);
+            
+            // Draw scaled coalescent time
+            if (chi>0.0)
+                tau += Randomizer.nextExponential(chi);
+            else
+                tau = Double.POSITIVE_INFINITY;
+            
+            // Convert to real time
+            double t = popFunc.getInverseIntensity(tau);
+            
+            // If new time takes us past next sample time, insert that sample
+            if (!inactiveNodes.isEmpty() && t>inactiveNodes.get(0).getHeight()) {
+                Node nextActive = inactiveNodes.remove(0);
+                activeNodes.add(nextActive);
+                tau = popFunc.getIntensity(nextActive.getHeight());
+                continue;
+            }
+            
+            // Coalesce random pair of active nodes.
+            Node node1 = activeNodes.remove(Randomizer.nextInt(k));
+            Node node2 = activeNodes.remove(Randomizer.nextInt(k-1));
+            
+            Node parent = new Node();
+            parent.addChild(node1);
+            parent.addChild(node2);
+            parent.setHeight(t);
+            parent.setNr(nextNr++);
+            
+            activeNodes.add(parent);
+            
+            if (inactiveNodes.isEmpty() && activeNodes.size()<2)
+                break;
+        }
+        
+        // Remaining active node is root
+        acg.setRoot(activeNodes.get(0));
     }
     
     private void generateConversions() {
@@ -275,6 +265,9 @@ public class SimulatedACGWithBlocks extends BEASTObject {
             
             // Choose affected blocks:
             int nAffected = sampleBinomial(blockSet.getBlockCount(), moveProb);
+
+            assert blockSet.getAffectedBlocks(conv).isEmpty();
+            
             int[] shuffledBlockIdxs = Randomizer.shuffled(nAffected);
             for (int j=0; j<nAffected; j++) {
             	int blockIdx = shuffledBlockIdxs[j];
@@ -284,7 +277,11 @@ public class SimulatedACGWithBlocks extends BEASTObject {
     }
     
     private int sampleBinomial(int n, double p) {
-    	return (new BinomialDistribution(n, p)).sample();
+    	int sum = 0;
+    	for (int i =0; i<n; i++) 
+    		if (Randomizer.nextDouble() < p) 
+    			sum += 1;
+    	return sum;
     }
     
     
@@ -295,42 +292,51 @@ public class SimulatedACGWithBlocks extends BEASTObject {
      * @param conv recombination to associate
      */
     private void associateConversionWithCF(Conversion conv) {
-    
-        // Select departure point (node1 and height)
-        double u = Randomizer.nextDouble() * acg.getClonalFrameLength();
+    	CFEventList cfEventList = acg.getCFEventList();
+    	List<Event> cfEvents = cfEventList.getCFEvents();
+    	
+        // Choose event interval
+    	double[] intervalVolumes = cfEventList.getIntervalVolumes();
+    	int iEvent = Util.sampleCategorical(intervalVolumes);
+        Event event = cfEvents.get(iEvent);
+        
+    	// Choose height within interval
+        double height = Randomizer.uniform(event.getHeight(), cfEvents.get(iEvent+1).getHeight());
+    	conv.setHeight(height);
+    	
+    	// Choose source lineage (given the height)
+    	Set<Node> activeLineages = acg.getLineagesAtHeight(height);
+    	Node node1 = Util.sampleFrom(activeLineages);
+    	conv.setNode1(node1);
+    	assert node1.getHeight() < height;
+        
+        // Choose destination lineage (given the height and node1)
+        activeLineages.remove(node1);
+        Node node2 = Util.sampleFrom(activeLineages);
+        conv.setNode2(node2);
+        
+        // Some validity checks...
+        assert conv.getNode1() != null;
+        assert conv.getNode2() != null;
+        assert conv.getNode1() != conv.getNode2();
+        assert !conv.getNode1().isRoot();
+        assert !conv.getNode2().isRoot();
+        assert conv.isValid();
+    }
 
-        // TODO Change the way we attach edges: Choose event interval by paired-length
-        
-        for (Node node : acg.getNodesAsArray()) {
-            if (node.isRoot())
-                continue;
-            
-            if (u<node.getLength()) {
-                conv.setHeight(node.getHeight() + u);
-                conv.setNode1(node);
-                break;  
-            } 
-            else {
-                u -= node.getLength();
-            }
-        }
-        
-        assert conv.getHeight() < acg.getRoot().getHeight();
-        
-        // Select arrival point (node2 given the height and node1)
-        Set<Node> activeLineages = acg.getLineagesAtHeight(conv.getHeight());
-        activeLineages.remove(conv.getNode1());
-        
-        // Sample the arrival point uar from the active lineages (without node 1)
-        int choice = Randomizer.nextInt(activeLineages.size());
-        int i=0;
-        for (Node node : activeLineages) {
-            if (i == choice) {
-            	conv.setNode2(node);
-            	break;
-            }
-            i++;
-        }
+    public void rescaleCF(ConversionGraph acg, double targetHeight) {
+    	double scale = targetHeight / acg.getRoot().getHeight();
+    	for (Node node : acg.getNodesAsArray()) {
+    		node.setHeight(scale*node.getHeight());
+    	}
+    }
+
+    public ConversionGraph getACG() {
+    	return acg;
+    }
+    
+    public BlockSet getBlockSet() {
+    	return blockSet;
     }
     
 }
