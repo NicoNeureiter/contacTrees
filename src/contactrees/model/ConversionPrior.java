@@ -53,12 +53,13 @@ public class ConversionPrior extends Distribution {
 	
 	@Override
 	public double calculateLogP() {
-		double logP = 0.0;
+		logP = 0.0;
 
         // Check whether conversion count exceeds bounds.
         if (acg.getConvCount()<lowerCCBoundInput.get()
                 || acg.getConvCount()>upperCCBoundInput.get()) {
-            return Double.NEGATIVE_INFINITY;
+            logP = Double.NEGATIVE_INFINITY;
+            return logP;
         }
 
         // Poisson prior on the number of conversions
@@ -67,10 +68,12 @@ public class ConversionPrior extends Distribution {
         
         assert poissonMean >= 0.0;
         if (poissonMean == 0) {
-        	if (acg.getConvCount() == 0)
-        		return 0.0;
-    		else
-    			return Double.NEGATIVE_INFINITY;
+        	if (acg.getConvCount() == 0) {
+        	    logP = 0.0;
+            } else {
+                logP = Double.NEGATIVE_INFINITY;
+    		}
+        	return logP;
         }
         		
         // Probability density of each conversion placement
@@ -89,7 +92,7 @@ public class ConversionPrior extends Distribution {
                         "prior density required by conversion number constraint.");
             }
         }
-
+        
 		return logP;
 	}
 
