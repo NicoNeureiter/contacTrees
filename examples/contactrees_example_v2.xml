@@ -1,0 +1,134 @@
+<beast version='2.0'
+       namespace='beast.evolution.tree.coalescent
+                 :beast.evolution.alignment
+                 :beast.evolution.operators
+                 :beast.evolution.sitemodel
+                 :beast.evolution.substitutionmodel
+                 :beast.evolution.likelihood
+                 :beast.core
+                 :beast.core.parameter
+                 :contactrees
+                 :contactrees.model
+                 :contactrees.util
+                 :contactrees.operators'>
+
+<data id="data:sim">
+	<sequence id="seq_A" taxon="A" totalcount="4" value="AAAGAGCAAAACAAAACTAGAAAAAAAAAAAGTAAAAAAAACAAAGAAAAAAAAAAAACGGCAGAAAACAAAGAAAACAAAGCAAACAACGATGAGAAAA"/>
+	<sequence id="seq_B" taxon="B" totalcount="4" value="AAAGAACAAAACAAAAATAGAAAAAAAAAAAGTAAAAAAAAAAAAGACAAAAAAAAAAAGATATAAAAAATAAAAAACAGAGCAAACAACGATGAGGAAA"/>
+	<sequence id="seq_C" taxon="C" totalcount="4" value="AAAGAACGAAAAAAAAACAGAAAAAGAAAAAATAAAAAAAAGAAAGAAAAAAAAAAAACATTAAAAAACAAGAAAACAAAAACACACAACGAGAAAAAAA"/>
+	<sequence id="seq_D" taxon="D" totalcount="4" value="AACAAAAAAGTAAATAACGCAAAAAAGGAGAAGAAAAGCAAGAGAGAAGCGAAAAAAAAAATATAAAAAATAAAAAACAGAAAAAAAAAAAAAACAATAA"/>
+	<sequence id="seq_E" taxon="E" totalcount="4" value="AACAAAAAAGTAAATAACGCAAAAAAGGAGAAGAAAAGCAAGAGAGAAGCGGAAAAAAAAATATAAAAAATAAAAAACAGAAAAAAAAAAAAAACAATAA"/>
+	<sequence id="seq_F" taxon="F" totalcount="4" value="AAAAAAAAACGAGACAATAAAAACAGGAAAACTCCAATAAAAAAAGGCAAGAAAGAAAAAACAAAAAAAAAACGACAAAAAAAAAAAAAGCACACAAACA"/>
+	<sequence id="seq_G" taxon="G" totalcount="4" value="AAAAGGAAAAGACAAGAAAAACGAAAAGAAAAAAAAAGAAAAAAAAAAAAAAAAAACACAAAAAAAAGAAAAAAAAAAAAAAAAGAAAAAGAAAAAACAA"/>
+	<sequence id="seq_H" taxon="H" totalcount="4" value="CAAAGGAAAAGACACGGAAAAAGAAAAAAAAAAAACAGAAAAAAAGAAAAAGAAAACACAGAAAAAAGAAAAAAAAAAAAAAAAGAAAAAGAAAAAACAA"/>
+	<sequence id="seq_I" taxon="I" totalcount="4" value="AACAGAAAAAGGAAATAAAAGAAAAAAAGACAAAAAAGAACAAAAAACAAAAAGCACACAACAAAAAAACAAAGAAAAAAGCAAGAAAAAGAAAAGAAAA"/>
+	<sequence id="seq_J" taxon="J" totalcount="4" value="AAAAGAACAAGAGAAGAAAAGAAAAAAAGCAGAAAGAGAACAAAAAACAAAAAACATACAACAAAAAGAAAAAGAAAACAAAAAGAAAACGAAAATGAAA"/>
+</data>
+
+<stateNode spec="BlockSet" id="allBlocks" network="@acg">
+	<plate var="n" range="block.0,block.1,block.2,block.3,block.4">
+		<block spec="Block" id="$(n)"/>
+	</plate>
+</stateNode>
+
+<run id="mcmc" spec="MCMC" chainLength="1000000">
+
+ 	<state id="state" storeEvery="10000">
+    	<!-- Define the conversion graph -->
+        <stateNode id="acg" spec="ConversionGraph">
+	        <taxonset id="taxa" spec="TaxonSet" alignment="@data:sim"/>
+        </stateNode>
+    	
+		<stateNode idref="block.0"/>
+		<stateNode idref="block.1"/>
+		<stateNode idref="block.2"/>
+		<stateNode idref="block.3"/>
+		<stateNode idref="block.4"/>
+        
+        <stateNode id="pMove" spec="RealParameter" estimate="false" value="0.2"/>
+		<stateNode id="conversionRate" spec="RealParameter" estimate="false" value="0.4"/>
+        <stateNode id="popSize" spec="RealParameter" estimate="false" value="1.0"/>
+        
+        <stateNode id="clockRate" spec="RealParameter" estimate="false" value="1.0"/>
+ 	</state>
+ 	
+ 	<init id="RandomACG" spec="beast.evolution.tree.RandomTree" estimate="false" initial="@acg" taxa="@data:sim">
+        <populationModel id="ConstantPopulation0.t" spec="ConstantPopulation" popSize="@popSize"/>
+    </init>
+
+   <distribution id="posterior" spec="util.CompoundDistribution">
+        <distribution id="prior" spec="util.CompoundDistribution">
+            <distribution id="CoalescentConstant.t:treeSim" spec="Coalescent">
+                <populationModel id="ConstantPopulation.t" spec="ConstantPopulation" popSize="@popSize"/>
+                <treeIntervals id="TreeIntervals.t:treeSim" spec="TreeIntervals" tree="@acg"/>
+            </distribution>
+
+            <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
+            <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+    
+        </distribution>
+        <distribution id="likelihood" spec="util.CompoundDistribution">
+            <!-- Tree likelihood for each block -->            
+            <distribution id="treeLikelihood.block0" spec="TreeLikelihood">
+                <data id="data.block0" spec="FilteredAlignment" data="@data:sim" filter="1-20"/>
+                <tree id="marginalTree.0" spec="MarginalTree" network="@acg" block="@block.0" nodetype="contactrees.MarginalNode"/>
+                <siteModel id="siteModel" spec="SiteModel">
+                    <substModel id="jukesCantor" spec="JukesCantor"/>
+                </siteModel>
+                <branchRateModel id="clock" spec="beast.evolution.branchratemodel.StrictClockModel" clock.rate="@clockRate"/>
+            </distribution>
+            
+            <distribution id="treeLikelihood.block1" spec="TreeLikelihood" branchRateModel="@clock" siteModel="@siteModel">
+                <data id="data.block1" spec="FilteredAlignment" data="@data:sim" filter="21-40"/>
+                <tree id="marginalTree.1" spec="MarginalTree" network="@acg" block="@block.1" nodetype="contactrees.MarginalNode"/>
+            </distribution>
+            <distribution id="treeLikelihood.block2" spec="TreeLikelihood" branchRateModel="@clock" siteModel="@siteModel">
+                <data id="data.block2" spec="FilteredAlignment" data="@data:sim" filter="41-60"/>
+                <tree id="marginalTree.2" spec="MarginalTree" network="@acg" block="@block.2" nodetype="contactrees.MarginalNode"/>
+            </distribution>
+            <distribution id="treeLikelihood.block3" spec="TreeLikelihood" branchRateModel="@clock" siteModel="@siteModel">
+                <data id="data.block3" spec="FilteredAlignment" data="@data:sim" filter="61-80"/>
+                <tree id="marginalTree.3" spec="MarginalTree" network="@acg" block="@block.3" nodetype="contactrees.MarginalNode"/>
+            </distribution>
+            <distribution id="treeLikelihood.block4" spec="TreeLikelihood" branchRateModel="@clock" siteModel="@siteModel">
+                <data id="data.block4" spec="FilteredAlignment" data="@data:sim" filter="81-100"/>
+                <tree id="marginalTree.4" spec="MarginalTree" network="@acg" block="@block.4" nodetype="contactrees.MarginalNode"/>
+            </distribution>
+            
+        </distribution>
+    </distribution>
+	
+
+ 	<operator id="CFWilsonBalding.t" spec="CFWilsonBalding" acg="@acg" alpha="0.1" conversionRate="@conversionRate"
+ 			  pMove="@pMove" blockSet="@allBlocks" includeRoot="false" weight="10.0"/>
+	<operator id="CFUniform.t" spec="CFUniform" acg="@acg" conversionRate="@conversionRate" 
+			  pMove="@pMove" blockSet="@allBlocks" weight="10.0"/>
+ 	<operator id="CFNarrowExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionRate="@conversionRate"
+ 		      pMove="@pMove" blockSet="@allBlocks" isNarrow="true" weight="10.0"/>      
+ 	<operator id="CFWideExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionRate="@conversionRate" 
+ 			  pMove="@pMove" blockSet="@allBlocks" isNarrow="false" weight="10.0"/>
+
+ 	<operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="200.0" acg="@acg" pMove="@pMove" 
+ 			  conversionRate="@conversionRate" blockSet="@allBlocks" />
+ 	<operator id="ACGscale.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="10.0"/>
+ 	<operator id="ACGscale.rootOnly.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="10.0" rootOnly="true"/> 
+ 	 
+	
+    <logger id="screenlog" logEvery="10000">
+        <log idref="posterior"/>
+        <log idref="prior"/>
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+    </logger>
+
+    <logger logEvery="10000" fileName="$(filebase).stats">
+        <log idref="posterior"/>
+        <log idref="prior"/>
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+    </logger>
+
+    <logger logEvery="10000" fileName="$(filebase).trees" mode="tree">
+    	<log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
+    </logger>
+</run>
+  
+</beast>
