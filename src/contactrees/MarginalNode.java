@@ -33,4 +33,22 @@ public class MarginalNode extends Node {
      * not correspond to any CF node.
      */
     public int cfNodeNr = -1;
+
+    public MarginalNode() {
+        super();
+    }
+    
+    public MarginalNode(int nr, double height) {
+        super();
+        setNr(nr);
+        setHeight(height);
+    }
+    
+    public MarginalNode(int nr, double height, MarginalNode child1, MarginalNode child2) {
+        this(nr, height);
+        addChild(child1);
+        addChild(child2);
+    }
+
+    
 }
