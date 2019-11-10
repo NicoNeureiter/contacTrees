@@ -95,7 +95,7 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
     
     private String extendedNewickTraverse(Node node,
                                           boolean includeBlockStats) {
-    	ConversionList convs = acg.convs;
+    	ConversionList convs = acg.getConversions();
     	HashMap<Conversion, List<Integer>> affectedBlocks = blockSet.getAffectedBlocks();
     	
         StringBuilder sb = new StringBuilder();

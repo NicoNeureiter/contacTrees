@@ -170,7 +170,7 @@ public class Conversion {
         
         // General sanity checks
         assert !(node1.isRoot() || node2.isRoot());
-        assert acg.convs.get(id) == this;
+        assert acg.getConversions().get(id) == this;
         
         return true;
     }

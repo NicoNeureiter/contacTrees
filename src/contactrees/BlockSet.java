@@ -97,7 +97,7 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 	public HashMap<Conversion, List<Integer>> getAffectedBlocks(){
 		HashMap<Conversion, List<Integer>> affectedBlocksByConv = new HashMap<>();
 		
-		for (Conversion conv : acg.convs) {
+		for (Conversion conv : acg.getConversions()) {
 			affectedBlocksByConv.put(conv, getAffectedBlocks(conv));
 		}
 
@@ -139,11 +139,11 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
      * @return The edges without an affected blocks.
      */
     public HashSet<Conversion> getUselessConversions() {
-        HashSet<Conversion> uselessConvs = new HashSet<>(acg.convs.getConversions());
+        HashSet<Conversion> uselessConvs = new HashSet<>(acg.getConversions().getConversions());
         
         for (Block block : blocks) {
 	        for (int convId : block.getConversionIDs()) {
-	            uselessConvs.remove(acg.convs.get(convId));
+	            uselessConvs.remove(acg.getConversions().get(convId));
 	        }
         }
         

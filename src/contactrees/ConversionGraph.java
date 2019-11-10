@@ -34,12 +34,12 @@ public class ConversionGraph extends Tree {
     /**
      * List of conversion edges on graph (and a copy for restore).
      */
-    protected ConversionList convs, storedConvs;
+    private ConversionList convs, storedConvs;
       
     /**
      * Clonal frame event list.
      */
-    protected CFEventList cfEventList;
+    private CFEventList cfEventList;
     
     @Override
     public void initAndValidate() {
@@ -319,7 +319,6 @@ public class ConversionGraph extends Tree {
     
     @Override
     public void store() {
-//    	System.out.println("Store");
         super.store();
         
         // Copy the conversion list
@@ -339,7 +338,6 @@ public class ConversionGraph extends Tree {
     
     @Override
     public void restore() {
-//    	System.out.println("Restore");
     	super.restore();
     	
         // Swap conversions with storedConversions
