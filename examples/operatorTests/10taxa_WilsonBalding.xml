@@ -23,9 +23,9 @@
 </data>
 
 <stateNode spec="BlockSet" id="allBlocks" network="@acg">
-	<plate var="n" range="b0,b1,b2,b3,b4,b5,b6,b7,b8,b9">
-		<block spec="Block" id="$(n)"/>
-	</plate>
+    <plate var="n" range="0,1,2,3,4,5,6,7,8,9">
+        <block spec="Block" id="block.$(n)"/>
+    </plate>
 </stateNode>
 
 <run id="mcmc" spec="MCMC" chainLength="$(chainLength)">
@@ -36,8 +36,8 @@
 	        <taxonset id="taxa" spec="TaxonSet" alignment="@data:nodata"/>
         </stateNode>
     	
-		<plate var="n" range="b0,b1,b2,b3,b4,b5,b6,b7,b8,b9">
-			<stateNode idref="$(n)"/>
+        <plate var="n" range="0,1,2,3,4,5,6,7,8,9">
+			<stateNode idref="block.$(n)"/>
 		</plate>
         
         <stateNode id="pMove" spec="RealParameter" estimate="false" value="$(pMove)"/>
@@ -58,40 +58,19 @@
 
             <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
             <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
-    
         </distribution>
     </distribution>
 	
 
- <!--  
 	<operatorschedule id="schedule" spec="contactrees.test.OrderedOperatorSchedule">
 	 	<operator id="SimumlateOp" spec="contactrees.test.SimulatorOperator" network="@acg" blockSet="@allBlocks" 
 	 	 		  pMove="@pMove" conversionRate="@conversionRate" weight="1.0">
 	 		<populationModel spec="ConstantPopulation" popSize="$(popSize)"/>
 	 	</operator>		 
- -->  
-      
- <!-- 
- -->
-	 	<operator id="CFWilsonBalding.t" spec="CFWilsonBalding" acg="@acg" alpha="0.1" conversionRate="@conversionRate"
-	 			  pMove="@pMove" blockSet="@allBlocks" includeRoot="false" weight="10.0"/>
-		<operator id="CFUniform.t" spec="CFUniform" acg="@acg" conversionRate="@conversionRate" 
-				  pMove="@pMove" blockSet="@allBlocks" weight="10.0"/>
-	 	<operator id="CFNarrowExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionRate="@conversionRate"
-	 		      pMove="@pMove" blockSet="@allBlocks" isNarrow="true" weight="10.0"/>      
-	 	<operator id="CFWideExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionRate="@conversionRate" 
-	 			  pMove="@pMove" blockSet="@allBlocks" isNarrow="false" weight="10.0"/>
-		  
-	 	<operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="200.0" acg="@acg" pMove="@pMove" 
-	 			  conversionRate="@conversionRate" blockSet="@allBlocks" />
-	 	<operator id="ACGscale.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="10.0"/>
-
-	 	<operator id="ACGscale.rootOnly.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="10.0" rootOnly="true"/> 
- 
-	 
-<!--
+	 	
+        <operator id="CFWilsonBalding.t" spec="CFWilsonBalding" acg="@acg" alpha="0.1" conversionRate="@conversionRate"
+                  pMove="@pMove" blockSet="@allBlocks" includeRoot="true" weight="9999.0"/>
 	</operatorschedule>
--->
 	
 	
     <logger id="screenlog" logEvery="$(logInterval)">
