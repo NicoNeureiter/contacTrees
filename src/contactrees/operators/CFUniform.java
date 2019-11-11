@@ -60,7 +60,6 @@ public class CFUniform extends CFOperator {
         // Choose new height:
         double newHeight;
         if (node.isRoot()) {
-//            return Double.NEGATIVE_INFINITY;
             double fMin = Math.min(scaleFactorInput.get(), 1.0/scaleFactorInput.get());
             double fMax = 1.0/fMin;
 

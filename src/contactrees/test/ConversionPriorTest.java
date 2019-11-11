@@ -3,6 +3,7 @@ package contactrees.test;
 import org.junit.Test;
 
 import contactrees.model.ConversionPrior;
+import contactrees.util.Util;
 
 public class ConversionPriorTest extends ContactreesTest {
 	
@@ -17,12 +18,15 @@ public class ConversionPriorTest extends ContactreesTest {
 		prior.initByName("network", acg, "conversionRate", "0.5");
 		
 		for (int i=0; i<N; i++) {
-			assert prior.calculateLogP() == Poiss;
+		    // TODO change network
+		    
+		    int n = acg.getConvCount();
+			assert prior.calculateLogP() == poissonLogPDF(2*gamma, n) + 0.5*n + Util.logFactorial(n);
 			
 		}
 	}
 
 	protected double poissonLogPDF(double mean, int value) {
-		return value * Math.log(mean) - mean - Uti;
+		return value * Math.log(mean) - mean - Util.logFactorial(value);
 	}
 }

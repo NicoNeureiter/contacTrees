@@ -115,4 +115,19 @@ public class Util {
 		throw new RuntimeException("Can not sample from an empty collection.");
 	}
 	
+	static public double[] sampleSubset(double[] samples, int subsetSize) {
+	    assert subsetSize <= samples.length; 
+	    
+	    double[] rndSubset = new double[subsetSize];
+	    int i = 0;
+	    
+	    for (int sampleIdx : Randomizer.shuffled(samples.length)) {
+	        rndSubset[i] = samples[sampleIdx];
+	        i++;
+	        if (i >= subsetSize)
+	            break;
+	    }
+	    
+	    return rndSubset;	    
+	}
 }

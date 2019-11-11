@@ -35,16 +35,16 @@ public class TestACGOperators {
 	static ArrayList<ACGWithBlocksReader> samplesSimulator;
 	static ArrayList<ACGWithBlocksReader> samplesMCMC;
 	
-	static int N_SAMPLES = 100;
+	static int N_SAMPLES = 6000;
 	static int N_SAMPLES_SIMU = N_SAMPLES;
 	static int N_SAMPLES_MCMC = N_SAMPLES;
 //
 	static int N_BLOCKS = 10;
-	static double CONV_RATE = 0.1;
-	static double P_MOVE = 0.1;
-	static double POP_SIZE = 20.0;
-	static int BURNIN_SAMPLES = 10;
-	static int LOG_INTERVAL = 20000;
+	static double CONV_RATE = 0.05;
+	static double P_MOVE = 0.15;
+	static double POP_SIZE = 50.0;
+	static int BURNIN_SAMPLES = 100;
+	static int LOG_INTERVAL = 150000;
 	
 	static boolean SAMPLE_HEIGHT = false;
 	static double HEIGHT = 40.;
