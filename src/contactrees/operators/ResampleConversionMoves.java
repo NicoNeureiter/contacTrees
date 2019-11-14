@@ -1,47 +1,67 @@
-/*
- * Copyright (C) 2015 Tim Vaughan (tgvaughan@gmail.com)
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+/**
+ * 
  */
 package contactrees.operators;
 
-import contactrees.Block;
-import contactrees.BlockSet;
-import contactrees.Conversion;
+import java.util.ArrayList;
+
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
+import contactrees.Block;
+import contactrees.BlockSet;
+import contactrees.Conversion;
+import contactrees.util.Util;
 
 /**
- * Abstract class of ACG operators that add new converted edges   
- * and their affected sites to an existing ConversionGraph.
- *
- * @author Nico Neureiter (nico.neureiter@gmail.com)
+ * An operator re-sampling a certain proportion of the Block moves over a 
+ * randomly selected conversion edges (according to the prior).
+ * 
+ * @author Nico Neureiter <nico.neureiter@gmail.com>
  */
-public abstract class ConversionCreationOperator extends EdgeCreationOperator {
-	
+public class ResampleConversionMoves extends ACGOperator {
+
+
+    final public Input<BlockSet> blockSetInput = new Input<>(
+            "blockSet",
+            "Block of site which are either inherited or passed via a conversion edge.",
+            Input.Validate.REQUIRED);
+
     public Input<RealParameter> pMoveInput = new Input<>(
             "pMove",
             "Probability for a block to follow a conversion edge.",
             Input.Validate.REQUIRED);
-
-    double pMove;
     
+//    public Input<Double> resampleFractionInput = new Input<>(
+//            "resampleFraction",
+//            "The fraction of blocks which are randomly resampled to be affected by the conversion edge or not.",
+//            0.1); 
+
+    protected BlockSet blockSet;
+    protected double pMove, resampleFraction;
+
     @Override
     public void initAndValidate() {
         super.initAndValidate();
+        blockSet = blockSetInput.get();
         pMove = pMoveInput.get().getValue();
+//        resampleFraction = resampleFractionInput.get();
+    }
+    
+    @Override
+    public double proposal() {
+        double logHGF = 0.0;
+        
+        if (acg.getConvCount() == 0) {
+            return Double.NEGATIVE_INFINITY;
+        }
+        
+        Conversion conv = acg.getConversions().getRandomConversion();
+        
+        logHGF += getAffectedBlocksProb(conv);
+        logHGF -= drawAffectedBlocks(conv);          
+        
+        return logHGF;
     }
 
     /**
@@ -57,6 +77,10 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
             assert blockSet.getAffectedBlocks(conv).isEmpty();
             return 0;
         }
+
+        for (Block block : blockSet.getBlocks()) 
+            if (block.isAffected(conv))
+                block.removeMove(conv);
 
         for (Block block : blockSet.getBlocks()) {
             if (Randomizer.nextDouble() < pMove) {
@@ -82,8 +106,8 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
         int unaffectedBlockCount = blockSet.getBlockCount() - affectedBlockCount;
         
         if (pMove == 0.) {
-        	assert blockSet.getAffectedBlocks(conv).isEmpty();
-        	return 0;
+            assert blockSet.getAffectedBlocks(conv).isEmpty();
+            return 0;
         }
         
         return affectedBlockCount*Math.log(pMove) + unaffectedBlockCount*Math.log(1-pMove);

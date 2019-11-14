@@ -5,6 +5,7 @@ package contactrees;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.w3c.dom.Node;
@@ -16,7 +17,7 @@ import contactrees.util.Util;
 
 
 /**
- * @author Nico Neureiter <nico.neureiter@gmail.com>
+ * @author Nico Neureiter <n.neureiter.research@gmail.com>
  */
 @Description("A block which is affected by a marginal tree and defined through a set of conversions wihtin a network.")
 public class Block extends StateNode { 
@@ -38,6 +39,8 @@ public class Block extends StateNode {
         startEditing(null);
         assert conv != null;
         assert convIDs != null;
+        assert !convIDs.contains(conv.getID());
+
         convIDs.add(conv.getID());
     }
     
@@ -48,7 +51,11 @@ public class Block extends StateNode {
      */
     public void removeMove(Conversion conv) {
         startEditing(null);
-        convIDs.remove((Integer) conv.getID());
+        Integer cid = conv.getID();
+        
+        convIDs.removeAll(Arrays.asList(cid));
+        
+        assert !convIDs.contains(cid);
     }
 
     /**
@@ -132,7 +139,6 @@ public class Block extends StateNode {
 
     @Override
     public void restore() {
-//        System.out.println("Block restore");
         List<Integer> tmp = convIDs;
         convIDs = convIDsStored;
         convIDsStored = tmp;

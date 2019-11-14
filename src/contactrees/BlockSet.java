@@ -50,12 +50,13 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 		return true;
     }
 	
-	public void removeConversion(Conversion conv) {        
+	public void removeConversion(Conversion conv) {
 		for (Block block : blocks) {
 			if (block.isAffected(conv)) {
 				removeBlockMove(conv, block);
 			}
 		}
+		
 	}
 	
 	public void addBlockMove(Conversion conv, Block block) {

@@ -91,35 +91,4 @@ public class AddRemoveConversion extends ConversionCreationOperator {
         return getEdgeAttachmentProb(conv) + getAffectedBlocksProb(conv);
     }
 
-//    public static void main(String[] args) throws Exception {
-//
-//        ConversionGraph acg = new ConversionGraph();
-//        ConstantPopulation popFunc = new ConstantPopulation();
-//
-//
-//        AddRemoveConversion operator = new AddRemoveConversion();
-//        operator.initByName("weight", 1.0,
-//            "acg", acg,
-//            "populationModel", popFunc,
-//            "rho", new RealParameter(Double.toString(1.0/10000.0)),
-//            "delta", new RealParameter("50.0"));
-//        popFunc.initByName("popSize", new RealParameter("1.0"));
-//
-//        TaxonSet taxonSet = new TaxonSet();
-//        taxonSet.taxonsetInput.setValue(new Taxon("t1"), taxonSet);
-//        taxonSet.taxonsetInput.setValue(new Taxon("t2"), taxonSet);
-//
-//        try (PrintStream ps = new PrintStream("out.txt")) {
-//            for (int i=0; i<100000; i++) {
-//                acg.initByName(
-//                        "taxonset", taxonSet,
-//                        "fromString", "(0:1.0,1:1.0)2:0.0;");
-//
-//                operator.drawNewConversion();
-//                
-//                ps.println(acg.getConversions().get(0).getStartSite() + " "
-//                    + acg.getConversions().get(0).getEndSite());
-//            }
-//        }
-//    }
 }
