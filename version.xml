@@ -1,0 +1,3 @@
+<package name='contactrees' version='0.0.1'>
+	<depends on='beast2' atleast='2.6.0' atmost="2.6.9"/>
+</package>
