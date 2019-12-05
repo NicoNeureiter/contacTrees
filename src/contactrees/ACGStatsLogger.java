@@ -42,7 +42,7 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
 
     @Override
     public void init(final PrintStream out) {
-        out.print("rootHeight\tconvCount\tmeanConvHeight\tmoveCount");
+        out.print("rootHeight\tconvCount\tmeanConvHeight\tmoveCount\t");
     }
 
     @Override
@@ -52,7 +52,7 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
     	double meanConvHeight = meanConvHeight(acg);
     	int moveCount = blockSet.countMoves();
     	
-        out.print(height + "\t" + nConv + "\t" + meanConvHeight + "\t" + moveCount);
+        out.print(height + "\t" + nConv + "\t" + meanConvHeight + "\t" + moveCount + "\t");
     }
 	
 	protected double meanConvHeight(ConversionGraph acg) {

@@ -17,6 +17,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import beast.core.Description;
+import beast.core.Input;
 import beast.core.Operator;
 import beast.core.StateNode;
 import beast.evolution.tree.Node;
@@ -30,7 +31,11 @@ import contactrees.util.parsers.ExtendedNewickParser;
  */
 @Description("Conversion graph based around the clonal frame.")
 public class ConversionGraph extends Tree {
-	
+
+//    public Input<String> fromExtNewickInput = new Input<>(
+//            "extendedNewick",
+//            "Initialise ARG from extended Newick representation.");
+    
     /**
      * List of conversion edges on graph (and a copy for restore).
      */
@@ -43,13 +48,19 @@ public class ConversionGraph extends Tree {
     
     @Override
     public void initAndValidate() {
+        System.setProperty("java.only", "true");
+        
     	// Initialise conversions lists
         convs = new ConversionList(this);
         storedConvs = new ConversionList(this);
-        
+
         cfEventList = new CFEventList(this);
-        
+
         super.initAndValidate();
+
+//        if (fromExtNewickInput.get() != null) {
+//            fromExtendedNewick(fromExtNewickInput.get());
+//        }
     }
     
     /**

@@ -16,7 +16,7 @@ public class SimulationTestConversionOperators extends TestSingleOperator {
     
     @Test
     public void testResampleConversionMoves() throws Exception {
-        
+        testStationarity("ResampleConversionMoves");
     }
     
 }

@@ -14,10 +14,10 @@ public class SimulationTestScaleOperators extends TestSingleOperator {
 	
     final static double EPSILON = 1e-10;
 
-//    @Test
-//    public void testFullTreeScaler() throws Exception {
-//        testStationarity("Scale");
-//    }
+    @Test
+    public void testFullTreeScaler() throws Exception {
+        testStationarity("Scale");
+    }
     
     @Test
     public void testRootOnly() throws Exception {

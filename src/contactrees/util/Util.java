@@ -114,20 +114,36 @@ public class Util {
 	
 		throw new RuntimeException("Can not sample from an empty collection.");
 	}
-	
-	static public double[] sampleSubset(double[] samples, int subsetSize) {
-	    assert subsetSize <= samples.length; 
-	    
-	    double[] rndSubset = new double[subsetSize];
-	    int i = 0;
-	    
-	    for (int sampleIdx : Randomizer.shuffled(samples.length)) {
-	        rndSubset[i] = samples[sampleIdx];
-	        i++;
-	        if (i >= subsetSize)
-	            break;
-	    }
-	    
-	    return rndSubset;	    
-	}
+    
+    static public double[] sampleSubset(double[] samples, int subsetSize) {
+        assert subsetSize <= samples.length; 
+        
+        double[] rndSubset = new double[subsetSize];
+        int i = 0;
+        
+        for (int sampleIdx : Randomizer.shuffled(samples.length)) {
+            rndSubset[i] = samples[sampleIdx];
+            i++;
+            if (i >= subsetSize)
+                break;
+        }
+        
+        return rndSubset;       
+    }
+    
+    static public <T> ArrayList<T> sampleSubset(List<T> samples, int subsetSize) {
+        assert subsetSize <= samples.size(); 
+        
+        ArrayList<T> rndSubset = new ArrayList<>(subsetSize);
+        int i = 0;
+        
+        for (int sampleIdx : Randomizer.shuffled(samples.size())) {
+            rndSubset.set(i, samples.get(sampleIdx));
+            i++;
+            if (i >= subsetSize)
+                break;
+        }
+        
+        return rndSubset;       
+    }
 }
