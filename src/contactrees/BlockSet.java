@@ -22,18 +22,30 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 			new ArrayList<>());
 	public Input<ConversionGraph> networkInput = new Input<>(
 			"network",
-			"The network on which the conversion moves are defined.",
-			Input.Validate.REQUIRED);
+			"The network on which the conversion moves are defined."
+			);
+	public Input<Boolean> deferNetworkSpecificationInput = new Input<>(
+	        "deferNetworkSpecification",
+	        "Set this flag to allow deferring the specification of the network input (usually to be set in ACGWithBlocksReader).",
+	        Input.Validate.XOR, networkInput);
 	
 	protected ArrayList<Block> blocks;
 	protected ConversionGraph acg;
 	
 	@Override
-	public void initAndValidate() {    
-        acg = networkInput.get();
+	public void initAndValidate() {
 		blocks = blocksInput.get();
 		for (Block block : blocks)
 		    block.initAndValidate();
+
+        if (networkInput.get() != null)
+            acg = networkInput.get();
+        else
+            assert deferNetworkSpecificationInput.get() == true;
+	}
+
+	public void setNetwork(ConversionGraph acg) {
+	    this.acg = acg;
 	}
 	
 	public ArrayList<Block> getBlocks(){
@@ -180,8 +192,5 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 	static public BlockSet getBlockSet(ConversionGraph acg) {
 		return getBlockSet(acg, new ArrayList<>());
 	}
-
 	
 }
-
-
