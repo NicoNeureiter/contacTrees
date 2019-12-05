@@ -1,3 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE note [
+    <!ENTITY blockrange "0,1,2,3,4,5,6,7,8,9">
+]>
 <beast version='2.0'
        namespace='beast.evolution.tree.coalescent
                  :beast.evolution.alignment
@@ -12,93 +16,105 @@
                  :contactrees.util
                  :contactrees.operators'>
 
-<data id="data:sim">
-	<sequence id="seq_A" taxon="A" totalcount="4" value="AAAGAGCAAAACAAAACTAGAAAAAAAAAAAGTAAAAAAAACAAAGAAAAAAAAAAAACGGCAGAAAACAAAGAAAACAAAGCAAACAACGATGAGAAAA"/>
-	<sequence id="seq_B" taxon="B" totalcount="4" value="AAAGAACAAAACAAAAATAGAAAAAAAAAAAGTAAAAAAAAAAAAGACAAAAAAAAAAAGATATAAAAAATAAAAAACAGAGCAAACAACGATGAGGAAA"/>
-	<sequence id="seq_C" taxon="C" totalcount="4" value="AAAGAACGAAAAAAAAACAGAAAAAGAAAAAATAAAAAAAAGAAAGAAAAAAAAAAAACATTAAAAAACAAGAAAACAAAAACACACAACGAGAAAAAAA"/>
-	<sequence id="seq_D" taxon="D" totalcount="4" value="AACAAAAAAGTAAATAACGCAAAAAAGGAGAAGAAAAGCAAGAGAGAAGCGAAAAAAAAAATATAAAAAATAAAAAACAGAAAAAAAAAAAAAACAATAA"/>
-	<sequence id="seq_E" taxon="E" totalcount="4" value="AACAAAAAAGTAAATAACGCAAAAAAGGAGAAGAAAAGCAAGAGAGAAGCGGAAAAAAAAATATAAAAAATAAAAAACAGAAAAAAAAAAAAAACAATAA"/>
-	<sequence id="seq_F" taxon="F" totalcount="4" value="AAAAAAAAACGAGACAATAAAAACAGGAAAACTCCAATAAAAAAAGGCAAGAAAGAAAAAACAAAAAAAAAACGACAAAAAAAAAAAAAGCACACAAACA"/>
-	<sequence id="seq_G" taxon="G" totalcount="4" value="AAAAGGAAAAGACAAGAAAAACGAAAAGAAAAAAAAAGAAAAAAAAAAAAAAAAAACACAAAAAAAAGAAAAAAAAAAAAAAAAGAAAAAGAAAAAACAA"/>
-	<sequence id="seq_H" taxon="H" totalcount="4" value="CAAAGGAAAAGACACGGAAAAAGAAAAAAAAAAAACAGAAAAAAAGAAAAAGAAAACACAGAAAAAAGAAAAAAAAAAAAAAAAGAAAAAGAAAAAACAA"/>
-	<sequence id="seq_I" taxon="I" totalcount="4" value="AACAGAAAAAGGAAATAAAAGAAAAAAAGACAAAAAAGAACAAAAAACAAAAAGCACACAACAAAAAAACAAAGAAAAAAGCAAGAAAAAGAAAAGAAAA"/>
-	<sequence id="seq_J" taxon="J" totalcount="4" value="AAAAGAACAAGAGAAGAAAAGAAAAAAAGCAGAAAGAGAACAAAAAACAAAAAACATACAACAAAAAGAAAAAGAAAACAAAAAGAAAACGAAAATGAAA"/>
+<!-- DATA -->
+<data id="data:sim" dataType="integer">
+	<sequence id="seq_A" taxon="A" totalcount="2" value="0001001001001101101000011000000010001100000000000010100011110000010000001000001000010100001100000100010110010000001000000100000010000011000000101100101110001001000000110101100110000000000000011000001011100000001001000010000110010000000000001010010000000110001000000101010001100001000110100000101100111100101011100101100000111000000100100011011101110000001100011111110101001000000000100101001100100010"/>
+	<sequence id="seq_B" taxon="B" totalcount="2" value="0001111001001010101000111011000000010100001001001010000100000010000100010000000000100000000001000010010110100000000000100000001000000010000000000000000110000001010000010101100110000000100011001000101000001011000000010000000000101000001001110000100101000001100100110010000001001001000110101011001010011000000110100101100001110000100000000111001001110011001100101111010001001110000010000001001010000110"/>
+	<sequence id="seq_C" taxon="C" totalcount="2" value="0101001100001100001000000000000011011100000001100000000000000000000000000000000000010100011000000100001110000000000010000000000000000010000001000000100110011001010000010101000111000010000100000000001000101010000000010000000001101000000001110101100111000001000000100011100001000001000110101010011110101000000011101101100011110000000000100011001101110001001100001111010001000110000110000001001000010011"/>
+	<sequence id="seq_D" taxon="D" totalcount="2" value="0001001000100001001100000000100110001000000001000011101000000000100100000100101001101100000001001000001100001000000100100000001100000010100000100000010001000001111101000011010110010101000100000010001101001000110100010011000101000010100001010000100001000110000100000001000111000010100100010100000000110100100000010000001001001110001100010000100001010000000010001111100001000000001010000001101000001000"/>
+	<sequence id="seq_E" taxon="E" totalcount="2" value="0001001011010001001100000000000010001000000001000111101000000110100000000100000000000000010001000101001100000100000101100001001000000010000000101000000001000001011101000001010110000100010000100000001000001011100100110100000001001010010000010000100001000000100100000001000101000010001010000110100000000000000100000000100001110110001101000010001010010000010000011111110001001000000000000000001000000010"/>
+	<sequence id="seq_F" taxon="F" totalcount="2" value="0110011000000000010101100011010010101000110110001010110001100000010000001001010100001001010001000000000111010110000100100000001100010010011010000010010010001001010000000101101110000110010100000110101000001100110011010010000000000100000000110010010100000010000000000111110000000000010101000001000001010000000000001101101100110000000100111111001001010000101100111011010000100010011000000011010000010000"/>
+	<sequence id="seq_G" taxon="G" totalcount="2" value="0110011100000000010101100011010010101000110110001010110001000000010000001001010100001001010001000000000111010110000100101000001100011010011010000010010010001001010000000101101110000110010100000110101000001100110011010010000000000100000100110010010100000010000000000111110000000000010111000001000000010000000000001101101100110100000100111111001001010000101100111011010000100000011000000011010001010000"/>
+	<sequence id="seq_H" taxon="H" totalcount="2" value="0010010000010010001100110101010010000000000010001001000000000010010001000000000100000011101000000100000000000000011000000000001001000100000101000000000100011010000001010100100001010000000100000000000000000000100100000100000001100001011001000010101001010110000101000000110100010100001000010110010011100000000000000110000000000011011010000001001000011101110100001001101001011110001000100000011000000000"/>
+	<sequence id="seq_I" taxon="I" totalcount="2" value="0001001100001100001000000000000010011100101001100001110000100101100001100001001000000011001000010001100000000010001111000001000010010001000010000010000100000000010000010101000111000000000100000000001000011010000000010010001110010000100000000001010000100111000000000100111000100011101100110000001100011100000010001010100000100011001100000000100100001100000011010000010100000010100100010100000010000000"/>
+	<sequence id="seq_J" taxon="J" totalcount="2" value="0000000010001010000100000100001101001100110000010010100000100000010000011000000010100110000100011010110100000100001001100110011011010000000001000011000000000000100000000110001001110000101000010000000010100000001001000010000000110000011100001010110101001100001000000110010001100001100000110100000000010100101000000000000001000001001000000100110000101010000010100100000011000000100000000000000000000000"/>
 </data>
 
+
+<!-- BLOCK DATA definition -->
+<data id="data.block0" spec="FilteredAlignment" data="@data:sim" filter="1-40"/>
+<data id="data.block1" spec="FilteredAlignment" data="@data:sim" filter="41-80"/>
+<data id="data.block2" spec="FilteredAlignment" data="@data:sim" filter="81-120"/>
+<data id="data.block3" spec="FilteredAlignment" data="@data:sim" filter="121-160"/>
+<data id="data.block4" spec="FilteredAlignment" data="@data:sim" filter="161-200"/>
+<data id="data.block5" spec="FilteredAlignment" data="@data:sim" filter="201-240"/>
+<data id="data.block6" spec="FilteredAlignment" data="@data:sim" filter="241-280"/>
+<data id="data.block7" spec="FilteredAlignment" data="@data:sim" filter="281-320"/>
+<data id="data.block8" spec="FilteredAlignment" data="@data:sim" filter="321-360"/>
+<data id="data.block9" spec="FilteredAlignment" data="@data:sim" filter="361-400"/>
+
+
+<!-- BLOCK SET declaration -->
 <stateNode spec="BlockSet" id="allBlocks" network="@acg">
-	<plate var="n" range="block.0,block.1,block.2,block.3,block.4">
-		<block spec="Block" id="$(n)"/>
+	<plate var="n" range="&blockrange;">
+		<block spec="Block" id="block$(n)"/>
 	</plate>
 </stateNode>
 
+
+<!-- CLOCK and SITE MODEL definition (for convenient use in the likelihood) -->
+<branchRateModel id="clock" spec="beast.evolution.branchratemodel.StrictClockModel" clock.rate="@clockRate"/>
+
+<siteModel id="siteModel" spec="SiteModel">
+    <!--     <substModel id="jukesCantor" spec="JukesCantor"/> -->
+    <substModel id="binaryCTMC" spec="GeneralSubstitutionModel">
+        <parameter dimension="2" estimate="false" id="rates.binCTMC" name="rates">1.0 1.0</parameter>
+        <frequencies data="@data:sim" id="empiricalFrequencies" spec="Frequencies"/>
+    </substModel>
+</siteModel>
+
+
+
+<!-- MCMC -->
 <run id="mcmc" spec="MCMC" chainLength="1000000">
 
+
+    <!-- STATE -->
  	<state id="state" storeEvery="10000">
-    	<!-- Define the conversion graph -->
         <stateNode id="acg" spec="ConversionGraph">
 	        <taxonset id="taxa" spec="TaxonSet" alignment="@data:sim"/>
         </stateNode>
-    	
-		<stateNode idref="block.0"/>
-		<stateNode idref="block.1"/>
-		<stateNode idref="block.2"/>
-		<stateNode idref="block.3"/>
-		<stateNode idref="block.4"/>
-        
+        <plate var="n" range="&blockrange;">
+            <stateNode idref="block$(n)"/>
+        </plate>
         <stateNode id="pMove" spec="RealParameter" estimate="false" value="0.2"/>
-		<stateNode id="conversionRate" spec="RealParameter" estimate="false" value="0.4"/>
-        <stateNode id="popSize" spec="RealParameter" estimate="false" value="1.0"/>
-        
-        <stateNode id="clockRate" spec="RealParameter" estimate="false" value="1.0"/>
+		<stateNode id="conversionRate" spec="RealParameter" estimate="false" value="0.1"/>
+        <stateNode id="popSize" spec="RealParameter" estimate="true" value="0.3"/>
+        <stateNode id="clockRate" spec="RealParameter" estimate="false" value="2.7"/>
  	</state>
  	
+ 	
+ 	<!-- INITIALIZER -->
  	<init id="RandomACG" spec="beast.evolution.tree.RandomTree" estimate="false" initial="@acg" taxa="@data:sim">
         <populationModel id="ConstantPopulation0.t" spec="ConstantPopulation" popSize="@popSize"/>
     </init>
 
+
    <distribution id="posterior" spec="util.CompoundDistribution">
+   
+        <!-- PRIOR -->
         <distribution id="prior" spec="util.CompoundDistribution">
             <distribution id="CoalescentConstant.t:treeSim" spec="Coalescent">
                 <populationModel id="ConstantPopulation.t" spec="ConstantPopulation" popSize="@popSize"/>
                 <treeIntervals id="TreeIntervals.t:treeSim" spec="TreeIntervals" tree="@acg"/>
             </distribution>
-
             <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
             <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
-    
         </distribution>
+        
+        <!-- LIKELIHOOD -->
         <distribution id="likelihood" spec="util.CompoundDistribution">
-            <!-- Tree likelihood for each block -->            
-            <distribution id="treeLikelihood.block0" spec="TreeLikelihood">
-                <data id="data.block0" spec="FilteredAlignment" data="@data:sim" filter="1-20"/>
-                <tree id="marginalTree.0" spec="MarginalTree" network="@acg" block="@block.0" nodetype="contactrees.MarginalNode"/>
-                <siteModel id="siteModel" spec="SiteModel">
-                    <substModel id="jukesCantor" spec="JukesCantor"/>
-                </siteModel>
-                <branchRateModel id="clock" spec="beast.evolution.branchratemodel.StrictClockModel" clock.rate="@clockRate"/>
-            </distribution>
-            
-            <distribution id="treeLikelihood.block1" spec="TreeLikelihood" branchRateModel="@clock" siteModel="@siteModel">
-                <data id="data.block1" spec="FilteredAlignment" data="@data:sim" filter="21-40"/>
-                <tree id="marginalTree.1" spec="MarginalTree" network="@acg" block="@block.1" nodetype="contactrees.MarginalNode"/>
-            </distribution>
-            <distribution id="treeLikelihood.block2" spec="TreeLikelihood" branchRateModel="@clock" siteModel="@siteModel">
-                <data id="data.block2" spec="FilteredAlignment" data="@data:sim" filter="41-60"/>
-                <tree id="marginalTree.2" spec="MarginalTree" network="@acg" block="@block.2" nodetype="contactrees.MarginalNode"/>
-            </distribution>
-            <distribution id="treeLikelihood.block3" spec="TreeLikelihood" branchRateModel="@clock" siteModel="@siteModel">
-                <data id="data.block3" spec="FilteredAlignment" data="@data:sim" filter="61-80"/>
-                <tree id="marginalTree.3" spec="MarginalTree" network="@acg" block="@block.3" nodetype="contactrees.MarginalNode"/>
-            </distribution>
-            <distribution id="treeLikelihood.block4" spec="TreeLikelihood" branchRateModel="@clock" siteModel="@siteModel">
-                <data id="data.block4" spec="FilteredAlignment" data="@data:sim" filter="81-100"/>
-                <tree id="marginalTree.4" spec="MarginalTree" network="@acg" block="@block.4" nodetype="contactrees.MarginalNode"/>
-            </distribution>
-            
+            <!-- Tree likelihood for each block -->
+		    <plate var="n" range="&blockrange;">
+	            <distribution id="treeLikelihood.block$(n)" spec="TreeLikelihood" branchRateModel="@clock" siteModel="@siteModel" data="@data.block$(n)">
+	                <tree id="marginalTree.$(n)" spec="MarginalTree" network="@acg" block="@block$(n)" nodetype="contactrees.MarginalNode"/>    
+	            </distribution>
+		    </plate>
         </distribution>
     </distribution>
 	
-
+	
+    <!-- OPERATORS -->
  	<operator id="CFWilsonBalding.t" spec="CFWilsonBalding" acg="@acg" alpha="0.1" conversionRate="@conversionRate"
  			  pMove="@pMove" blockSet="@allBlocks" includeRoot="false" weight="10.0"/>
 	<operator id="CFUniform.t" spec="CFUniform" acg="@acg" conversionRate="@conversionRate" 
@@ -107,25 +123,32 @@
  		      pMove="@pMove" blockSet="@allBlocks" isNarrow="true" weight="10.0"/>      
  	<operator id="CFWideExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionRate="@conversionRate" 
  			  pMove="@pMove" blockSet="@allBlocks" isNarrow="false" weight="10.0"/>
-
- 	<operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="200.0" acg="@acg" pMove="@pMove" 
+ 			  
+    <operator id="ACGscale.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="10.0"/>
+    <operator id="ACGscale.rootOnly.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="10.0" rootOnly="true"/>
+ 	<operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="100.0" acg="@acg" pMove="@pMove" 
  			  conversionRate="@conversionRate" blockSet="@allBlocks" />
- 	<operator id="ACGscale.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="10.0"/>
- 	<operator id="ACGscale.rootOnly.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="10.0" rootOnly="true"/> 
- 	 
-	
+    <operator id="MovesGibbs" spec="GibbsSampleMovesPerConversion" weight="100.0" acg="@acg" pMove="@pMove" blockSet="@allBlocks">
+        <plate var="n" range="&blockrange;">
+	        <treeLikelihood idref="treeLikelihood.block$(n)"/>
+        </plate>
+    </operator>
+    <!-- <operator id="ResampleConversionMoves.t" spec="ResampleConversionMoves" weight="200.0" acg="@acg" 
+              pMove="@pMove" blockSet="@allBlocks" />  -->
+    <!-- 
+    <operator id="PopSizeScaler" spec="ScaleOperator" parameter="@popSize" scaleFactor="0.75" weight="3.0"/>
+  -->
+    <!-- LOGGERS -->
     <logger id="screenlog" logEvery="10000">
         <log idref="posterior"/>
         <log idref="prior"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
     </logger>
-
     <logger logEvery="10000" fileName="$(filebase).stats">
         <log idref="posterior"/>
         <log idref="prior"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
     </logger>
-
     <logger logEvery="10000" fileName="$(filebase).trees" mode="tree">
     	<log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
     </logger>
