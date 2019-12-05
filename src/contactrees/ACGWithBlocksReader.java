@@ -10,32 +10,50 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import beast.core.Input;
 import beast.evolution.tree.Node;
 import contactrees.util.parsers.ExtendedNewickBaseVisitor;
 import contactrees.util.parsers.ExtendedNewickLexer;
 import contactrees.util.parsers.ExtendedNewickParser;
 
-public class ACGWithBlocksReader {
 
-	public ConversionGraph acg;
+public class ACGWithBlocksReader extends ConversionGraph  {
+
+    public Input<BlockSet> blockSetInput = new Input<>(
+            "blockSet",
+            "The block set, which will be assignmed from the parsed network annotations.",
+            Input.Validate.REQUIRED);
+    
+    public Input<String> newickInput = new Input<>(
+            "newick",
+            "The extended newick string.",
+            Input.Validate.REQUIRED);
+
 	public BlockSet blockSet;
 
-//	public ACGWithBlocksReader(ConversionGraph acg, BlockSet blockSet) {
-	public ACGWithBlocksReader(int nBlocks) {
-		acg = new ConversionGraph();
-		acg.initAndValidate();
-		
-		blockSet = new BlockSet();
-		ArrayList<Block> blocks = new ArrayList<>();
-		for (int i=0; i<nBlocks; i++) {
-			Block b = new Block();
-			b.initAndValidate();
-			blocks.add(b);
-		}
-		
-		blockSet.initByName("network", acg, "block", blocks);
-		
-	}
+    @Override
+    public void initAndValidate() {
+        blockSet = blockSetInput.get();
+        blockSet.setNetwork(this);
+
+        super.initAndValidate();
+        
+        String newick = newickInput.get();
+        fromExtendedNewick(newick, false, taxaTranslationOffset);
+    }
+
+//	public ACGWithBlocksReader(int nBlocks) {
+//		super();
+//		
+//		blockSet = new BlockSet();
+//		ArrayList<Block> blocks = new ArrayList<>();
+//		for (int i=0; i<nBlocks; i++) {
+//			Block b = new Block();
+//			b.initAndValidate();
+//			blocks.add(b);
+//		}
+//		blockSet.initByName("network", this, "block", blocks);
+//	}
 	
     /**
      * Read in an ACG from a string in extended newick format.  Assumes
@@ -54,7 +72,6 @@ public class ACGWithBlocksReader {
         ExtendedNewickParser parser = new ExtendedNewickParser(tokens);
         ParseTree parseTree = parser.tree();
 
-        Map<Integer, List<Conversion>> blockConvs = new HashMap<>();
         Map<String, Conversion> convIDMap = new HashMap<>();
         Node root = new ExtendedNewickBaseVisitor<Node>() {
 
@@ -217,9 +234,6 @@ public class ACGWithBlocksReader {
                                 	List<Integer> blockIDs = parseIntList(attribCtx.attribValue().getText());
                                 	for (int blockID : blockIDs) 
                                 		blockSet.addBlockMove(conv, blockID);
-//	                                	if (!blockConvs.containsKey(blockID))
-//	                                		blockConvs.put(blockID, new ArrayList<Conversion>());
-//	                                	blockConvs.get(blockID).add(conv);
 //                                	}
                                 	
                                     break;
@@ -247,16 +261,10 @@ public class ACGWithBlocksReader {
             }
         }.visit(parseTree);
 
-        acg.initAfterParsingFromNewick(root, acg.getNodesAsArray());
+        initAfterParsingFromNewick(root, getNodesAsArray());
 
         for (Conversion conv : convIDMap.values())
-            acg.addConversion(conv);
-        
-//        // Initialize blockSet
-//        for (int iBlock : blockConvs.keySet()) {
-//        	for (Conversion conv : blockConvs.get(iBlock))
-//        		blockSet.addBlockMove(conv, iBlock);
-//        }
+            addConversion(conv);
     }
 
     
