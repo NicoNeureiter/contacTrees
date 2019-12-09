@@ -211,8 +211,9 @@ public class SimulatorOperator extends Operator {
             associateConversionWithCF(conv, newACG);
             
             // Choose affected blocks:
-            int nAffected = sampleBinomial(blockSet.getBlockCount(), pMove);
-            int[] shuffledBlockIdxs = Randomizer.shuffled(nAffected);
+            int nBlocks = blockSet.getBlockCount();
+            int nAffected = sampleBinomial(nBlocks, pMove);
+            int[] shuffledBlockIdxs = Randomizer.shuffled(nBlocks);
             for (int j=0; j<nAffected; j++) {
             	int blockIdx = shuffledBlockIdxs[j];
             	blockSet.getBlocks().get(blockIdx).addMove(conv);
