@@ -146,4 +146,32 @@ public class Util {
         
         return rndSubset;       
     }
+    
+    static public double logAddExp(double logP1, double logP2) {
+        double logPMin, logPMax;
+        if (logP1 < logP2) {
+            logPMin = logP1;
+            logPMax = logP2;
+        } else {
+            logPMin = logP2;
+            logPMax = logP1;
+        }
+        
+        return logPMax + Math.log1p(Math.exp(logPMin - logPMax));
+    }
+    
+    static public double logSumExp(List<Double> logProbs) {
+        double logPMax = Double.NEGATIVE_INFINITY;
+
+        for (double logP : logProbs)
+            if (logP > logPMax)
+                logPMax = logP;
+        
+        double sumExp = 0; 
+        for (double logP : logProbs)
+            sumExp += Math.exp(logP - logPMax);
+        
+        return logPMax + Math.log(sumExp);
+    }
+
 }
