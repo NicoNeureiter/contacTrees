@@ -41,19 +41,6 @@ public class ACGWithBlocksReader extends ConversionGraph  {
         String newick = newickInput.get();
         fromExtendedNewick(newick, false, taxaTranslationOffset);
     }
-
-//	public ACGWithBlocksReader(int nBlocks) {
-//		super();
-//		
-//		blockSet = new BlockSet();
-//		ArrayList<Block> blocks = new ArrayList<>();
-//		for (int i=0; i<nBlocks; i++) {
-//			Block b = new Block();
-//			b.initAndValidate();
-//			blocks.add(b);
-//		}
-//		blockSet.initByName("network", this, "block", blocks);
-//	}
 	
     /**
      * Read in an ACG from a string in extended newick format.  Assumes
@@ -285,4 +272,21 @@ public class ACGWithBlocksReader extends ConversionGraph  {
     	return Integer.parseInt(sConvID.substring(1));
     }
     
+    public static ACGWithBlocksReader newFromNewick(int nBlocks, String newick) {
+        ACGWithBlocksReader reader = new ACGWithBlocksReader();
+      
+        BlockSet blockSet = new BlockSet();
+        ArrayList<Block> blocks = new ArrayList<>();
+        for (int i=0; i<nBlocks; i++) {
+            Block b = new Block();
+            b.initAndValidate();
+            blocks.add(b);
+        }
+        blockSet.initByName("block", blocks, "network", reader);
+      
+        reader.initByName("blockSet", blockSet, "newick", newick);
+        
+        return reader;
+  }
+
 }
