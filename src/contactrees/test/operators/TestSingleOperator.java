@@ -115,10 +115,10 @@ public abstract class TestSingleOperator {
 	protected void collectStatistics(int i, List<ACGWithBlocksReader> samples, double[] heightsArray, double[] convCountArray, 
 									 double[] moveCountsArray, double[] meanConvHeightsArray) {
 		ACGWithBlocksReader sample = samples.get(i);
-		heightsArray[i] = sample.acg.getRoot().getHeight();
-		convCountArray[i] = sample.acg.getConvCount();
+		heightsArray[i] = sample.getRoot().getHeight();
+		convCountArray[i] = sample.getConvCount();
 		moveCountsArray[i] = sample.blockSet.countMoves();
-		meanConvHeightsArray[i] = meanConvHeight(sample.acg);
+		meanConvHeightsArray[i] = meanConvHeight(sample);
 	}
 	
 	protected void printStats(double[] xMCMC, double[] xSimu, String statName) {
@@ -246,8 +246,8 @@ public abstract class TestSingleOperator {
 		assert newick != "";
 		assert newick != null;
 		
-		ACGWithBlocksReader reader = new ACGWithBlocksReader(N_BLOCKS);
-		reader.fromExtendedNewick(newick, false, 1);
+		ACGWithBlocksReader reader = ACGWithBlocksReader.newFromNewick(N_BLOCKS, newick);
+		//reader.fromExtendedNewick(newick, false, 1);
 		
 		return reader;
 	}
