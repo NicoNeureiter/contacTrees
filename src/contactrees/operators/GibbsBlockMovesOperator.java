@@ -11,6 +11,7 @@ import contactrees.Block;
 import contactrees.BlockSet;
 import contactrees.Conversion;
 import contactrees.MarginalTree;
+import contactrees.util.Util;
 
 
 /**
@@ -34,8 +35,14 @@ public abstract class GibbsBlockMovesOperator extends ACGOperator {
         pMove = pMoveInput.get().getValue();
     }
 
-    public double sampleBlockMove(Block block, Conversion conv, MarginalTree blockTree, TreeLikelihood treeLH) {
-        
+    public double sampleBlockMove(Conversion conv, TreeLikelihood treeLH) {
+        MarginalTree marginalTree = (MarginalTree) treeLH.treeInput.get();
+        Block block = marginalTree.block;
+        return sampleBlockMove(block, conv, marginalTree, treeLH);
+    }
+    
+    public double sampleBlockMove(Block block, Conversion conv, MarginalTree marginalTree, TreeLikelihood treeLH) {
+        // Get prior and likelihood for current block move
         boolean moveOld = block.isAffected(conv); 
         double priorOld = moveOld ? pMove : (1 - pMove);
         double logLHOld = treeLH.getCurrentLogP();
@@ -43,32 +50,17 @@ public abstract class GibbsBlockMovesOperator extends ACGOperator {
         
         // Compute prior and likelihood for flipped block move
         double priorNew = 1 - priorOld;
-        // Flip the block move
         flipBlockMove(block, conv);
-        // Update the marginal tree and the likelihood
-        blockTree.recalculate();
+        marginalTree.recalculate();
         double logLHNew = treeLH.calculateLogP();
         double logPosteriorNew = Math.log(priorNew) + logLHNew;
         
         // Revert flip with probability $p_old / (p_old + p_new)$
-        double logPRevert = logPosteriorOld - logAddExp(logPosteriorOld, logPosteriorNew);
+        double logPRevert = logPosteriorOld - Util.logAddExp(logPosteriorOld, logPosteriorNew);
         if (Math.log(Randomizer.nextDouble()) < logPRevert)
             flipBlockMove(block, conv);
         
         return Double.POSITIVE_INFINITY;
-    }
-    
-    static public double logAddExp(double logP1, double logP2) {
-        double logPMin, logPMax;
-        if (logP1 < logP2) {
-            logPMin = logP1;
-            logPMax = logP2;
-        } else {
-            logPMin = logP2;
-            logPMax = logP1;
-        }
-        
-        return logPMax + Math.log1p(Math.exp(logPMin - logPMax));
     }
         
     
