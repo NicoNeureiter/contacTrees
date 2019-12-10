@@ -126,13 +126,26 @@
  			  
     <operator id="ACGscale.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="10.0"/>
     <operator id="ACGscale.rootOnly.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="10.0" rootOnly="true"/>
- 	<operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="100.0" acg="@acg" pMove="@pMove" 
- 			  conversionRate="@conversionRate" blockSet="@allBlocks" />
-    <operator id="MovesGibbs" spec="GibbsSampleMovesPerConversion" weight="100.0" acg="@acg" pMove="@pMove" blockSet="@allBlocks">
+    
+ 	<operator id="AddRemoveConversion.t" spec="AddRemoveConversionGibbs" weight="30.0" acg="@acg" pMove="@pMove" 
+ 			  conversionRate="@conversionRate" blockSet="@allBlocks">
+        <plate var="n" range="&blockrange;">
+            <treeLikelihood idref="treeLikelihood.block$(n)"/>
+        </plate>   
+    </operator>
+    
+    <operator id="ConvertedEdgeSlide.t" spec="ConvertedEdgeSlide" acg="@acg" weight="20.0"/>
+    <operator id="ConvertedEdgeFlip.t" spec="ConvertedEdgeFlip" acg="@acg" weight="20.0"/>
+    <operator id="ConvertedEdgeHop.t" spec="ConvertedEdgeHop" acg="@acg" weight="20.0"/>
+    
+    <operator id="MovesGibbs" spec="GibbsSampleMovesPerConversion" weight="30.0" acg="@acg" pMove="@pMove" blockSet="@allBlocks">
         <plate var="n" range="&blockrange;">
 	        <treeLikelihood idref="treeLikelihood.block$(n)"/>
         </plate>
     </operator>
+    
+    <!-- 
+     -->
     <!-- <operator id="ResampleConversionMoves.t" spec="ResampleConversionMoves" weight="200.0" acg="@acg" 
               pMove="@pMove" blockSet="@allBlocks" />  -->
     <!-- 
