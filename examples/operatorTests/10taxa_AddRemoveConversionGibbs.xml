@@ -1,0 +1,93 @@
+<beast version='2.0'
+       namespace='beast.evolution.tree.coalescent
+                 :beast.evolution.alignment
+                 :beast.evolution.operators
+                 :beast.core
+                 :beast.core.parameter
+                 :contactrees
+                 :contactrees.model
+                 :contactrees.util
+                 :contactrees.operators'>
+
+<data id="data:nodata" name="alignment">
+    <sequence id="seq_A" taxon="A" totalcount="4" value="ACGT"/>
+    <sequence id="seq_B" taxon="B" totalcount="4" value="ACGT"/>
+    <sequence id="seq_C" taxon="C" totalcount="4" value="ACGT"/>
+    <sequence id="seq_D" taxon="D" totalcount="4" value="ACGT"/>
+    <sequence id="seq_E" taxon="E" totalcount="4" value="ACGT"/>
+    <sequence id="seq_F" taxon="F" totalcount="4" value="ACGT"/>
+    <sequence id="seq_G" taxon="G" totalcount="4" value="ACGT"/>
+    <sequence id="seq_H" taxon="H" totalcount="4" value="ACGT"/>
+    <sequence id="seq_I" taxon="I" totalcount="4" value="ACGT"/>
+    <sequence id="seq_J" taxon="J" totalcount="4" value="ACGT"/>
+</data>
+
+<stateNode spec="BlockSet" id="allBlocks" network="@acg">
+    <plate var="n" range="0,1,2,3,4,5,6,7,8,9">
+        <block spec="Block" id="block.$(n)"/>
+    </plate>
+</stateNode>
+
+<run id="mcmc" spec="MCMC" chainLength="$(chainLength)">
+
+    <state id="state" storeEvery="$(logInterval)">
+        <!-- Define the conversion graph -->
+        <stateNode id="acg" spec="ConversionGraph">
+            <taxonset id="taxa" spec="TaxonSet" alignment="@data:nodata"/>
+        </stateNode>
+        
+        <plate var="n" range="0,1,2,3,4,5,6,7,8,9">
+            <stateNode idref="block.$(n)"/>
+        </plate>
+        
+        <stateNode id="pMove" spec="RealParameter" estimate="false" value="$(pMove)"/>
+        <stateNode id="conversionRate" spec="RealParameter" estimate="false" value="$(convRate)"/>
+        <stateNode id="popSize" spec="RealParameter" estimate="false" value="$(popSize)"/>
+    </state>
+    
+    <init id="RandomACG" spec="beast.evolution.tree.RandomTree" estimate="false" initial="@acg" taxa="@data:nodata">
+        <populationModel id="ConstantPopulation0.t" spec="ConstantPopulation" popSize="@popSize"/>
+    </init>
+
+   <distribution id="posterior" spec="util.CompoundDistribution">
+        <distribution id="prior" spec="util.CompoundDistribution">
+            <distribution id="CoalescentConstant.t:treeSim" spec="Coalescent">
+                <populationModel id="ConstantPopulation.t" spec="ConstantPopulation" popSize="@popSize"/>
+                <treeIntervals id="TreeIntervals.t:treeSim" spec="TreeIntervals" tree="@acg"/>
+            </distribution>
+
+            <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
+            <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+        </distribution>
+    </distribution>
+    
+
+    <operatorschedule id="schedule" spec="contactrees.test.OrderedOperatorSchedule">
+        <operator id="SimumlateOp" spec="contactrees.test.SimulatorOperator" network="@acg" blockSet="@allBlocks" 
+                  pMove="@pMove" conversionRate="@conversionRate" weight="1.0">
+            <populationModel spec="ConstantPopulation" popSize="$(popSize)"/>
+        </operator>      
+        
+        <operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="9999.0" acg="@acg" pMove="@pMove" 
+                  conversionRate="@conversionRate" blockSet="@allBlocks" />
+    </operatorschedule>
+    
+    
+    <logger id="screenlog" logEvery="$(logInterval)">
+        <log idref="posterior"/>
+        <log idref="prior"/>
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+    </logger>
+
+    <logger logEvery="$(logInterval)" fileName="$(filebase).stats">
+        <log idref="posterior"/>
+        <log idref="prior"/>
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+    </logger>
+
+    <logger logEvery="$(logInterval)" fileName="$(filebase).trees">
+        <log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
+    </logger>
+</run>
+  
+</beast>
