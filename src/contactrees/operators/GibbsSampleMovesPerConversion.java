@@ -51,13 +51,7 @@ public class GibbsSampleMovesPerConversion extends GibbsBlockMovesOperator {
         
         // Iterate over all blocks and resample the move over the chosen conversion
         for (TreeLikelihood treeLH : treeLHs) {
-            
-            // Select marginalTree and block corresponding to treeLH
-            MarginalTree marginalTree = (MarginalTree) treeLH.treeInput.get();
-            Block block = marginalTree.block;
-            assert blockSet.getBlocks().contains(block);
-            
-            sampleBlockMove(block, conv, marginalTree, treeLH);
+            sampleBlockMove(conv, treeLH);
         }
         
         return Double.POSITIVE_INFINITY;
