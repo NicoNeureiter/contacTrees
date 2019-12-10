@@ -17,12 +17,14 @@
 
 package contactrees.operators;
 
+import contactrees.Block;
 import contactrees.BlockSet;
 import contactrees.CFEventList;
 import contactrees.CFEventList.Event;
 import contactrees.Conversion;
 import contactrees.util.Util;
 import beast.core.Input;
+import beast.core.StateNode;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.util.Randomizer;
@@ -223,6 +225,19 @@ public abstract class EdgeCreationOperator extends ACGOperator {
     public double getEdgeCoalescenceProb(Conversion conv) {
     	int nLineages = acg.countLineagesAtHeight(conv.getHeight());
     	return - Math.log(nLineages - 1);
+    }
+    
+    /**
+     * Include all block StateNodes in the list of affected state nodes.
+     * This does not work automatically, since blocks are only indirect 
+     * inputs through the blockSet.
+     */
+    public List<StateNode> listStateNodes() {
+        final List<StateNode> list = super.listStateNodes();
+        for (Block block : blockSet.getBlocks()) {
+            list.add(block);
+        }
+        return list;
     }
     
 }
