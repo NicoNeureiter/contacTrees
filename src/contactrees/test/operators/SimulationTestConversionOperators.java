@@ -18,6 +18,21 @@ public class SimulationTestConversionOperators extends TestSingleOperator {
     public void testConvertedEdgeSlide() throws Exception {
         testStationarity("ConvertedEdgeSlide");
     }
+
+    @Test
+    public void testConvertedEdgeFlip() throws Exception {
+        testStationarity("ConvertedEdgeFlip");
+    }
+
+    @Test
+    public void testConvertedEdgeHop() throws Exception {
+        testStationarity("ConvertedEdgeHop");
+    }
+    
+    @Test
+    public void testConvertedEdgeHopGibbs() throws Exception {
+        testStationarity("ConvertedEdgeHopGibbs");
+    }
     
     @Test
     public void testResampleConversionMoves() throws Exception {

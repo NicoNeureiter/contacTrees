@@ -29,7 +29,7 @@
 </data>
 
 <stateNode spec="BlockSet" id="allBlocks" network="@acg">
-    <plate var="n" range="0,1,2,3,4,5,6,7,8,9">
+    <plate var="n" range="&blockrange;">
         <block spec="Block" id="block.$(n)"/>
     </plate>
 </stateNode>

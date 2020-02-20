@@ -29,7 +29,6 @@
     <sequence id="seq_J" taxon="J" totalcount="2" value="?"/>
 </data>
 
-
 <stateNode spec="BlockSet" id="allBlocks" network="@acg">
     <plate var="n" range="&blockrange;">
         <block spec="Block" id="block.$(n)"/>
@@ -50,22 +49,22 @@
 
 <run id="mcmc" spec="MCMC" chainLength="$(chainLength)">
 
-    <state id="state" storeEvery="$(logInterval)">
-        <!-- Define the conversion graph -->
+ 	<state id="state" storeEvery="$(logInterval)">
+    	<!-- Define the conversion graph -->
         <stateNode id="acg" spec="ConversionGraph">
-            <taxonset id="taxa" spec="TaxonSet" alignment="@data:nodata"/>
+	        <taxonset id="taxa" spec="TaxonSet" alignment="@data:nodata"/>
         </stateNode>
-        
+    	
         <plate var="n" range="&blockrange;">
-            <stateNode idref="block.$(n)"/>
-        </plate>
+			<stateNode idref="block.$(n)"/>
+		</plate>
         
         <stateNode id="pMove" spec="RealParameter" estimate="false" value="$(pMove)"/>
-        <stateNode id="conversionRate" spec="RealParameter" estimate="false" value="$(convRate)"/>
+		<stateNode id="conversionRate" spec="RealParameter" estimate="false" value="$(convRate)"/>
         <stateNode id="popSize" spec="RealParameter" estimate="false" value="$(popSize)"/>
-    </state>
-    
-    <init id="RandomACG" spec="beast.evolution.tree.RandomTree" estimate="false" initial="@acg" taxa="@data:nodata">
+ 	</state>
+ 	
+ 	<init id="RandomACG" spec="beast.evolution.tree.RandomTree" estimate="false" initial="@acg" taxa="@data:nodata">
         <populationModel id="ConstantPopulation0.t" spec="ConstantPopulation" popSize="@popSize"/>
     </init>
 
@@ -80,22 +79,22 @@
             <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
         </distribution>
     </distribution>
-    
+	
 
-    <operatorschedule id="schedule" spec="contactrees.test.OrderedOperatorSchedule">
-        <operator id="SimumlateOp" spec="contactrees.test.SimulatorOperator" network="@acg" blockSet="@allBlocks" 
-                  pMove="@pMove" conversionRate="@conversionRate" weight="1.0">
-            <populationModel spec="ConstantPopulation" popSize="$(popSize)"/>
-        </operator>      
-        
-        <operator id="AddRemoveConversionGibbs.t" spec="AddRemoveConversionGibbs" weight="9999.0" acg="@acg" 
-                  conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks">
+	<operatorschedule id="schedule" spec="contactrees.test.OrderedOperatorSchedule">
+	 	<operator id="SimumlateOp" spec="contactrees.test.SimulatorOperator" network="@acg" blockSet="@allBlocks" 
+	 	 		  pMove="@pMove" conversionRate="@conversionRate" weight="1.0">
+	 		<populationModel spec="ConstantPopulation" popSize="$(popSize)"/>
+	 	</operator>
+	 	
+	 	<operator id="ConvertedEdgeHopGibbs.t" spec="ConvertedEdgeHopGibbs" acg="@acg" weight="9999.0"
+	 	          conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks">
             <plate var="n" range="&blockrange;">
                 <treeLikelihood idref="treeLikelihood.block$(n)"/>
             </plate>
-        </operator>
-    </operatorschedule>
-    
+        </operator> 
+	</operatorschedule>
+	
     <logger id="screenlog" logEvery="$(logInterval)">
         <log idref="posterior"/>
         <log idref="prior"/>
@@ -109,7 +108,7 @@
     </logger>
 
     <logger logEvery="$(logInterval)" fileName="$(filebase).trees">
-        <log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
+    	<log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
     </logger>
 </run>
   
