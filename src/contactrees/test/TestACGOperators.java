@@ -35,19 +35,16 @@ public class TestACGOperators {
 	static ArrayList<ACGWithBlocksReader> samplesSimulator;
 	static ArrayList<ACGWithBlocksReader> samplesMCMC;
 	
-	static int N_SAMPLES = 6000;
+	static int N_SAMPLES = 100000;
 	static int N_SAMPLES_SIMU = N_SAMPLES;
 	static int N_SAMPLES_MCMC = N_SAMPLES;
 //
 	static int N_BLOCKS = 10;
-	static double CONV_RATE = 0.05;
+	static double CONV_RATE = 5.0;
 	static double P_MOVE = 0.15;
-	static double POP_SIZE = 50.0;
+	static double POP_SIZE = 0.5;
 	static int BURNIN_SAMPLES = 100;
-	static int LOG_INTERVAL = 150000;
-	
-	static boolean SAMPLE_HEIGHT = false;
-	static double HEIGHT = 40.;
+	static int LOG_INTERVAL = 2000;
 
 	static int N_TAXA = 10;
 	static boolean FIXED_CF = false;
@@ -59,8 +56,8 @@ public class TestACGOperators {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		int chainLength = LOG_INTERVAL*(N_SAMPLES_MCMC + BURNIN_SAMPLES);
-		String xmlParams = String.format("nSims=%d,convRate=%f,pMove=%f,popSize=%f,chainLength=%d,logInterval=%d,height=%f,sampleHeight=%b", 
-				N_SAMPLES_SIMU, CONV_RATE, P_MOVE, POP_SIZE, chainLength, LOG_INTERVAL, HEIGHT, SAMPLE_HEIGHT);
+		String xmlParams = String.format("nSims=%d,convRate=%f,pMove=%f,popSize=%f,chainLength=%d,logInterval=%d", 
+				N_SAMPLES_SIMU, CONV_RATE, P_MOVE, POP_SIZE, chainLength, LOG_INTERVAL);
 		System.out.println(xmlParams);
 		String workingDir = "simulations/";
 		System.setProperty("beast.useWindow", "true"); // Trick beast into not stopping application
@@ -71,15 +68,15 @@ public class TestACGOperators {
 		System.out.println("Seed: " + seed);
 
 		
-		// Run the simulation
+//		// Run the simulation
 		samplesSimulator = new ArrayList<>();
 		String xmlPath = String.format("examples/ACGsimulations/%s.xml", FBASE_SIM);
 		System.out.println(xmlPath);
-		String[] simArgs = {"-overwrite", "-D", xmlParams, "-seed", seed, "-prefix", workingDir, xmlPath};
-		BeastMCMC.main(simArgs);
-		
-		// Read the prior samplesSimulator
-		samplesSimulator = readSamplesFromNexus(workingDir + FBASE_SIM + ".trees");
+//		String[] simArgs = {"-overwrite", "-D", xmlParams, "-seed", seed, "-prefix", workingDir, xmlPath};
+//		BeastMCMC.main(simArgs);
+//		
+//		// Read the prior samplesSimulator
+//		samplesSimulator = readSamplesFromNexus(workingDir + FBASE_SIM + ".trees");
 		
 		// Run the MCMC
 		samplesMCMC = new ArrayList<>();
@@ -139,10 +136,10 @@ public class TestACGOperators {
 	protected void collectStatistics(int i, List<ACGWithBlocksReader> samples, double[] heightsArray, double[] convCountArray, 
 									 double[] moveCountsArray, double[] meanConvHeightsArray) {
 		ACGWithBlocksReader sample = samples.get(i);
-		heightsArray[i] = sample.acg.getRoot().getHeight();
-		convCountArray[i] = sample.acg.getConvCount();
+		heightsArray[i] = sample.getRoot().getHeight();
+		convCountArray[i] = sample.getConvCount();
 		moveCountsArray[i] = sample.blockSet.countMoves();
-		meanConvHeightsArray[i] = meanConvHeight(sample.acg);
+		meanConvHeightsArray[i] = meanConvHeight(sample);
 //		for (Conversion conv : sample.acg.getConversions()) {
 ////			System.out.println(conv.getHeight());
 //			convHeightsList.add(conv.getHeight());
@@ -245,6 +242,8 @@ public class TestACGOperators {
 			line = reader.readLine();
 		}
 		
+		reader.close();
+		
 		return samples;
 	}
 	
@@ -257,10 +256,7 @@ public class TestACGOperators {
 		assert newick != "";
 		assert newick != null;
 		
-		ACGWithBlocksReader reader = new ACGWithBlocksReader(N_BLOCKS);
-		reader.fromExtendedNewick(newick, false, 1);
-		
-		return reader;
+		return ACGWithBlocksReader.newFromNewick(N_BLOCKS, newick);
 	}
 
 	@Before

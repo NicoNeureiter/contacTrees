@@ -55,6 +55,7 @@ public class TestACGSimulator {
 			line = reader.readLine();
 		}
 		
+		reader.close();
 	}
 	
 	public static ACGWithBlocksReader parseSampleLine(String line, int nBlocks) {
@@ -66,10 +67,7 @@ public class TestACGSimulator {
 		assert newick != "";
 		assert newick != null;
 		
-		ACGWithBlocksReader reader = new ACGWithBlocksReader(nBlocks);
-		reader.fromExtendedNewick(newick, false, 1);
-		
-		return reader;
+		return ACGWithBlocksReader.newFromNewick(nBlocks, newick);		
 	}
 
 	@Before
@@ -88,7 +86,7 @@ public class TestACGSimulator {
 		
 		// Evaluate statistics per sample
 		for (int i=0; i<nSamples; i++) {
-			ConversionGraph acg = samples.get(i).acg;
+			ConversionGraph acg = samples.get(i);
 			BlockSet blockSet = samples.get(i).blockSet;
 			double iProb = i / (double) nSamples;
 			

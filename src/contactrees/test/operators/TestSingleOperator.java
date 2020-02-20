@@ -26,16 +26,18 @@ public abstract class TestSingleOperator {
 	static ArrayList<ACGWithBlocksReader> samplesSimulator;
 	static ArrayList<ACGWithBlocksReader> samplesMCMC;
 	
-	static final int N_SAMPLES = 1000;
+	static final int N_SAMPLES = 500;
 	static final int N_SAMPLES_SIMU = 5000;
     static final int LOG_INTERVAL = 10000;
 
     static final int N_TAXA = 10;
 	static final int N_BLOCKS = 10;
-	static final double CONV_RATE = 0.05;
+	static final double CONV_RATE = 0.025;
 	static final double P_MOVE = 0.15;
 	static final double POP_SIZE = 50.0;
  
+	static final double KS_THRESHOLD = 0.001;
+	
 	static String FBASE_SIM = String.format("simulateACGs%dtaxon", N_TAXA);
 	static String FBASE_MCMC;  // Will be assigned in setUp, based on subclass specific operator
 	
@@ -134,16 +136,17 @@ public abstract class TestSingleOperator {
 		
 
 		// We test whether a bootstrap sample of the KS-Statistic averages out to 0.5 (as it should)-
-        int nFolds = 500;
-        double ksStatSum = 0.0;
-        for (int iFold=0; iFold<nFolds; iFold++) {
-            double[] xMCMCFold = Util.sampleSubset(xMCMC, 200);
-            double[] xSimuFold = Util.sampleSubset(xSimu, 200);
-            ksStatSum += ksTest(xSimuFold, xMCMCFold);
-        }
-        double ksStatMean = ksStatSum / nFolds;
-        System.out.println(ksStatMean);
-        assertTrue(ksStatMean >= 0.1);
+		assertTrue(ksStatistic > KS_THRESHOLD);
+//        int nFolds = 500;
+//        double ksStatSum = 0.0;
+//        for (int iFold=0; iFold<nFolds; iFold++) {
+//            double[] xMCMCFold = Util.sampleSubset(xMCMC, 200);
+//            double[] xSimuFold = Util.sampleSubset(xSimu, 200);
+//            ksStatSum += ksTest(xSimuFold, xMCMCFold);
+//        }
+//        double ksStatMean = ksStatSum / nFolds;
+//        System.out.println(ksStatMean);
+//        assertTrue(ksStatMean >= 0.1);
         
 	}
 	
