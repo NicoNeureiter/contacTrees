@@ -17,7 +17,6 @@
 
 package contactrees.operators;
 
-import contactrees.BlockSet;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
 
@@ -26,7 +25,6 @@ import javax.naming.directory.InvalidAttributesException;
 import beast.core.Input;
 import beast.core.Operator;
 import beast.evolution.tree.Node;
-import beast.util.Randomizer;
 
 /**
  * Abstract class of operators which act on the ConversionGraph state.
