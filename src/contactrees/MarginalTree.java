@@ -6,11 +6,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.hamcrest.core.IsInstanceOf;
+
 import contactrees.MarginalNode;
 import contactrees.CFEventList;
 import contactrees.CFEventList.Event;
 import contactrees.Conversion;
 import beast.core.Input;
+import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 
@@ -20,7 +23,7 @@ import beast.evolution.tree.Tree;
  * The resulting marginal trees are the basis for the likelihood computation 
  * of the corresponding block.  
  * 
- * @author Nico Neureiter <nico.neureiter@gmail.com>
+ * @author Nico Neureiter
  */
 
 public class MarginalTree extends Tree {
@@ -31,9 +34,16 @@ public class MarginalTree extends Tree {
 			Input.Validate.REQUIRED);
 	public Input<Block> blockInput = new Input<>(
 			"block",
-			"The block object containing the moves this marginal tree follows along the conversion graph.",
+			"The block object cinitArraysontaining the moves this marginal tree follows along the conversion graph.",
 			Input.Validate.REQUIRED);
 
+    public Input<RealParameter> ratesCFInput = new Input<>(
+            "ratesCF",
+            "The rates associated with nodes in the clonal frame.");
+    public Input<RealParameter> ratesMarginalTreeInput = new Input<>(
+            "ratesMarginalTree",
+            "The rates associated with nodes in the marginal tree, computed from ratesCF.");
+	
 	public ConversionGraph acg;
 	public Block block;
 	boolean outdated;
@@ -45,7 +55,7 @@ public class MarginalTree extends Tree {
 		
 		// Initialize to clonal frame of acg
 		assignFrom(acg);
-//      recalculate();
+		recalculate();
         super.initAndValidate();
 		    
 		outdated = true;
@@ -55,9 +65,8 @@ public class MarginalTree extends Tree {
 	}
 	
 	@Override
-	protected boolean requiresRecalculation() {
-		// Check whether recalculation is necessary
-		// TODO actually check it!
+	public boolean requiresRecalculation() {
+	    
 		outdated = true;
 		
 		// Recalculate right away if needed
@@ -65,11 +74,16 @@ public class MarginalTree extends Tree {
 			recalculate();
 			outdated = false;
 			return true;
-		} else 
-			return false;
+		} else {
+            return false;
+		}
 	}
 	
 	public void recalculate() {
+	    startEditing(null);
+	    
+	    Node startRoot = acg.getRoot();
+	    
         List<Event> cfEvents = acg.getCFEvents();
         Map<Node, MarginalNode> activeCFlineages = new HashMap<>();
         ArrayList<Conversion> convs = getBlockConversions();
@@ -97,7 +111,7 @@ public class MarginalTree extends Tree {
             // Process the current CF-event
             switch (event.getType()) {
                 case SAMPLE:
-                    MarginalNode marginalLeaf = new MarginalNode(node.getNr(), event.getHeight());
+                    MarginalNode marginalLeaf = new MarginalNode(acg, node.getNr(), event.getHeight());
                     marginalLeaf.setID(node.getID());
                     marginalLeaf.cfNodeNr = node.getNr();
                     activeCFlineages.put(node, marginalLeaf);
@@ -115,7 +129,7 @@ public class MarginalTree extends Tree {
                         MarginalNode marginalRight = activeCFlineages.get(right);
                         
                         // Create a new marginal node at the coalescence event
-                        MarginalNode marginalNode = new MarginalNode(nextNonLeafNr++, event.getHeight(), 
+                        MarginalNode marginalNode = new MarginalNode(acg, nextNonLeafNr++, event.getHeight(), 
                                                                      marginalLeft, marginalRight);
                         marginalNode.cfNodeNr = node.getNr();
 
@@ -169,7 +183,8 @@ public class MarginalTree extends Tree {
                     activeCFlineages.remove(node2);
                     
                     // Create a MarginalNode at the point of the conversion and add it as a new lineage
-                    MarginalNode convNode = new MarginalNode(nextNonLeafNr++, conv.height, left, right);
+                    MarginalNode convNode = new MarginalNode(acg, nextNonLeafNr++, conv.height, left, right);
+                    convNode.convID = conv.getID();
                     activeCFlineages.put(node2, convNode);
                 
                     assert activeCFlineages.size() == nActive - 1;
@@ -196,21 +211,55 @@ public class MarginalTree extends Tree {
         assert m_nodes.length == acg.getNodeCount();
         root = activeCFlineages.get(acg.getRoot());
         setRoot(root);
+        initArrays();
         
-    }
+        assert root.isRoot();
+        assert root == getRoot();
+        
+        int rootCount = 0;
+        for (Node node : getNodesAsArray())
+            if (node.isRoot())
+                rootCount += 1;
+        assert rootCount == 1;
+        
+        for (Node node : getNodesAsArray()) {
+            if (node.isRoot())
+                assert node == getRoot();
+        }
 
-    public boolean somethingIsDirty() {
-        // TODO implement proper matching between 
-        return true;
+//        acg.setEverythingDirty(true); // TODO Get around this!
+//        setSomethingIsDirty(true);
+        
+        
     }
 	
 	@Override
+    public boolean somethingIsDirty() {
+	    // Whould be dirty if either ACG or BlockSet is dirty
+        boolean ALWAYS_DIRTY = true;
+        
+        if (ALWAYS_DIRTY) 
+            return true;
+        
+        return (acg.somethingIsDirty() || block.somethingIsDirty());
+	}
+	
+	@Override
     public void store() {
-	    super.store();
+//	    super.store();
     }
 	
 	@Override
     public void restore() {
+//        for (Node node : getNodesAsArray())
+//            assert node.getClass() == MarginalNode.class;
+//
+//        super.restore();
+//
+//        for (Node node : getNodesAsArray())
+//            assert node.getClass() == MarginalNode.class;
+        
+        outdated = true;
 	}
 	
     /**
