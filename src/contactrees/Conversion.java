@@ -1,11 +1,4 @@
-/**
- * 
- */
 package contactrees;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 import contactrees.ConversionGraph;
 import beast.evolution.tree.Node;
@@ -15,9 +8,9 @@ import beast.evolution.tree.Node;
  * modifications of the clonal frame. A conversion edge connects 
  * two lineages at the same time on the clonal frame.     
  * 
- * @author Nico Neureiter <nico.neureiter@gmail.com>
- *
+ * @author Nico Neureiter
  */
+
 public class Conversion {
 	
 	// TODO Remove "acg" from Conversion?
@@ -38,19 +31,8 @@ public class Conversion {
      */
     protected Integer id;
     
-//    /**
-//     * List of blocks affected by the conversion.
-//     */
-//    protected List<Block> affectedBlocks;
-    
-//    /**
-//     * A list of indices of the affected sites in the alignment. 
-//     */
-//    protected List<Integer> affectedSites;
-
     public Conversion(int id) {
     	this.id = id;
-//    	this.affectedBlocks = new ArrayList<Block>();
     }
 
     /**

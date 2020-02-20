@@ -25,20 +25,20 @@ import contactrees.util.parsers.ExtendedNewickLexer;
 import contactrees.util.parsers.ExtendedNewickParser;
 
 /**
- * @author Nico Neureiter <nico.neureiter@gmail.com>
+ * @author Nico Neureiter
  */
 @Description("Conversion graph based around the clonal frame.")
 public class ConversionGraph extends Tree {
 
-//    public Input<String> fromExtNewickInput = new Input<>(
-//            "extendedNewick",
-//            "Initialise ARG from extended Newick representation.");
-    
+    public Input<String> fromExtNewickInput = new Input<>(
+            "extendedNewick",
+            "Initialise ARG from extended Newick representation.");
+
     /**
      * List of conversion edges on graph (and a copy for restore).
      */
     private ConversionList convs, storedConvs;
-      
+    
     /**
      * Clonal frame event list.
      */
@@ -48,17 +48,18 @@ public class ConversionGraph extends Tree {
     public void initAndValidate() {
         System.setProperty("java.only", "true");
         
-    	// Initialise conversions lists
-        convs = new ConversionList(this);
-        storedConvs = new ConversionList(this);
-
-        cfEventList = new CFEventList(this);
-
         super.initAndValidate();
 
-//        if (fromExtNewickInput.get() != null) {
-//            fromExtendedNewick(fromExtNewickInput.get());
-//        }
+        // Initialise conversions lists
+        convs = new ConversionList(this);
+        storedConvs = new ConversionList(this);
+        
+
+        if (fromExtNewickInput.get() != null) {
+            fromExtendedNewick(fromExtNewickInput.get());
+        }
+        
+        cfEventList = new CFEventList(this);
     }
     
     /**
@@ -216,7 +217,7 @@ public class ConversionGraph extends Tree {
      * 
      * @return true if all conversions are valid w.r.t. clonal frame.
      */
-    public boolean isInvalid() {    	
+    public boolean isInvalid() {
     	// A node is the root iff it is at the last index of m_nodes array
         for (int i=0; i<m_nodes.length; i++) {
         	Node node = m_nodes[i];
@@ -299,6 +300,8 @@ public class ConversionGraph extends Tree {
 
             if (cfEventList == null)
                 cfEventList = new CFEventList(this);
+            else
+                cfEventList.makeDirty();
         }
         
 //        nodeCount = m_nodes.length;
@@ -355,7 +358,7 @@ public class ConversionGraph extends Tree {
         convs = tmp;
 
         cfEventList.makeDirty();
-        
+
         assert !isInvalid();
     }
 
@@ -598,6 +601,8 @@ public class ConversionGraph extends Tree {
         }.visit(parseTree);
         
         initAfterParsingFromNewick(root, m_nodes);
+
+        cfEventList = new CFEventList(this);
 
         for (Conversion conv : convIDMap.values())
             addConversion(conv);
