@@ -94,19 +94,19 @@
 -->
 	
 	
-    <logger id="screenlog" logEvery="$(logInterval)">
+    <logger id="screenlog" logEvery="20000">
         <log idref="posterior"/>
         <log idref="prior"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
     </logger>
 
     <logger logEvery="$(logInterval)" fileName="$(filebase).stats">
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
         <log idref="posterior"/>
         <log idref="prior"/>
-        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
     </logger>
 
-    <logger logEvery="$(logInterval)" fileName="$(filebase).trees">
+    <logger logEvery="20000" fileName="$(filebase).trees">
     	<log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
     </logger>
 </run>
