@@ -33,7 +33,12 @@ public class ConversionGraph extends Tree {
     public Input<String> fromExtNewickInput = new Input<>(
             "extendedNewick",
             "Initialise ARG from extended Newick representation.");
-
+    public Input<Boolean> dropNewickConvsInput = new Input<>(
+            "dropNewickConvs",
+            "Drop the conversions specified in the extended Newick tree.",
+            false);
+    
+    
     /**
      * List of conversion edges on graph (and a copy for restore).
      */
@@ -604,9 +609,10 @@ public class ConversionGraph extends Tree {
 
         cfEventList = new CFEventList(this);
 
-        for (Conversion conv : convIDMap.values())
-            addConversion(conv);
-
+        if (!dropNewickConvsInput.get()) {
+            for (Conversion conv : convIDMap.values())
+                addConversion(conv);
+        }
     }
 
     public int _getNodeCount() {
