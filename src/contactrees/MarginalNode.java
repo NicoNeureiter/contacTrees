@@ -2,8 +2,6 @@ package contactrees;
 
 import java.util.TreeMap;
 
-import javax.naming.directory.InvalidAttributeValueException;
-
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 
@@ -33,38 +31,41 @@ public class MarginalNode extends Node {
     
     public MarginalNode() {
         super(); 
-//        makeDirty(Tree.IS_FILTHY);
+        makeDirty(Tree.IS_FILTHY);
     }
     
     public MarginalNode(ConversionGraph acg) {
         super();
         this.acg = acg;
-//        makeDirty(Tree.IS_FILTHY);
+        makeDirty(Tree.IS_FILTHY);
     }
     
     public MarginalNode(ConversionGraph acg, int nr, double height) {
         this(acg);
         setNr(nr);
-        setHeight(height);
+        this.height = height;
     }
     
     public MarginalNode(ConversionGraph acg, int nr, double height, MarginalNode child1, MarginalNode child2) {
         this(acg, nr, height);
-        addChild(child1);
-        addChild(child2);
+        
+        children.add(child1);
+        children.add(child2);
+        child1.parent = this;
+        child2.parent = this;
     }
     
-    @Override
-    public int isDirty() {
-        return Tree.IS_FILTHY;
-//        int acgNodeDirty = Tree.IS_CLEAN;
-//        if (isConversionNode())
-//            acgNodeDirty = getConversion().isDirty();
-//        else
-//            acgNodeDirty = getCFNode().isDirty();
-//        
-//        return Math.max(super.isDirty(), acgNodeDirty);
-    }
+//    @Override
+//    public int isDirty() {
+//        return Tree.IS_FILTHY;
+////        int acgNodeDirty = Tree.IS_CLEAN;
+////        if (isConversionNode())
+////            acgNodeDirty = getConversion().isDirty();
+////        else
+////            acgNodeDirty = getCFNode().isDirty();
+////        
+////        return Math.max(super.isDirty(), acgNodeDirty);
+//    }
     
     public boolean isConversionNode() {
         if (cfNodeNr >= 0) {
@@ -100,6 +101,32 @@ public class MarginalNode extends Node {
         return convID;
     }
     
+    protected void setTree(MarginalTree tree) {
+        m_tree = tree;
+    }
+    
+    @Override
+    public void setParent(final Node parent) {
+        this.parent = parent;
+    }
+    
+    @Override
+    protected void setParent(final Node parent, final boolean inOperator) {
+        this.parent = parent;
+    }
+    
+    public void update(double height, MarginalNode child1, MarginalNode child2) {
+        this.height = height;
+        children.set(0, child1);
+        children.set(1, child2);
+        child1.parent = this;
+        child2.parent = this;
+    }
+    
+    @Override
+    public void setHeight(final double height) {
+        this.height = height;
+    }
 
     /**
      * @return (deep) copy of node

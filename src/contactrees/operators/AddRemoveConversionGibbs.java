@@ -60,9 +60,9 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
         double logP = attachEdge(newConversion);
         logP += drawAffectedBlocksGibbs(newConversion);
         
-        // TODO Remove after testing is done (quite expensive)!!!
-        double logP2 = getConversionProb(newConversion);
-        assert Math.abs(logP - logP2) < 1E-5;
+//        // TODO Remove after testing is done (quite expensive)!!!
+//        double logP2 = getConversionProb(newConversion);
+//        assert Math.abs(logP - logP2) < 1E-5;
 
         return logP;
     }
