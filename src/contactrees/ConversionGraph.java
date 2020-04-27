@@ -79,6 +79,11 @@ public class ConversionGraph extends Tree {
         convs.add(conv);
     }
     
+    /**
+     * Create a new conversion, add it to the graph and return it.
+     * 
+     * @return The newly created conversion
+     */
     public Conversion addNewConversion() {
     	startEditing(null);
     	
@@ -88,7 +93,7 @@ public class ConversionGraph extends Tree {
     }
    
     /**
-     * Remove recombination from graph.
+     * Remove a conversion edge from the graph.
      *
      * @param conv conversion to remove.
      */
@@ -105,6 +110,14 @@ public class ConversionGraph extends Tree {
      */
     public ConversionList getConversions() {
         return convs;
+    }
+    
+    /**
+     * Remove all conversion edges from the graph.
+     */
+    public void removeAllConversions() {
+        startEditing(null);
+        convs.clear();
     }
     
     /**
@@ -247,6 +260,11 @@ public class ConversionGraph extends Tree {
         return false;
     }
 
+    /**
+     * Create a copy of this conversion graph.
+     * 
+     * @return The new copy of this conversion graph
+     */
     @Override
     public ConversionGraph copy() {
         ConversionGraph acg = new ConversionGraph();
@@ -631,7 +649,6 @@ public class ConversionGraph extends Tree {
     	initArrays();
     }
     
-
     protected int parseConvID(String sConvID) {
     	return Integer.parseInt(sConvID.substring(1));
     }

@@ -3,6 +3,7 @@
  */
 package contactrees.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -12,12 +13,13 @@ import beast.core.State;
 import beast.core.parameter.RealParameter;
 import contactrees.Block;
 import contactrees.BlockSet;
+import contactrees.Conversion;
 import contactrees.ConversionGraph;
 
 /**
  * 
  * 
- * @author Nico Neureiter <nico.neureiter@gmail.com>
+ * @author Nico Neureiter
  */
 public class ConversionMovePrior extends Distribution {
 
@@ -81,17 +83,46 @@ public class ConversionMovePrior extends Distribution {
 	
 	@Override
 	public List<String> getArguments() {
-		throw new UnsupportedOperationException("Not supported yet.");
+        List<String> arguments = new ArrayList<>();
+        arguments.add(blockSetInput.get().getID());
+
+        return arguments;
 	}
 
 	@Override
 	public List<String> getConditions() {
-		throw new UnsupportedOperationException("Not supported yet.");
+        List<String> conditions = new ArrayList<>();
+        conditions.add(networkInput.get().getID());
+        conditions.add(pMoveInput.get().getID());
+
+        return conditions;
 	}
 
 	@Override
 	public void sample(State state, Random random) {
-		throw new UnsupportedOperationException("Not supported yet.");
+        if (sampledFlag)
+            return;
+        sampledFlag = true;
+
+        // Cause conditional parameters to be sampled
+        sampleConditions(state, random);
+
+        acg = networkInput.get();
+        blockSet = blockSetInput.get();
+        pMove = pMoveInput.get().getValue();
+        
+
+        for (Block block : blockSet) {
+            // Remove old conversion moves
+            block.removeAllMoves();
+            
+            // Sample new conversion moves
+            for (Conversion conv : acg.getConversions()) {
+                if (random.nextDouble() < pMove) {
+                    block.addMove(conv);
+                }
+            }
+        }
 	}
 
 }

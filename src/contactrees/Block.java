@@ -59,6 +59,14 @@ public class Block extends StateNode {
     }
 
     /**
+     * Remove all conversion moves from this blocks history. 
+     */
+    public void removeAllMoves() {
+        startEditing(null);
+        convIDs.clear();
+    }
+    
+    /**
      * Evaluate whether this block was affected by the given conversion.
      * @param The conversion in question.
      * @return "true" iff the block moved over the conversion.

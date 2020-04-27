@@ -131,8 +131,8 @@ public class CFEventList {
      * to these events.
      */
     public void updateEvents() {
-        if (!dirty)
-            return;
+//        if (!dirty)
+//            return;
         
         events.clear();
         

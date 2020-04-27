@@ -3,8 +3,10 @@
  */
 package contactrees.model;
 
+import java.util.ArrayList;
 import java.util.List; 
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.PoissonDistributionImpl;
@@ -12,23 +14,32 @@ import org.apache.commons.math.distribution.PoissonDistributionImpl;
 import contactrees.CFEventList;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
+import contactrees.CFEventList.Event;
 import contactrees.util.Util;
 import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.State;
 import beast.core.parameter.RealParameter;
+import beast.evolution.speciation.YuleModel;
+import beast.evolution.tree.Node;
+import beast.evolution.tree.Tree;
+import beast.evolution.tree.TreeDistribution;
+import beast.util.Randomizer;
 
 /**
- * 
- * 
  * @author Nico Neureiter
  */
-public class ConversionPrior extends Distribution {
+public class ACGDistribution extends Distribution {
 
 	final public Input<ConversionGraph> networkInput = new Input<>(
 			"network",
 			"The conversion graph containing the conversion edges.",
 			Input.Validate.REQUIRED);
+	
+	final public Input<TreeDistribution> cfModelInput = new Input<>(
+	        "cfModel",
+	        "The tree prior of the clonal frame.",
+	        Input.Validate.REQUIRED); 
 	
 	final public Input<RealParameter> conversionRateInput = new Input<>(
 			"conversionRate",
@@ -43,17 +54,19 @@ public class ConversionPrior extends Distribution {
 	
 	ConversionGraph acg;
 	double convRate;
+	TreeDistribution cfModel;
 	
 	@Override
 	public void initAndValidate() {
 		super.initAndValidate();
 		acg = networkInput.get();
+		cfModel = cfModelInput.get();
 		convRate = conversionRateInput.get().getValue();
 	}
 	
 	@Override
 	public double calculateLogP() {
-		logP = 0.0;
+		logP = cfModel.calculateLogP();
 
         // Check whether conversion count exceeds bounds.
         if (acg.getConvCount()<lowerCCBoundInput.get()
@@ -113,17 +126,86 @@ public class ConversionPrior extends Distribution {
 	
 	@Override
 	public List<String> getArguments() {
-		throw new UnsupportedOperationException("Not supported yet.");
+        List<String> arguments = new ArrayList<>();
+        arguments.add(networkInput.get().getID());
+
+        return arguments;
 	}
 
 	@Override
 	public List<String> getConditions() {
-		throw new UnsupportedOperationException("Not supported yet.");
+        List<String> conditions = new ArrayList<>();
+        conditions.add(conversionRateInput.get().getID());
+
+        return conditions;
 	}
 
 	@Override
 	public void sample(State state, Random random) {
-		throw new UnsupportedOperationException("Not supported yet.");
+        if (sampledFlag)
+            return;
+        sampledFlag = true;
+
+        // Cause conditional parameters to be sampled
+
+        sampleConditions(state, random);
+        cfModel.sample(state, random);
+        
+        acg = (ConversionGraph) cfModel.treeInput.get();
+        convRate = conversionRateInput.get().getValue();
+        
+        generateConversions();
 	}
+    
+	/**
+	 * Sample conversion edges according to the current convRate 
+	 * in the current clonal frame.
+	 */
+    private void generateConversions() {
+        acg.removeAllConversions();
+        
+        // Draw number of conversions:
+        double nConvMean = convRate * acg.getClonalFramePairedLength();
+        int nConv = (int) Randomizer.nextPoisson(nConvMean);
+
+        // Generate conversions:
+        for (int i=0; i<nConv; i++) {
+            Conversion conv = acg.addNewConversion();
+            associateConversionWithCF(conv);
+        }
+    }
+
+    /**
+     * Associates recombination with the clonal frame, selecting 
+     * points of departure and arrival.
+     * 
+     * @param conv recombination to associate
+     */
+    private void associateConversionWithCF(Conversion conv) {
+        CFEventList cfEventList = acg.getCFEventList();
+        List<Event> cfEvents = cfEventList.getCFEvents();
+        
+        // Choose event interval
+        double[] intervalVolumes = cfEventList.getIntervalVolumes();
+        int iEvent = Util.sampleCategorical(intervalVolumes);
+        Event event = cfEvents.get(iEvent);
+        
+        // Choose height within interval
+        double height = Randomizer.uniform(event.getHeight(), cfEvents.get(iEvent+1).getHeight());
+        conv.setHeight(height);
+        
+        // Choose source lineage (given the height)
+        Set<Node> activeLineages = acg.getLineagesAtHeight(height);
+        Node node1 = Util.sampleFrom(activeLineages);
+        conv.setNode1(node1);
+        assert node1.getHeight() < height;
+        
+        // Choose destination lineage (given the height and node1)
+        activeLineages.remove(node1);
+        Node node2 = Util.sampleFrom(activeLineages);
+        conv.setNode2(node2);
+        
+        assert conv.isValid();
+    }
 
 }

@@ -46,7 +46,7 @@ public class MarginalTree extends Tree {
     boolean outdated;
     
     boolean nextTimeDirty;
-    
+        
 //    Map<String, MarginalNode> oldNodes, newNodes;
     
     public void initAndValidate() {
@@ -61,9 +61,9 @@ public class MarginalTree extends Tree {
         String beastID = ID;
         assignFrom(acg);
         setID(beastID);
-        
-        recalculate();
+
         super.initAndValidate();
+        recalculate();
             
         outdated = true;
         
@@ -270,7 +270,7 @@ public class MarginalTree extends Tree {
         // A single active CF lineage (the root) should remain:;
         root = activeCFlineages.get(acg.getRoot());
         setRootOnly(root);
-
+        
 //        assert activeCFlineages.size() == 1;
 //        assert activeCFlineages.containsKey(acg.getRoot());
 //        assert m_nodes.length == acg.getNodeCount()

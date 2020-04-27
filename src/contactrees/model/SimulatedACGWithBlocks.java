@@ -49,7 +49,7 @@ import java.util.Set;
 import org.apache.commons.math3.distribution.BinomialDistribution;
 
 /**
- * @author Tim Vaughan <tgvaughan@gmail.com>
+ * @author Tim Vaughan
  */
 @Description("Simulates an ARG under the full ClonalOrigin model - can be used"
     + " for chain initialization or for sampler validation.")
@@ -283,7 +283,6 @@ public class SimulatedACGWithBlocks extends BEASTObject {
     			sum += 1;
     	return sum;
     }
-    
     
     /**
      * Associates recombination with the clonal frame, selecting points of
