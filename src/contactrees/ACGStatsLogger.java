@@ -42,7 +42,7 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
 
     @Override
     public void init(final PrintStream out) {
-        out.print("rootHeight\ttreeLength\tpairedTreeLength\tconvCount\tmeanConvHeight\tmoveCount\t");
+        out.print("rootHeight\ttreeLength\tpairedTreeLength\tconvCount\tmeanConvHeight\tmoveCount\tmovesPerConv\t");
     }
 
     @Override
@@ -51,10 +51,15 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
     	double treeLength = acg.getClonalFrameLength();
     	double pairedTreeLength = acg.getClonalFramePairedLength();
     	int nConv = acg.getConvCount();
-    	double meanConvHeight = meanConvHeight(acg);
     	int moveCount = blockSet.countMoves();
-    	
-        out.print(height + "\t" + treeLength + "\t" + pairedTreeLength + "\t" + nConv + "\t" + meanConvHeight + "\t" + moveCount + "\t");
+    	double meanConvHeight = 0;
+    	double movesPerConv = 0;
+        if (nConv > 0) {
+            meanConvHeight = meanConvHeight(acg);
+            movesPerConv = (double) moveCount / nConv;
+        }
+        
+        out.print(height + "\t" + treeLength + "\t" + pairedTreeLength + "\t" + nConv + "\t" + meanConvHeight + "\t" + moveCount + "\t" + movesPerConv + "\t");
     }
 	
 	protected double meanConvHeight(ConversionGraph acg) {
