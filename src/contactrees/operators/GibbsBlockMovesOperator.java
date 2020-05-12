@@ -42,10 +42,12 @@ public abstract class GibbsBlockMovesOperator extends ACGOperator {
     }
     
     public double sampleBlockMove(Block block, Conversion conv, MarginalTree marginalTree, TreeLikelihood treeLH) {
+
         // Get prior and likelihood for current block move
         boolean moveOld = block.isAffected(conv); 
         double priorOld = moveOld ? pMove : (1 - pMove);
-        double logLHOld = treeLH.getCurrentLogP();
+        marginalTree.recalculate();
+        double logLHOld = treeLH.calculateLogP();
         double logPosteriorOld = Math.log(priorOld) + logLHOld;
         
         // Compute prior and likelihood for flipped block move
@@ -57,7 +59,8 @@ public abstract class GibbsBlockMovesOperator extends ACGOperator {
         
         // Revert flip with probability $p_old / (p_old + p_new)$
         double logPRevert = logPosteriorOld - Util.logAddExp(logPosteriorOld, logPosteriorNew);
-        if (Math.log(Randomizer.nextDouble()) < logPRevert)
+        boolean revert = (Math.log(Randomizer.nextDouble()) < logPRevert);
+        if (revert)
             flipBlockMove(block, conv);
         
         return Double.POSITIVE_INFINITY;
