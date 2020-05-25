@@ -54,6 +54,7 @@ public class ConversionMovePrior extends Distribution {
 	@Override
 	public double calculateLogP() {
 		logP = 0.0;
+        pMove = pMoveInput.get().getValue();
 		int moveCount = blockSet.countMoves();
 		int n = acg.getConvCount() * blockSet.getBlockCount();
 		

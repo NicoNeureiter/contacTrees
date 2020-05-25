@@ -66,6 +66,8 @@ public class ACGDistribution extends Distribution {
 	
 	@Override
 	public double calculateLogP() {
+	    convRate = conversionRateInput.get().getValue();
+	    
 		logP = cfModel.calculateLogP();
 
         // Check whether conversion count exceeds bounds.

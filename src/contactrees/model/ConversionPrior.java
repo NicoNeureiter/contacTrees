@@ -54,7 +54,8 @@ public class ConversionPrior extends Distribution {
 	@Override
 	public double calculateLogP() {
 		logP = 0.0;
-
+		convRate = conversionRateInput.get().getValue();
+		
         // Check whether conversion count exceeds bounds.
         if (acg.getConvCount()<lowerCCBoundInput.get()
                 || acg.getConvCount()>upperCCBoundInput.get()) {
