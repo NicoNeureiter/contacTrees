@@ -60,15 +60,17 @@ public abstract class TestSingleOperator {
 		// Run the simulation and read samples from file
 		samplesSimulator = new ArrayList<>();
 		String xmlPath = String.format("examples/ACGsimulations/%s.xml", FBASE_SIM);
+		String paramsPath = "examples/operatorTests/parameters.json";
 		System.out.println(xmlPath);
-		String[] simArgs = {"-overwrite", "-D", xmlParams, "-seed", seed, "-prefix", workingDir, xmlPath};
+		String[] simArgs = {"-overwrite", "-DF", paramsPath, "-seed", seed, "-prefix", workingDir, xmlPath};
+		System.out.println(simArgs);
 		BeastMCMC.main(simArgs);
 		samplesSimulator = readSamplesFromNexus(workingDir + FBASE_SIM + ".trees");
 		
 		// Run the MCMC and read samples from file
 		samplesMCMC = new ArrayList<>();
 		xmlPath = String.format("examples/operatorTests/%s.xml", FBASE_MCMC);
-		String[] mcmcArgs = {"-overwrite", "-D", xmlParams, "-seed", seed, "-prefix", workingDir, xmlPath};
+		String[] mcmcArgs = {"-overwrite", "-DF", paramsPath, "-seed", seed, "-prefix", workingDir, xmlPath};
 		System.out.println(xmlPath);
 		
 		BeastMCMC.main(mcmcArgs);
