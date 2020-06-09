@@ -2,6 +2,7 @@ package contactrees;
 
 import java.util.TreeMap;
 
+import beast.evolution.branchratemodel.BranchRateModel;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 
@@ -14,18 +15,16 @@ import beast.evolution.tree.Tree;
 public class MarginalNode extends Node {
 
     /**
-     * If >= 0, denotes the node Nr of the CF node that
-     * this node corresponds to.  If <0, this node does
-     * not correspond to any CF node.
+     * The length of this branch in time, i.e. scaled by the branch-rate.
+     * This is used in the creation of the marginal tree, since scaling 
+     * branch lengths is easier than scaling heights.  
      */
-    public int cfNodeNr = -1;
+    public double timeLength = 0.0; 
     
     /**
-     * If >= 0, denotes the ID of the conversion
-     * that this node corresponds to. If <0, this
-     * node comes from a CF nodes (not a conversion).
+     * 
      */
-    public int convID = -1;
+    public double lastEventHeight = 0.0;
     
     private ConversionGraph acg;
     
@@ -66,41 +65,7 @@ public class MarginalNode extends Node {
 ////        
 ////        return Math.max(super.isDirty(), acgNodeDirty);
 //    }
-    
-    public boolean isConversionNode() {
-        if (cfNodeNr >= 0) {
-            assert convID == -1;
-            return false;
-        } else {
-            assert convID >= 0;
-            return true;
-        }
-    }
 
-    public Conversion getConversion() {
-        assert isConversionNode();
-        Conversion conv = acg.getConversions().get(convID);
-        if (conv == null) {
-            throw new RuntimeException("Conversion ID is obsolete (probably conversion was removed from ACG).");
-        }
-        return conv;
-    }
-
-    public Node getCFNode() {
-        assert !isConversionNode();
-        Node node = acg.getNode(cfNodeNr);
-        assert node != null;
-        return node;
-    }
-
-    public int getCFNodeNr() {
-        return cfNodeNr;
-    }
-    
-    public int getConvID() {
-        return convID;
-    }
-    
     protected void setTree(MarginalTree tree) {
         m_tree = tree;
     }
@@ -147,9 +112,20 @@ public class MarginalNode extends Node {
         }
         
         node.acg = acg;
-        node.cfNodeNr = cfNodeNr;
-        node.convID = convID;
         
         return node;
     }
+    
+    public void setTimeLength(double timeLength) {
+        this.timeLength = timeLength;
+    }
+    
+    public void addToTimeLength(double timeLength) {
+        this.timeLength += timeLength;
+    }
+    
+    public void addToTimeLength(double length, double branchRate) {
+        this.timeLength += length * branchRate;
+    }
+    
 }
