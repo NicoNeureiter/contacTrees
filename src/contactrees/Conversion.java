@@ -31,6 +31,11 @@ public class Conversion {
      */
     protected Integer id;
     
+    /**
+     * Keep track whether this conversion changed within this step.
+     */
+    protected boolean hasStartedEditing = false;
+    
     public Conversion(int id) {
     	this.id = id;
     }
@@ -135,18 +140,14 @@ public class Conversion {
      * @return true if specification is valid
      */
     public boolean isValid() {
-        assert ((node1.getHeight() < height) && (node2.getHeight() < height));
         if ((node1.getHeight() > height) || (node2.getHeight() > height))
             return false;
         
-        assert (node1.getParent().getHeight() > height);
-        assert (node2.getParent().getHeight() > height);
         if (node1.getParent().getHeight() < height)
         	return false;
         if (node2.getParent().getHeight() < height)
         	return false;
         
-        assert (node1 != node2);
         if (node1 == node2)
         	return false;
         
@@ -169,6 +170,8 @@ public class Conversion {
      * Mark ARG statenode as dirty if available.
      */
     public void startEditing() {
+        // TODO: hasStartedEditing = true <<<<<<<<<<<<<<<<
+        // ...
         if (acg != null)
             acg.startEditing(null);
     }
