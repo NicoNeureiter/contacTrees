@@ -207,6 +207,19 @@ public class ContactreesTest {
         return getAlignment(3);
     }
     
+    public void shift(Node node, double offset) {
+        node.setHeight(node.getHeight() + offset);
+        for (Node child : node.getChildren()) {
+            shift(child, offset);
+        }
+    }
+    
+    public boolean treesEquivalentShifted(Tree treeA, Tree treeB, double tolerance) {
+        shift(treeA.getRoot(), -treeA.getRoot().getHeight());
+        shift(treeB.getRoot(), -treeB.getRoot().getHeight());
+        return treesEquivalent(treeA, treeB, tolerance);
+    }
+    
     /**
      * Tests whether treeA and treeB are equivalent.  That is, whether they
      * have the same node heights (to within tolerance) and clade sets.

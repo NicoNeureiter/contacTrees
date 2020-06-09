@@ -1,12 +1,16 @@
 package contactrees.test;
 
 import contactrees.*;
+import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Alignment;
+import beast.evolution.branchratemodel.UCRelaxedClockModel;
 import beast.evolution.likelihood.TreeLikelihood;
 import beast.evolution.sitemodel.SiteModel;
 import beast.evolution.substitutionmodel.JukesCantor;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
+import beast.math.distributions.LogNormalDistributionModel;
+import beast.math.distributions.Uniform;
 import beast.util.ClusterTree;
 import beast.util.TreeParser;
 import org.junit.Test;
@@ -55,7 +59,7 @@ public class MarginalTreeTest extends ContactreesTest {
 
             String newickStr = correctNewickStrings[b];
             Tree correctTree = new TreeParser(newickStr, false, true, false, 1);
-            assertTrue(treesEquivalent(marginalTree.getRoot(), correctTree.getRoot(), 1e-15));
+            assertTrue(treesEquivalent(marginalTree, correctTree, 1e-15));
             
             equalLikelihood(correctTree, marginalTree);
         }
@@ -107,7 +111,7 @@ public class MarginalTreeTest extends ContactreesTest {
             String newickStr = correctNewickStrings[b];
             Tree correctTree = new TreeParser(newickStr, false, true, false, 1);
             
-            assertTrue(treesEquivalent(marginalTree.getRoot(), correctTree.getRoot(), 1e-15));
+            assertTrue(treesEquivalent(marginalTree, correctTree, 1e-15));
             equalLikelihood(correctTree, marginalTree);
         }
     }
@@ -180,7 +184,53 @@ public class MarginalTreeTest extends ContactreesTest {
             System.out.println(newickStr);
             Tree correctTree = new TreeParser(newickStr, false, true, false, 1);
             
-            assertTrue(treesEquivalent(marginalTree.getRoot(), correctTree.getRoot(), 1e-15));
+            assertTrue(treesEquivalent(marginalTree, correctTree, 1e-15));
+            equalLikelihood(correctTree, marginalTree);
+        }
+    }
+
+    @Test
+    public void testBranchRates() throws Exception {
+        Double[] rates = {2., 2., 1., 1.};
+        UCRelaxedClockModel clock = new UCRelaxedClockModel();
+        clock.initByName(
+                "rates", new RealParameter(rates),
+                "distr", new Uniform(),
+                "tree", acg
+                );
+        
+        // Test all marginals against truth
+        // (I have eyeballed each of these trees and claim that they are correct.)
+        String[] correctNewickStrings = {
+            "((1:2.0,2:2.0)4:1.5,3:2.5)5:0.0",  // No conv
+            "(1:3.5,(2:1.0,3:0.5)4:2.0)5:0.0",  // Conv 1
+            "((1:2.0,2:2.0)4:0.5,3:1.5)5:0.0",  // Conv 2
+            "(1:2.5,(2:1.0,3:0.5)4:1.0)5:0.0",  // Conv 1 & 2
+            "((1:2.0,2:2.0)4:1.5,3:2.5)5:0.0",  // No conv
+            "((1:2.0,2:2.0)4:1.5,3:2.5)5:0.0",  // No conv
+            "((1:2.0,2:2.0)4:1.5,3:2.5)5:0.0",  // No conv
+            "((1:2.0,2:2.0)4:1.5,3:2.5)5:0.0",  // No conv
+            "((1:2.0,2:2.0)4:1.5,3:2.5)5:0.0",  // No conv
+        };
+
+        List<Block> blocks = blockSet.getBlocks();
+        blocks.get(1).addMove(conv1);
+        blocks.get(2).addMove(conv2);
+        blocks.get(3).addMove(conv1);
+        blocks.get(3).addMove(conv2);
+
+        for (int b=0; b<N_BLOCKS; b++) {         
+            MarginalTree marginalTree = new MarginalTree();
+            marginalTree.initByName(
+                    "network", acg, 
+                    "block", blocks.get(b),
+                    "nodetype", MarginalNode.class.getName(),
+                    "branchRateModel", clock);
+
+            String newickStr = correctNewickStrings[b];
+            Tree correctTree = new TreeParser(newickStr, false, true, false, 1);
+            
+            assertTrue(treesEquivalentShifted(marginalTree, correctTree, 1e-15));
             equalLikelihood(correctTree, marginalTree);
         }
     }
@@ -194,7 +244,6 @@ public class MarginalTreeTest extends ContactreesTest {
         SiteModel siteModel = new SiteModel();
         siteModel.initByName(
                 "substModel", jc);
-        
 
         // Likelihood
         TreeLikelihood correctLikelihood = new TreeLikelihood();
@@ -216,7 +265,6 @@ public class MarginalTreeTest extends ContactreesTest {
         
         double diff = Math.abs(logPtrue - logP);
 
-        System.out.println("Test 1.  Truth: " + logPtrue+ " Value: " + logP);
         assertTrue(diff < 0.001);
         
         return true;
