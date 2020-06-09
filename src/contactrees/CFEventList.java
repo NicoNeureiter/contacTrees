@@ -4,7 +4,9 @@ import beast.evolution.tree.Node;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 import javax.management.InvalidAttributeValueException;
 
@@ -35,6 +37,10 @@ public class CFEventList {
          * @param node chosen CF node
          */
         public Event(Node node) {
+            this.fromNode(node);
+        }
+        
+        public void fromNode(Node node) {
             this.node = node;
 
             if (node.isLeaf())
@@ -96,6 +102,8 @@ public class CFEventList {
         
         events = new ArrayList<>();
         dirty = true;
+        
+        eventDump = new LinkedList<>();
     }
 
     /**
@@ -125,20 +133,42 @@ public class CFEventList {
     public void makeDirty() {
         dirty = true;
     }
+    
+    
+    private final LinkedList<Event> eventDump;
+    int eventDumpMaxSize = 1000;
+    
+    private void clearEvents() {
+        if (eventDump.size() < eventDumpMaxSize)
+            eventDump.addAll(events);
+        
+        events.clear();
+    }
+    
+    private Event newEvent(Node node) {
+        if (eventDump.isEmpty()) {
+            return new Event(node);
+        }
+
+        Event event = eventDump.pop();
+        event.fromNode(node);
+        return event;
+    }
 
     /**
      * Assemble sorted list of events on clonal frame and a map from nodes
      * to these events.
      */
     public void updateEvents() {
-//        if (!dirty)
-//            return;
+        if (!dirty)
+            return;
         
-        events.clear();
+        clearEvents();
+        // events.clear();
         
         // Create event list
         for (Node node : acg.getNodesAsArray()) {
-            Event event = new Event(node);
+            Event event = newEvent(node);
             events.add(event);
         }
         
