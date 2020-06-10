@@ -103,7 +103,6 @@ public class ACGScaler extends ACGOperator {
             if (conv.getHeight() < node1.getHeight()
                     || conv.getHeight() < node2.getHeight()) {
             	// Conversion below its node -> Illegal move
-            	assert rootOnly : "This should never happen if we rescale the whole graph!";
                 return Double.NEGATIVE_INFINITY;
             }
         }
