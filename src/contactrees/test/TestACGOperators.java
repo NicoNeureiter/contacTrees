@@ -21,7 +21,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import contactrees.ACGWithBlocksReader;
+import contactrees.ACGWithBlocks;
 import contactrees.Block;
 import contactrees.BlockSet;
 import contactrees.Conversion;
@@ -32,8 +32,8 @@ import beast.util.Randomizer;
 
 public class TestACGOperators {
 
-	static ArrayList<ACGWithBlocksReader> samplesSimulator;
-	static ArrayList<ACGWithBlocksReader> samplesMCMC;
+	static ArrayList<ACGWithBlocks> samplesSimulator;
+	static ArrayList<ACGWithBlocks> samplesMCMC;
 	
 	static int N_SAMPLES = 100000;
 	static int N_SAMPLES_SIMU = N_SAMPLES;
@@ -86,8 +86,8 @@ public class TestACGOperators {
 		BeastMCMC.main(mcmcArgs);
 		
 		// Read the prior samplesMCMC and drop the burn-in
-		ArrayList<ACGWithBlocksReader> tmp = readSamplesFromNexus(workingDir + FBASE_MCMC + ".trees");
-		samplesMCMC = new ArrayList<ACGWithBlocksReader>();
+		ArrayList<ACGWithBlocks> tmp = readSamplesFromNexus(workingDir + FBASE_MCMC + ".trees");
+		samplesMCMC = new ArrayList<ACGWithBlocks>();
 		for (int i=0; i<N_SAMPLES_MCMC; i++) {
 			samplesMCMC.add(tmp.get(BURNIN_SAMPLES+i));
 		}
@@ -133,9 +133,9 @@ public class TestACGOperators {
 		return ksTest.kolmogorovSmirnovTest(samples1, samples2);
 	}
 	
-	protected void collectStatistics(int i, List<ACGWithBlocksReader> samples, double[] heightsArray, double[] convCountArray, 
+	protected void collectStatistics(int i, List<ACGWithBlocks> samples, double[] heightsArray, double[] convCountArray, 
 									 double[] moveCountsArray, double[] meanConvHeightsArray) {
-		ACGWithBlocksReader sample = samples.get(i);
+		ACGWithBlocks sample = samples.get(i);
 		heightsArray[i] = sample.getRoot().getHeight();
 		convCountArray[i] = sample.getConvCount();
 		moveCountsArray[i] = sample.blockSet.countMoves();
@@ -229,8 +229,8 @@ public class TestACGOperators {
 		return array;
 	}
 	
-	protected static ArrayList<ACGWithBlocksReader> readSamplesFromNexus(String path) throws IOException {
-		ArrayList<ACGWithBlocksReader> samples = new ArrayList<>();
+	protected static ArrayList<ACGWithBlocks> readSamplesFromNexus(String path) throws IOException {
+		ArrayList<ACGWithBlocks> samples = new ArrayList<>();
 		BufferedReader reader = new BufferedReader(new FileReader(path));
 		
 		String line = "";
@@ -247,7 +247,7 @@ public class TestACGOperators {
 		return samples;
 	}
 	
-	public static ACGWithBlocksReader parseSampleLine(String line) {
+	public static ACGWithBlocks parseSampleLine(String line) {
 		String newick = line
 				.split("&R\\]", 2)[1]
 				.replace(";"," ")
@@ -256,7 +256,7 @@ public class TestACGOperators {
 		assert newick != "";
 		assert newick != null;
 		
-		return ACGWithBlocksReader.newFromNewick(N_BLOCKS, newick);
+		return ACGWithBlocks.newFromNewick(N_BLOCKS, newick);
 	}
 
 	@Before

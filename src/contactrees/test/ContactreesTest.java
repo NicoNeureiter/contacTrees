@@ -109,7 +109,7 @@ public class ContactreesTest {
 
         acg2 = getACGFromNewick(newick);
         blockSet2 = getBlockSet(N_BLOCKS, acg2);
-        acgLogger2 = ACGWithMetaDataLogger.getACGWMDLogger(acg2, blockSet2);       
+        acgLogger2 = new ACGWithMetaDataLogger(acg2, blockSet2);       
 
         // Assign nodes
         root2 = acg2.getRoot();
@@ -139,7 +139,7 @@ public class ContactreesTest {
 	public void setupFromNewick(String newick) {
 	    acg = getACGFromNewick(newick);
 		blockSet = getBlockSet(N_BLOCKS, acg);
-		acgLogger = ACGWithMetaDataLogger.getACGWMDLogger(acg, blockSet);		
+		acgLogger = new ACGWithMetaDataLogger(acg, blockSet);		
 	}
 	
 	public ConversionGraph getACGFromNewick(String newick) {

@@ -17,7 +17,7 @@ import beast.evolution.tree.Node;
 /**
  * 
  * 
- * @author Nico Neureiter <nico.neureiter@gmail.com>
+ * @author Nico Neureiter
  */
 public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
 
@@ -96,7 +96,7 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
     private String extendedNewickTraverse(Node node,
                                           boolean includeBlockStats) {
     	ConversionList convs = acg.getConversions();
-    	HashMap<Conversion, List<Integer>> affectedBlocks = blockSet.getAffectedBlocks();
+    	HashMap<Conversion, List<Integer>> affectedBlocks = blockSet.getAffectedBlockIDs();
     	
         StringBuilder sb = new StringBuilder();
         
@@ -164,7 +164,7 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
         			
                     meta += String.format(Locale.ENGLISH,
                             ", affectedBlocks=%s",
-                            formatList(blockSet.getAffectedBlocks(event.conv))
+                            formatList(blockSet.getAffectedBlockIDs(event.conv))
 //                            ", affectedSites=%d, uselessSiteFraction=%g, affectedBlocks=%s",
 //                            affectedBlockCount,
 //                            1.0-affectedBlockFraction,
@@ -232,18 +232,9 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
                 nSample, getExtendedNewick()));
     }
 
-
     /*
      * TESTING INTERFACE
-     */
-    static public ACGWithMetaDataLogger getACGWMDLogger(ConversionGraph acg, BlockSet blockSet) {
-    	ACGWithMetaDataLogger acgwmdLogger = new ACGWithMetaDataLogger();
-    	acgwmdLogger.initAndValidate();
-    	acgwmdLogger.acg = acg;
-    	acgwmdLogger.blockSet = blockSet;
-    	return acgwmdLogger;
-    }
-    
+     */    
     public ConversionGraph getACG() {
     	return acg;
     }
@@ -258,5 +249,18 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
     		i++;
     	}
     	return s + "}\"";
+    }
+    
+    public ACGWithMetaDataLogger() {
+        super();
+    }
+
+    public ACGWithMetaDataLogger(ConversionGraph acg, BlockSet blockSet) {
+        this();
+        initByName("network", acg, "blockSet", blockSet);
+    }
+    
+    public ACGWithMetaDataLogger(ACGWithBlocks acgWithBlocks) {
+        this(acgWithBlocks, acgWithBlocks.blockSet);
     }
 }

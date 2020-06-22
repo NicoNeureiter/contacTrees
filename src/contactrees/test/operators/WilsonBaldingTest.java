@@ -129,8 +129,8 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
         ConversionGraph acg = new ConversionGraph();
         acg.initAndValidate();
         acg.assignFrom(treee);
-		BlockSet blockSet = BlockSet.getBlockSet(acg);
-		ACGWithMetaDataLogger acgLogger = ACGWithMetaDataLogger.getACGWMDLogger(acg, blockSet);	
+		BlockSet blockSet = BlockSet.create(acg);
+		ACGWithMetaDataLogger acgLogger = new ACGWithMetaDataLogger(acg, blockSet);	
 
 		TreeIntervals treeIntervals = new TreeIntervals();
 		treeIntervals.initByName("tree", acg);

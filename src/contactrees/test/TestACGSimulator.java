@@ -15,7 +15,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import contactrees.ACGWithBlocksReader;
+import contactrees.ACGWithBlocks;
 import contactrees.Block;
 import contactrees.BlockSet;
 import contactrees.ConversionGraph;
@@ -25,7 +25,7 @@ import beast.util.Randomizer;
 
 public class TestACGSimulator {
 
-	static ArrayList<ACGWithBlocksReader> samples;
+	static ArrayList<ACGWithBlocks> samples;
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -58,7 +58,7 @@ public class TestACGSimulator {
 		reader.close();
 	}
 	
-	public static ACGWithBlocksReader parseSampleLine(String line, int nBlocks) {
+	public static ACGWithBlocks parseSampleLine(String line, int nBlocks) {
 		String newick = line
 				.split("&R\\]", 2)[1]
 				.replace(";"," ")
@@ -67,7 +67,7 @@ public class TestACGSimulator {
 		assert newick != "";
 		assert newick != null;
 		
-		return ACGWithBlocksReader.newFromNewick(nBlocks, newick);		
+		return ACGWithBlocks.newFromNewick(nBlocks, newick);		
 	}
 
 	@Before

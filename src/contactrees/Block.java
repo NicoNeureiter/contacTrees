@@ -183,4 +183,17 @@ public class Block extends StateNode {
         throw new UnsupportedOperationException("StateNode method scale() not applicable to Block."); 
     }
 
+    public Block() {
+        super();
+    }
+
+    /**
+     * Create a new block with specified BEASTObject-ID.
+     * Used for parsing log files.
+     * @param ID
+     */
+    public Block(String ID) {
+        this();
+        setID(ID);
+    }
 }

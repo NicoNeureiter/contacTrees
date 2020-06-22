@@ -11,7 +11,7 @@ import beast.core.Description;
 import beast.core.Input;
 
 /**
- * @author Nico Neureiter <nico.neureiter@gmail.com>
+ * @author Nico Neureiter
  */
 @Description("A container for multiple Block objects.")
 public class BlockSet extends CalculationNode implements Iterable<Block> {
@@ -26,7 +26,7 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 			);
 	public Input<Boolean> deferNetworkSpecificationInput = new Input<>(
 	        "deferNetworkSpecification",
-	        "Set this flag to allow deferring the specification of the network input (usually to be set in ACGWithBlocksReader).",
+	        "Set this flag to allow deferring the specification of the network input (usually to be set in ACGWithBlocks).",
 	        Input.Validate.XOR, networkInput);
 	
 	protected ArrayList<Block> blocks;
@@ -88,34 +88,62 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 	}
 	
 	/**
-	 * Obtain the blocks currently affected by the given conversion.
+	 * Obtain the IDs of the blocks currently affected by the given conversion.
 	 * @return List of affected blocks.
 	 */
 
-	public List<Integer> getAffectedBlocks(Conversion conv){
+	public List<Integer> getAffectedBlockIDs(Conversion conv){
 		List<Integer> affectedBlocks = new ArrayList<>();
 		
 		for (int i = 0; i<blocks.size(); i++) {
-			if (blocks.get(i).convIDs.contains(conv.id))
+			if (blocks.get(i).isAffected(conv))
 				affectedBlocks.add(i);
 		}
 		
 		return affectedBlocks;
 	}
+    
+    /**
+     * Obtain the blocks currently affected by the given conversion.
+     * @return List of affected blocks.
+     */
+    public List<Block> getAffectedBlocks(Conversion conv){
+        List<Block> affectedBlocks = new ArrayList<>();
+        for (Block block : this) {
+            if (block.isAffected(conv))
+                affectedBlocks.add(block);
+        }
+        return affectedBlocks;
+    }
+    
+    /**
+     * Obtain a hash-map, mapping each conversion to the IDs of the currently affected blocks.
+     * @return Map from conversion to affected block IDs.
+     */
+    public HashMap<Conversion, List<Integer>> getAffectedBlockIDs(){
+        HashMap<Conversion, List<Integer>> affectedBlocksByConv = new HashMap<>();
+        
+        assert acg != null;
+        for (Conversion conv : acg.getConversions()) {
+            affectedBlocksByConv.put(conv, getAffectedBlockIDs(conv));
+        }
 
-	/**
-	 * Obtain a hash-map, mapping each conversion to the currently affected blocks.
-	 * @return Map from conversion to affected blocks.
-	 */
-	public HashMap<Conversion, List<Integer>> getAffectedBlocks(){
-		HashMap<Conversion, List<Integer>> affectedBlocksByConv = new HashMap<>();
-		
-		for (Conversion conv : acg.getConversions()) {
-			affectedBlocksByConv.put(conv, getAffectedBlocks(conv));
-		}
+        return affectedBlocksByConv;
+    }
 
-		return affectedBlocksByConv;
-	}
+    /**
+     * Obtain a hash-map, mapping each conversion to the currently affected blocks.
+     * @return Map from conversion to affected blocks.
+     */
+    public HashMap<Conversion, List<Block>> getAffectedBlocks(){
+        HashMap<Conversion, List<Block>> affectedBlocksByConv = new HashMap<>();
+        
+        for (Conversion conv : acg.getConversions()) {
+            affectedBlocksByConv.put(conv, getAffectedBlocks(conv));
+        }
+
+        return affectedBlocksByConv;
+    }
 	
 	/**
      * Count the number of blocks affected by any conversion.
@@ -123,15 +151,31 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
      * @return Number of blocks
      */
     public int countAffectedBlocks() {
-    	int affectedCount = 0;
-    	for (Block block : blocks) {
-    		if (block.countMoves() > 0)
-    			affectedCount++;
-    	}
-    	
-    	return affectedCount;
+        int affectedCount = 0;
+        for (Block block : blocks) {
+            if (block.countMoves() > 0)
+                affectedCount++;
+        }
+        
+        return affectedCount;
     }
 
+    /**
+     * Count the number of blocks affected by the given conversion.
+     * 
+     * @conv the conversion edge.
+     * @return Number of blocks
+     */
+    public int countAffectedBlocks(Conversion conv) {
+        int affectedCount = 0;
+        for (Block block : blocks) {
+            if (block.isAffected(conv)) {
+                affectedCount++;
+            }
+        }
+        return affectedCount;
+    }
+    
 	/**
      * Count the number of times a block is affected by a conversion edge.
      *
@@ -176,12 +220,20 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 	public Iterator<Block> iterator() {
 		return blocks.iterator();
 	}
+	
+	public int size() {
+	    return blocks.size();
+	}
+	
+	public Block get(int i) {
+	    return blocks.get(i);
+	}
 
 	
 	/*
 	 * TESTING INTERFACE
 	 */
-	static public BlockSet getBlockSet(ConversionGraph acg, ArrayList<Block> blocks) {
+	static public BlockSet create(ConversionGraph acg, ArrayList<Block> blocks) {
 		BlockSet bs = new BlockSet();
 		bs.initAndValidate();
 		bs.acg = acg;
@@ -189,8 +241,25 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 		return bs;
 	}
 
-	static public BlockSet getBlockSet(ConversionGraph acg) {
-		return getBlockSet(acg, new ArrayList<>());
+	static public BlockSet create(ConversionGraph acg) {
+		return create(acg, new ArrayList<>());
 	}
+
+//    public BlockSet copy() {
+//        return copy(acg);
+//    }
+
+    public BlockSet copy(ConversionGraph newACG) {
+        ArrayList<Block> otherBlocks = new ArrayList<>();
+        for (Block b : blocks) {
+            otherBlocks.add(b.copy());
+        }
+        
+        BlockSet other = new BlockSet();
+        other.initByName("block", otherBlocks,
+                         "network", newACG);
+
+        return other;
+    }
 	
 }

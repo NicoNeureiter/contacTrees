@@ -13,7 +13,7 @@ import org.apache.commons.math3.stat.inference.KolmogorovSmirnovTest;
 import org.junit.Before;
 import org.junit.Test;
 
-import contactrees.ACGWithBlocksReader;
+import contactrees.ACGWithBlocks;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
 import contactrees.util.Util;
@@ -23,8 +23,8 @@ import beast.util.Randomizer;
 
 public abstract class TestSingleOperator {
 
-	static ArrayList<ACGWithBlocksReader> samplesSimulator;
-	static ArrayList<ACGWithBlocksReader> samplesMCMC;
+	static ArrayList<ACGWithBlocks> samplesSimulator;
+	static ArrayList<ACGWithBlocks> samplesMCMC;
 	
 	static final int N_SAMPLES = 500;
 	static final int N_SAMPLES_SIMU = 5000;
@@ -116,9 +116,9 @@ public abstract class TestSingleOperator {
 		return ksTest.kolmogorovSmirnovTest(samples1, samples2);
 	}
 	
-	protected void collectStatistics(int i, List<ACGWithBlocksReader> samples, double[] heightsArray, double[] convCountArray, 
+	protected void collectStatistics(int i, List<ACGWithBlocks> samples, double[] heightsArray, double[] convCountArray, 
 									 double[] moveCountsArray, double[] meanConvHeightsArray) {
-		ACGWithBlocksReader sample = samples.get(i);
+		ACGWithBlocks sample = samples.get(i);
 		heightsArray[i] = sample.getRoot().getHeight();
 		convCountArray[i] = sample.getConvCount();
 		moveCountsArray[i] = sample.blockSet.countMoves();
@@ -225,8 +225,8 @@ public abstract class TestSingleOperator {
 		return array;
 	}
 	
-	protected static ArrayList<ACGWithBlocksReader> readSamplesFromNexus(String path) throws IOException {
-		ArrayList<ACGWithBlocksReader> samples = new ArrayList<>();
+	protected static ArrayList<ACGWithBlocks> readSamplesFromNexus(String path) throws IOException {
+		ArrayList<ACGWithBlocks> samples = new ArrayList<>();
 		BufferedReader reader = new BufferedReader(new FileReader(path));
 		
 		String line = "";
@@ -242,7 +242,7 @@ public abstract class TestSingleOperator {
 		return samples;
 	}
 	
-	public static ACGWithBlocksReader parseSampleLine(String line) {
+	public static ACGWithBlocks parseSampleLine(String line) {
 		String newick = line
 				.split("&R\\]", 2)[1]
 				.replace(";"," ")
@@ -251,7 +251,7 @@ public abstract class TestSingleOperator {
 		assert newick != "";
 		assert newick != null;
 		
-		ACGWithBlocksReader reader = ACGWithBlocksReader.newFromNewick(N_BLOCKS, newick);
+		ACGWithBlocks reader = ACGWithBlocks.newFromNewick(N_BLOCKS, newick);
 		//reader.fromExtendedNewick(newick, false, 1);
 		
 		return reader;

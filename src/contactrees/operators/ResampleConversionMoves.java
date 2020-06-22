@@ -74,7 +74,7 @@ public class ResampleConversionMoves extends ACGOperator {
         double logP = 0;
         
         if (pMove == 0.) {
-            assert blockSet.getAffectedBlocks(conv).isEmpty();
+            assert blockSet.getAffectedBlockIDs(conv).isEmpty();
             return 0;
         }
 
@@ -102,11 +102,11 @@ public class ResampleConversionMoves extends ACGOperator {
      * @return log probability density
      */
     public double getAffectedBlocksProb(Conversion conv) {
-        int affectedBlockCount = blockSet.getAffectedBlocks(conv).size();
+        int affectedBlockCount = blockSet.getAffectedBlockIDs(conv).size();
         int unaffectedBlockCount = blockSet.getBlockCount() - affectedBlockCount;
         
         if (pMove == 0.) {
-            assert blockSet.getAffectedBlocks(conv).isEmpty();
+            assert blockSet.getAffectedBlockIDs(conv).isEmpty();
             return 0;
         }
         

@@ -30,8 +30,8 @@ import contactrees.util.parsers.ExtendedNewickParser;
 @Description("Conversion graph based around the clonal frame.")
 public class ConversionGraph extends Tree {
 
-    public Input<String> fromExtNewickInput = new Input<>(
-            "extendedNewick",
+    public Input<String> newickInput = new Input<>(
+            "newick",
             "Initialise ARG from extended Newick representation.");
     public Input<Boolean> dropNewickConvsInput = new Input<>(
             "dropNewickConvs",
@@ -42,12 +42,12 @@ public class ConversionGraph extends Tree {
     /**
      * List of conversion edges on graph (and a copy for restore).
      */
-    private ConversionList convs, storedConvs;
+    protected ConversionList convs, storedConvs;
     
     /**
      * Clonal frame event list.
      */
-    private CFEventList cfEventList;
+    protected CFEventList cfEventList;
     
     @Override
     public void initAndValidate() {
@@ -60,8 +60,8 @@ public class ConversionGraph extends Tree {
         storedConvs = new ConversionList(this);
         
 
-        if (fromExtNewickInput.get() != null) {
-            fromExtendedNewick(fromExtNewickInput.get());
+        if (newickInput.get() != null) {
+            fromExtendedNewick(newickInput.get());
         }
         
         cfEventList = new CFEventList(this);

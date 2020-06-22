@@ -131,7 +131,7 @@ public class SimulatedACGWithBlocks extends BEASTObject {
             nexusBuilder.append((new TreesBlock() {
                 @Override
                 public String getTreeString(Tree tree) {
-                	ACGWithMetaDataLogger acgLogger = ACGWithMetaDataLogger.getACGWMDLogger((ConversionGraph) tree, blockSet);
+                	ACGWithMetaDataLogger acgLogger = new ACGWithMetaDataLogger((ConversionGraph) tree, blockSet);
                     return acgLogger.getExtendedNewick();
                 }
             }).addTree(acg, "simulatedARG"));
@@ -158,7 +158,7 @@ public class SimulatedACGWithBlocks extends BEASTObject {
                         lines.add("conversion"
                         		+ " node2=" + conv.getNode1().getNr()
                                 + " node3=" + conv.getNode2().getNr()
-                                + " affectedBlocks=" + blockSet.getAffectedBlocks(conv));
+                                + " affectedBlocks=" + blockSet.getAffectedBlockIDs(conv));
                     }
 
                     return lines;
@@ -266,7 +266,7 @@ public class SimulatedACGWithBlocks extends BEASTObject {
             // Choose affected blocks:
             int nAffected = sampleBinomial(blockSet.getBlockCount(), moveProb);
 
-            assert blockSet.getAffectedBlocks(conv).isEmpty();
+            assert blockSet.getAffectedBlockIDs(conv).isEmpty();
             
             int[] shuffledBlockIdxs = Randomizer.shuffled(nAffected);
             for (int j=0; j<nAffected; j++) {
