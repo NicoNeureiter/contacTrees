@@ -165,20 +165,6 @@
     <sequence id="seq_J.block9" taxon="J" totalcount="2" value="0100000011000000100000000000000000000000"/>
 </data>
 
- 
-<!-- BLOCK DATA definition -->
-<!-- 
-<data id="data.block0" spec="FilteredAlignment" data="@data:sim" filter="1-40"/>
-<data id="data.block1" spec="FilteredAlignment" data="@data:sim" filter="41-80"/>
-<data id="data.block2" spec="FilteredAlignment" data="@data:sim" filter="81-120"/>
-<data id="data.block3" spec="FilteredAlignment" data="@data:sim" filter="121-160"/>
-<data id="data.block4" spec="FilteredAlignment" data="@data:sim" filter="161-200"/>
-<data id="data.block5" spec="FilteredAlignment" data="@data:sim" filter="201-240"/>
-<data id="data.block6" spec="FilteredAlignment" data="@data:sim" filter="241-280"/>
-<data id="data.block7" spec="FilteredAlignment" data="@data:sim" filter="281-320"/>
-<data id="data.block8" spec="FilteredAlignment" data="@data:sim" filter="321-360"/>
-<data id="data.block9" spec="FilteredAlignment" data="@data:sim" filter="361-400"/>
- -->
 
 <!-- BLOCK SET declaration -->
 <stateNode spec="BlockSet" id="allBlocks" network="@acg">
@@ -201,6 +187,17 @@
 </siteModel>
 
 
+<map name="Uniform" >beast.math.distributions.Uniform</map>
+<map name="Exponential" >beast.math.distributions.Exponential</map>
+<map name="LogNormal" >beast.math.distributions.LogNormalDistributionModel</map>
+<map name="Normal" >beast.math.distributions.Normal</map>
+<map name="Beta" >beast.math.distributions.Beta</map>
+<map name="Gamma" >beast.math.distributions.Gamma</map>
+<map name="LaplaceDistribution" >beast.math.distributions.LaplaceDistribution</map>
+<map name="prior" >beast.math.distributions.Prior</map>
+<map name="InverseGamma" >beast.math.distributions.InverseGamma</map>
+<map name="OneOnX" >beast.math.distributions.OneOnX</map>
+
 
 <!-- MCMC -->
 <run id="mcmc" spec="MCMC" chainLength="3000000">
@@ -215,28 +212,42 @@
             <stateNode idref="block$(n)"/>
         </plate>
         <stateNode id="pMove" spec="RealParameter" estimate="false" value="0.2"/>
-		<stateNode id="conversionRate" spec="RealParameter" estimate="false" value="0.1"/>
-        <stateNode id="popSize" spec="RealParameter" estimate="true" value="0.3"/>
+		<stateNode id="conversionRate" spec="RealParameter" estimate="true" value="0.1"/>
+        <!-- <stateNode id="popSize" spec="RealParameter" estimate="true" value="0.3"/> -->
+        <stateNode id="birthRate" spec="RealParameter" estimate="true" value="3.0"/>
         <stateNode id="clockRate" spec="RealParameter" estimate="false" value="2.7"/>
  	</state>
  	
  	
- 	<!-- INITIALIZER -->
+ 	<!-- INITIALIZER 
  	<init id="acg.initial" spec="RandomACG" estimate="false" initial="@acg" taxa="@data.block0">
         <populationModel id="ConstantPopulation0.t" spec="ConstantPopulation" popSize="@popSize"/>
     </init>
-
+    -->
 
    <distribution id="posterior" spec="util.CompoundDistribution">
    
         <!-- PRIOR -->
         <distribution id="prior" spec="util.CompoundDistribution">
-            <distribution id="CoalescentConstant.t:treeSim" spec="Coalescent">
-                <populationModel id="ConstantPopulation.t" spec="ConstantPopulation" popSize="@popSize"/>
-                <treeIntervals id="TreeIntervals.t:treeSim" spec="TreeIntervals" tree="@acg"/>
+            <!-- 
+                <distribution id="CoalescentConstant.t:treeSim" spec="Coalescent">
+                    <populationModel id="ConstantPopulation.t" spec="ConstantPopulation" popSize="@popSize"/>
+                    <treeIntervals id="TreeIntervals.t:treeSim" spec="TreeIntervals" tree="@acg"/>
+                </distribution>
+            -->
+            <!-- 
+                <distribution id="YuleModel" spec="beast.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
+                <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
+            -->
+            <distribution id="ACGYulePrior.t:treeSim" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
+                <cfModel id="YuleModel" spec="beast.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
             </distribution>
-            <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
             <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+            
+            <prior id="convRatePrior" name="distribution" x="@conversionRate">
+                <LogNormal id="LogNormalDistr.convRatePrior" meanInRealSpace="true" name="distr" M="0.5" S="1.0"/>
+            </prior>
+            
         </distribution>
         
         <!-- LIKELIHOOD -->
@@ -290,23 +301,29 @@
     </operator>
     
     <!-- 
-    <operator id="ResampleConversionMoves.t" spec="ResampleConversionMoves" weight="200.0" acg="@acg" 
-              pMove="@pMove" blockSet="@allBlocks" />
+    <operator id="ResampleConversionMoves.t" spec="ResampleConversionMoves" weight="200.0" acg="@acg" pMove="@pMove" blockSet="@allBlocks" />
     -->
 
     <!-- 
     <operator id="PopSizeScaler" spec="ScaleOperator" parameter="@popSize" scaleFactor="0.75" weight="3.0"/>
+    <operator id="BirthRateScaler" spec="ScaleOperator" parameter="@birthRate" scaleFactor="0.75" weight="3.0"/>
     -->
+    <operator id="ConversionRateScaler" spec="ScaleOperator" parameter="@conversionRate" scaleFactor="0.8" weight="3.0"/>
+
 
     <!-- LOGGERS -->
     <logger id="screenlog" logEvery="10000">
         <log idref="posterior"/>
         <log idref="prior"/>
+        <log idref="birthRate"/>
+        <log idref="conversionRate"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
     </logger>
     <logger logEvery="5000" fileName="$(filebase).stats">
         <log idref="posterior"/>
         <log idref="prior"/>
+        <log idref="birthRate"/>
+        <log idref="conversionRate"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
     </logger>
     <logger logEvery="5000" fileName="$(filebase).trees" mode="tree">
