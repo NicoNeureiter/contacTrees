@@ -17,29 +17,20 @@ import contactrees.util.parsers.ExtendedNewickLexer;
 import contactrees.util.parsers.ExtendedNewickParser;
 
 
-public class ACGWithBlocksReader extends ConversionGraph  {
+public class ACGWithBlocks extends ConversionGraph  {
 
     public Input<BlockSet> blockSetInput = new Input<>(
             "blockSet",
             "The block set, which will be assignmed from the parsed network annotations.",
             Input.Validate.REQUIRED);
-    
-    public Input<String> newickInput = new Input<>(
-            "newick",
-            "The extended newick string.",
-            Input.Validate.REQUIRED);
 
 	public BlockSet blockSet;
-
+	
     @Override
     public void initAndValidate() {
         blockSet = blockSetInput.get();
         blockSet.setNetwork(this);
-
         super.initAndValidate();
-        
-        String newick = newickInput.get();
-        fromExtendedNewick(newick, false, taxaTranslationOffset);
     }
 	
     /**
@@ -50,6 +41,7 @@ public class ACGWithBlocksReader extends ConversionGraph  {
      * @param string extended newick representation of ACG
      * @param numbered true indicates that the ACG is numbered.
      */
+    @Override
     public void fromExtendedNewick(String string, boolean numbered, int nodeNumberoffset) {
 
         // Spin up ANTLR
@@ -272,21 +264,75 @@ public class ACGWithBlocksReader extends ConversionGraph  {
     	return Integer.parseInt(sConvID.substring(1));
     }
     
-    public static ACGWithBlocksReader newFromNewick(int nBlocks, String newick) {
-        ACGWithBlocksReader reader = new ACGWithBlocksReader();
-      
+    public static ACGWithBlocks newFromNewick(ArrayList<Block> blocks) {
+
         BlockSet blockSet = new BlockSet();
+        ACGWithBlocks acgWB = new ACGWithBlocks();
+        
+        blockSet.initByName("block", blocks, "network", acgWB);
+        acgWB.initByName("blockSet", blockSet);
+        
+        return acgWB;        
+    }
+    
+    public static ACGWithBlocks newFromNewick(ArrayList<Block> blocks, String newick) {
+
+        BlockSet blockSet = new BlockSet();
+        ACGWithBlocks acgWB = new ACGWithBlocks();
+        
+        blockSet.initByName("block", blocks, "network", acgWB);
+        acgWB.initByName("blockSet", blockSet, "newick", newick);
+        
+        return acgWB;        
+    }
+    
+    public static ACGWithBlocks newFromNewick(int nBlocks, String newick) {
         ArrayList<Block> blocks = new ArrayList<>();
         for (int i=0; i<nBlocks; i++) {
-            Block b = new Block();
+            Block b = new Block("block" + i);
             b.initAndValidate();
             blocks.add(b);
         }
-        blockSet.initByName("block", blocks, "network", reader);
-      
-        reader.initByName("blockSet", blockSet, "newick", newick);
         
-        return reader;
-  }
+        return newFromNewick(blocks, newick);
+    }
+
+    public ACGWithBlocks copy() {
+        ACGWithBlocks other = new ACGWithBlocks();
+
+        // From ConversionGraph.copy():
+        other.setID(getID());
+        other.index = index;
+        other.root = root.copy();
+        other.nodeCount = nodeCount;
+        other.internalNodeCount = internalNodeCount;
+        other.leafNodeCount = leafNodeCount;
+
+        other.initArrays();
+        other.m_taxonset.setValue(m_taxonset.get(), other);
+        
+        other.convs = new ConversionList(this);
+        other.storedConvs = new ConversionList(this);
+
+        for (Conversion conv : convs) {
+            Conversion convCopy = conv.getCopy();
+            convCopy.setConversionGraph(other);
+            convCopy.setNode1(other.m_nodes[conv.getNode1().getNr()]);
+            convCopy.setNode2(other.m_nodes[conv.getNode2().getNr()]);
+            other.convs.convs.put(convCopy.getID(), convCopy);
+        }
+        for (Conversion conv : storedConvs) {
+            Conversion convCopy = conv.getCopy();
+            convCopy.setConversionGraph(other);
+            convCopy.setNode1(other.m_nodes[conv.getNode1().getNr()]);
+            convCopy.setNode2(other.m_nodes[conv.getNode2().getNr()]);
+            other.storedConvs.convs.put(convCopy.getID(), convCopy);
+        }
+
+        other.blockSet = blockSet.copy(other);
+        
+        return other;
+        
+    }
 
 }
