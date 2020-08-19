@@ -174,4 +174,23 @@ public class Util {
         return logPMax + Math.log(sumExp);
     }
 
+    static public double[] list2array(List<Double> list) {
+        double[] array = new double[list.size()];
+        for (int i=0; i<list.size(); i++) {
+            array[i] = list.get(i);
+        }
+        return array;
+    }
+    
+    static public Node getOtherChild(Node parent, Node child) {
+        for (Node c : parent.getChildren()) 
+            if (c != child)
+                return c;
+        
+        return null;
+    }
+    
+    static public Node getSibling(Node node) {
+        return getOtherChild(node.getParent(), node);
+    }
 }
