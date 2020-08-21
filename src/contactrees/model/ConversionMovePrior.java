@@ -36,33 +36,25 @@ public class ConversionMovePrior extends Distribution {
 	
 	final public Input<RealParameter> pMoveInput = new Input<>(
 			"pMove",
-			"The rate at which a pair of lineages will get in contact and form a conversion.",
+			"The probability of a block moving over (being transferred at) a conversion edge.",
 			Input.Validate.REQUIRED);
 
 	ConversionGraph acg;
 	BlockSet blockSet;
-	double pMove;
 	
 	@Override
 	public void initAndValidate() {
 		super.initAndValidate();
 		acg = networkInput.get();
 		blockSet = blockSetInput.get();
-		pMove = pMoveInput.get().getValue();
 	}
 	
 	@Override
 	public double calculateLogP() {
 		logP = 0.0;
-        pMove = pMoveInput.get().getValue();
+        double pMove = pMoveInput.get().getValue();
 		int moveCount = blockSet.countMoves();
 		int n = acg.getConvCount() * blockSet.getBlockCount();
-		
-		for (Block b : blockSet) {
-		    for (int cID : b.getConversionIDs()) {
-		        assert acg.getConversions().getKeys().contains(cID) : cID;
-		    }
-		}
 		
         if (pMove == 0.) {
         	assert moveCount == 0;
@@ -110,7 +102,7 @@ public class ConversionMovePrior extends Distribution {
 
         acg = networkInput.get();
         blockSet = blockSetInput.get();
-        pMove = pMoveInput.get().getValue();
+        double pMove = pMoveInput.get().getValue();
         
 
         for (Block block : blockSet) {

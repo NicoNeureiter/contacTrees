@@ -85,11 +85,24 @@ public class ConversionGraph extends Tree {
      * @return The newly created conversion
      */
     public Conversion addNewConversion() {
-    	startEditing(null);
-    	
-    	Conversion conv = convs.addNewConversion();
-    	conv.setConversionGraph(this);
-    	return conv;
+        startEditing(null);
+        
+        Conversion conv = convs.addNewConversion();
+        conv.setConversionGraph(this);
+        return conv;
+    }
+    
+    /**
+     * Create a new conversion, add it to the graph and return it.
+     * 
+     * @return The newly created conversion
+     */
+    public Conversion addDuplicateConversion(Conversion original) {
+        startEditing(null);
+        
+        Conversion copy = convs.duplicateConversion(original);
+        copy.setConversionGraph(this);
+        return copy;
     }
    
     /**

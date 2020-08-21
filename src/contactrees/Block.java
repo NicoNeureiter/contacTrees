@@ -17,7 +17,7 @@ import contactrees.util.Util;
 
 
 /**
- * @author Nico Neureiter <n.neureiter.research@gmail.com>
+ * @author Nico Neureiter
  */
 @Description("A block which is affected by a marginal tree and defined through a set of conversions wihtin a network.")
 public class Block extends StateNode { 

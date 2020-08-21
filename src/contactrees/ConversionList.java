@@ -66,14 +66,36 @@ public class ConversionList implements Iterable<Conversion> {
 		if (conv.id == 0)
 			conv.setID(getFreeKey());
 		
+		assert !convs.containsKey(conv.id);
+		
 		convs.put(conv.id, conv);
 		_lastAdded = conv;
 	}
 	
+
+    /**
+     * Create a duplicate of the speicified conversion and add it to the list
+     * @param Conversion to be duplicated
+     * @return The duplicate
+     */
+    public Conversion duplicateConversion(Conversion conv) {
+        assert convs.containsKey(conv.id);
+        startEditing();
+        
+        // Copy the original conversion 
+        Conversion newConv= conv.getCopy();
+        
+        // Assign a new ID and add the copied conversion to the list
+        newConv.setID(getFreeKey());
+        add(newConv);
+        
+        return newConv;
+    }
+	
 	/**
 	 * Obtain the conversion at the given key.
 	 * @param key
-	 * @return The requested conversion.
+	 * @return The requested conversion
 	 */
 	public Conversion get(int key) {
 		return convs.get(key);
@@ -168,7 +190,6 @@ public class ConversionList implements Iterable<Conversion> {
 	public Conversion getRandomConversion() {
 		return Util.sampleFrom(convs.values());
 	}
-
 
     /**
      * Mark ACG statenode as dirty if available.

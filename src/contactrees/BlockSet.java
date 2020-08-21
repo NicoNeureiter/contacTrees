@@ -22,8 +22,7 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 			new ArrayList<>());
 	public Input<ConversionGraph> networkInput = new Input<>(
 			"network",
-			"The network on which the conversion moves are defined."
-			);
+			"The network on which the conversion moves are defined.");
 	public Input<Boolean> deferNetworkSpecificationInput = new Input<>(
 	        "deferNetworkSpecification",
 	        "Set this flag to allow deferring the specification of the network input (usually to be set in ACGWithBlocks).",

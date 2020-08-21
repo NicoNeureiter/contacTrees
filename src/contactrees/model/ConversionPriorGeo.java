@@ -49,14 +49,12 @@ public class ConversionPriorGeo extends Distribution {
             "Upper bound on conversion count.", Integer.MAX_VALUE);
 	
 	ConversionGraph acg;
-	double convRate;
 	ApproxMultivariateTraitLikelihoodF geoLikelihood;
 	
 	@Override
 	public void initAndValidate() {
 		super.initAndValidate();
 		acg = networkInput.get();
-		convRate = conversionRateInput.get().getValue();
 		geoLikelihood = geoLikelihoodInput.get();
 	}
 	
@@ -74,6 +72,7 @@ public class ConversionPriorGeo extends Distribution {
         }
 
         // Poisson prior on the number of conversions
+        double convRate = conversionRateInput.get().getValue();
         double poissonMean = convRate * acg.getClonalFramePairedLength();
         logP += -poissonMean + acg.getConvCount() * Math.log(poissonMean);
         

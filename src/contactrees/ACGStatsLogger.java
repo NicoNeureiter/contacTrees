@@ -17,7 +17,7 @@ import beast.evolution.tree.Node;
 /**
  * 
  * 
- * @author Nico Neureiter <nico.neureiter@gmail.com>
+ * @author Nico Neureiter
  */
 public class ACGStatsLogger extends BEASTObject implements Loggable {
 
