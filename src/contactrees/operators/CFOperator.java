@@ -12,7 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * @author Nico Neureiter <nico.neureiter@gmail.com>
+ * @author Nico Neureiter
  */
 public abstract class CFOperator extends ConversionCreationOperator {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Tim Vaughan <tgvaughan@gmail.com>
+ * Copyright (C) 2014 Tim Vaughan <tgvaughan@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Nico Neureiter <nico.neureiter@gmail.com>
+ * @author Nico Neureiter
  */
 @Description("Scaling operator for recombination graphs.")
 public class ACGScaler extends ACGOperator {

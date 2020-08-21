@@ -37,7 +37,7 @@ import java.util.Set;
  * Abstract class of ACG operators that add new conversion
  * edges to an existing ConversionGraph.
  *
- * @author Nico Neureiter <nico.neureiter@gmail.com>
+ * @author Nico Neureiter
  */
 public abstract class EdgeCreationOperator extends ACGOperator {
 
@@ -110,60 +110,8 @@ public abstract class EdgeCreationOperator extends ACGOperator {
         activeLineages.remove(node1);
         Node node2 = Util.sampleFrom(activeLineages);
         conv.setNode2(node2);
-        
-        assert conv.getNode1() != null;
-        assert conv.getNode2() != null;
-        assert conv.getNode1() != conv.getNode2();
-        assert !conv.getNode1().isRoot();
-        assert !conv.getNode2().isRoot();
-        assert conv.isValid();
-        
+
         return Math.log(1.0/acg.getClonalFramePairedLength());
-        
-//        
-//        // Select departure point
-//        double u = Randomizer.nextDouble()*acg.getClonalFramePairedLength();
-//        logP += Math.log(1.0/acg.getClonalFramePairedLength());
-//        
-//        List<Event> eventList = acg.getCFEvents(); 
-//        for (int i=0; i<eventList.size()-1; i++) {
-//        	Event start = eventList.get(i);
-//        	Event end = eventList.get(i+1);
-//        	int k = start.getLineageCount();
-//        	
-//        	double intervalLength = end.getHeight() - start.getHeight(); 
-//        	double pairedLength = intervalLength * k * (k-1); 
-//        	
-//        	if (u < pairedLength) {
-//        		System.out.println(start.getNode().getNr());
-//        		System.out.println(start.getNode());
-//        		System.out.println(intervalLength);
-//        		System.out.println(start.getNode().getLength());
-//        		System.out.println(u + " < "+ pairedLength);
-//        		// Pick height uniformly at random
-//        		double height = Randomizer.uniform(0, intervalLength);
-//        		conv.setHeight(height);
-//        		
-//        		// Pick pair of lineages uniformly from active interval
-//        		HashSet<Node> lineages = acg.getLineagesAtHeight(height);
-//        		Node node1 = Util.sampleFrom(lineages);
-//        		conv.setNode1(node1);
-//        		assert node1.getParent().getHeight() > height;
-//        		
-//        		lineages.remove(node1);
-//        		Node node2 = Util.sampleFrom(lineages);
-//        		conv.setNode2(node2);
-//        		assert node2.getParent().getHeight() > height : "Parent too young: "
-//        				+ node2.getParent().getHeight() + " < " + height;
-//        		
-//        		
-//        		break;
-//        	}
-//        	u -= pairedLength;
-//        }
-//        
-//        
-//        return logP;
     }
     
     /**
