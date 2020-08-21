@@ -12,7 +12,7 @@ public class SimulationTestCFOperators extends TestSingleOperator {
     @Test
     public void testNarrowExchange() throws Exception {
         testStationarity("NarrowExchange");
-}
+    }
     
     @Test
     public void testWideExchange() throws Exception {
@@ -22,5 +22,10 @@ public class SimulationTestCFOperators extends TestSingleOperator {
     @Test
     public void testUniform() throws Exception {
         testStationarity("Uniform");
+    }
+
+    @Test
+    public void testCFConversionSwap() throws Exception {
+        testStationarity("CFConversionSwap");
     }
 }

@@ -2,6 +2,7 @@
        namespace='beast.evolution.tree.coalescent
                  :beast.evolution.alignment
                  :beast.evolution.operators
+                 :beast.math.distributions
                  :beast.core
                  :beast.core.parameter
                  :contactrees
@@ -42,47 +43,42 @@
         
         <stateNode id="pMove" spec="RealParameter" estimate="false" value="$(pMove)"/>
         <stateNode id="conversionRate" spec="RealParameter" estimate="false" value="$(convRate)"/>
-        <stateNode id="popSize" spec="RealParameter" estimate="false" value="$(popSize)"/>
+        <stateNode id="birthRate" spec="RealParameter" estimate="false" value="$(birthRate)"/>
     </state>
-    
-    <init id="RandomACG" spec="beast.evolution.tree.RandomTree" estimate="false" initial="@acg" taxa="@data:nodata">
-        <populationModel id="ConstantPopulation0.t" spec="ConstantPopulation" popSize="@popSize"/>
-    </init>
 
-   <distribution id="posterior" spec="util.CompoundDistribution">
-        <distribution id="prior" spec="util.CompoundDistribution">
-            <distribution id="CoalescentConstant.t:treeSim" spec="Coalescent">
-                <populationModel id="ConstantPopulation.t" spec="ConstantPopulation" popSize="@popSize"/>
-                <treeIntervals id="TreeIntervals.t:treeSim" spec="TreeIntervals" tree="@acg"/>
-            </distribution>
-
-            <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
-            <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+    <distribution id="prior" spec="util.CompoundDistribution">
+        <distribution id="ACGYulePrior.t" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
+            <cfModel id="YuleModel" spec="beast.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
         </distribution>
+        <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+        <!-- 
+        <distribution id="convRatePrior" spec="Prior" x="@conversionRate">
+            <distr id="LogNormalDistr.convRatePrior" spec="LogNormalDistributionModel" meanInRealSpace="true" M="$(convRate)" S="1.0"/>
+        </distribution>
+        <distribution id="pMovePrior" spec="Prior" x="@pMove">
+            <distr id="BetaDistr.pMovePrior" spec="Beta" alpha="30.0" beta="70.0"/>
+        </distribution>
+         -->
     </distribution>
-    
 
-    <operatorschedule id="schedule" spec="contactrees.test.OrderedOperatorSchedule">
-        <operator id="SimumlateOp" spec="contactrees.test.SimulatorOperator" network="@acg" blockSet="@allBlocks" 
-                  pMove="@pMove" conversionRate="@conversionRate" weight="1.0">
-            <populationModel spec="ConstantPopulation" popSize="$(popSize)"/>
-        </operator>      
-        
-        <operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="9999.0" acg="@acg" pMove="@pMove" 
+    <operatorschedule id="schedule" spec="contactrees.test.StationarityTestSchedule" logInterval="$(logInterval)">
+        <simulatorOperator id="SimumlaterOperator" spec="contactrees.test.SimulatorOperator" distribution="@prior" state="@state" weight="1"/>
+        <operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="1" acg="@acg" pMove="@pMove" 
                   conversionRate="@conversionRate" blockSet="@allBlocks" />
     </operatorschedule>
     
-    
     <logger id="screenlog" logEvery="$(logInterval)">
-        <log idref="posterior"/>
         <log idref="prior"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="pMove"/>
+        <log idref="conversionRate"/>
     </logger>
 
     <logger logEvery="$(logInterval)" fileName="$(filebase).stats">
-        <log idref="posterior"/>
         <log idref="prior"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="pMove"/>
+        <log idref="conversionRate"/>
     </logger>
 
     <logger logEvery="$(logInterval)" fileName="$(filebase).trees">

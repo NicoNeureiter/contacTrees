@@ -28,6 +28,11 @@ public class SimulationTestConversionOperators extends TestSingleOperator {
     public void testConvertedEdgeHop() throws Exception {
         testStationarity("ConvertedEdgeHop");
     }
+
+    @Test
+    public void testConversionSplit() throws Exception {
+        testStationarity("ConversionSplit");
+    }
     
     @Test
     public void testConvertedEdgeHopGibbs() throws Exception {

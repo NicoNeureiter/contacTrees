@@ -6,7 +6,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.apache.commons.math3.stat.inference.KolmogorovSmirnovTest;
@@ -25,35 +27,22 @@ public abstract class TestSingleOperator {
 
 	static ArrayList<ACGWithBlocks> samplesSimulator;
 	static ArrayList<ACGWithBlocks> samplesMCMC;
-	
-	static final int N_SAMPLES = 500;
-	static final int N_SAMPLES_SIMU = 5000;
-    static final int LOG_INTERVAL = 10000;
 
     static final int N_TAXA = 10;
-	static final int N_BLOCKS = 10;
-	static final double CONV_RATE = 0.025;
-	static final double P_MOVE = 0.15;
-	static final double POP_SIZE = 50.0;
- 
+    static final int N_BLOCKS = 10;
 	static final double KS_THRESHOLD = 0.001;
 	
 	static String FBASE_SIM = String.format("simulateACGs%dtaxon", N_TAXA);
 	static String FBASE_MCMC;  // Will be assigned in setUp, based on subclass specific operator
 	
-
 	public void generateSamples(String operator) throws Exception {
 	    FBASE_MCMC = String.format("%dtaxa_%s", N_TAXA, operator);
 	    
-		int chainLength = LOG_INTERVAL*N_SAMPLES;
-		String xmlParams = String.format("nSims=%d,convRate=%f,pMove=%f,popSize=%f,chainLength=%d,logInterval=%d", 
-		        N_SAMPLES_SIMU, CONV_RATE, P_MOVE, POP_SIZE, chainLength, LOG_INTERVAL);
-		System.out.println(xmlParams);
 		String workingDir = "simulations/";
 		System.setProperty("beast.useWindow", "true"); // Trick beast into not stopping application
 
 		String seed = String.format("%d", Randomizer.nextInt());
-		seed = "1575254328";
+//		seed = "1575254328";
 		System.out.println("Seed: " + seed);
 
 		
@@ -75,40 +64,47 @@ public abstract class TestSingleOperator {
 		
 		BeastMCMC.main(mcmcArgs);
 		samplesMCMC = readSamplesFromNexus(workingDir + FBASE_MCMC + ".trees");
-		samplesMCMC.remove(0);
+        samplesMCMC.remove(0);
+        samplesMCMC.remove(1);
 	}
 
 	public void testStationarity(String operatorName) throws Exception {
 	    generateSamples(operatorName);
-	    
-		assert samplesMCMC.size() == N_SAMPLES : samplesMCMC.size();
-		assert samplesSimulator.size() == N_SAMPLES_SIMU;
-		
+
+        int n_samples_simu = samplesSimulator.size();
+	    int n_samples_mcmc = samplesMCMC.size();
 		
 		// Statistics to collect
-		double[] convCounts = new double[N_SAMPLES];
-		double[] convCountsTarget = new double[N_SAMPLES_SIMU];
-		double[] moveCounts = new double[N_SAMPLES];
-		double[] moveCountsTarget = new double[N_SAMPLES_SIMU];
-		double[] rootHeights = new double[N_SAMPLES];
-		double[] rootHeightsTarget = new double[N_SAMPLES_SIMU];
-		double[] meanConvHeights = new double[N_SAMPLES];
-		double[] meanConvHeightsTarget = new double[N_SAMPLES_SIMU];
-		
+        double[] convCounts = new double[n_samples_mcmc];
+        double[] convCountsTarget = new double[n_samples_simu];
+		double[] moveCounts = new double[n_samples_mcmc];
+		double[] moveCountsTarget = new double[n_samples_simu];
+		double[] rootHeights = new double[n_samples_mcmc];
+		double[] rootHeightsTarget = new double[n_samples_simu];
+		double[] meanConvHeights = new double[n_samples_mcmc];
+		double[] meanConvHeightsTarget = new double[n_samples_simu];
+        double[] obsConvRate = new double[n_samples_mcmc];
+        double[] obsConvRateTarget= new double[n_samples_simu];
+        double[] movesPerConv = new double[n_samples_mcmc];
+        double[] movesPerConvTarget= new double[n_samples_simu];
+        
 		// Evaluate statistics per sample
-		for (int i=0; i<N_SAMPLES; i++)
+		for (int i=0; i<n_samples_mcmc; i++)
 			collectStatistics(i, samplesMCMC, rootHeights, convCounts, 
-							  moveCounts, meanConvHeights);
-		for (int i=0; i<N_SAMPLES_SIMU; i++) {
+							  moveCounts, meanConvHeights, obsConvRate,
+							  movesPerConv);
+		for (int i=0; i<n_samples_simu; i++) {
 			collectStatistics(i, samplesSimulator, rootHeightsTarget, convCountsTarget, 
-							  moveCountsTarget, meanConvHeightsTarget);
+							  moveCountsTarget, meanConvHeightsTarget, obsConvRateTarget, 
+							  movesPerConvTarget);
 		}
 		
 		printStats(rootHeights, rootHeightsTarget, "rootHeight");
+        printStats(obsConvRate, obsConvRateTarget, "obsConvRate");
 		printStats(convCounts, convCountsTarget, "convCounts");
 		printStats(meanConvHeights, meanConvHeightsTarget, "meanConvHeights");
 		printStats(moveCounts, moveCountsTarget, "moveCounts");
-
+        printStats(movesPerConv, movesPerConvTarget, "movesPerConv");
 	}
 	
 	protected static double ksTest(double[] samples1, double[] samples2) {
@@ -117,41 +113,39 @@ public abstract class TestSingleOperator {
 	}
 	
 	protected void collectStatistics(int i, List<ACGWithBlocks> samples, double[] heightsArray, double[] convCountArray, 
-									 double[] moveCountsArray, double[] meanConvHeightsArray) {
+									 double[] moveCountsArray, double[] meanConvHeightsArray, double[] obsConvRate, double[] movesPerConv) {
 		ACGWithBlocks sample = samples.get(i);
 		heightsArray[i] = sample.getRoot().getHeight();
 		convCountArray[i] = sample.getConvCount();
 		moveCountsArray[i] = sample.blockSet.countMoves();
 		meanConvHeightsArray[i] = meanConvHeight(sample);
+		obsConvRate[i] = (double) sample.getConvCount() / ((double) sample.getClonalFramePairedLength());
+		movesPerConv[i] = (double) sample.blockSet.countMoves() / ((double) sample.getConvCount());
+
 	}
 	
 	protected void printStats(double[] xMCMC, double[] xSimu, String statName) {
-		
-		double ksStatistic = ksTest(xSimu, xMCMC);
+	    xMCMC = filterNaNs(xMCMC);
+	    xSimu = filterNaNs(xSimu);
+	    
+	    double ksStatistic = ksTest(xSimu, xMCMC);
 		
 		System.out.println();
 		System.out.println(String.format("KS-test %s: %.4f", statName, ksStatistic));
 		System.out.println(String.format("MCMC %s: %.2f  \t   %.3f\t+/- %.2f", statName, 
-									     (new Median()).evaluate(xMCMC), mean(xMCMC), stdOfMean(xMCMC)));
+									     (new Median()).evaluate(xMCMC), mean(xMCMC), std(xMCMC)));
 		System.out.println(String.format("Simu %s: %.2f  \t   %.3f\t+/- %.2f", statName, 
-										 (new Median()).evaluate(xSimu), mean(xSimu), stdOfMean(xSimu)));
-		
+										 (new Median()).evaluate(xSimu), mean(xSimu), std(xSimu)));
 
 		// We test whether a bootstrap sample of the KS-Statistic averages out to 0.5 (as it should)-
 		assertTrue(ksStatistic > KS_THRESHOLD);
-//        int nFolds = 500;
-//        double ksStatSum = 0.0;
-//        for (int iFold=0; iFold<nFolds; iFold++) {
-//            double[] xMCMCFold = Util.sampleSubset(xMCMC, 200);
-//            double[] xSimuFold = Util.sampleSubset(xSimu, 200);
-//            ksStatSum += ksTest(xSimuFold, xMCMCFold);
-//        }
-//        double ksStatMean = ksStatSum / nFolds;
-//        System.out.println(ksStatMean);
-//        assertTrue(ksStatMean >= 0.1);
-        
 	}
 	
+	double[] filterNaNs(double[] x) {
+	    List<Double> xList = asList(x);
+	    xList.removeIf(v -> Double.isNaN(v));
+        return asArray(xList); 
+	}
 	
 	protected double[] meanArr(double[] xs, double[] ys) {
 		assert xs.length == ys.length;
@@ -215,7 +209,7 @@ public abstract class TestSingleOperator {
 		return names;
 	}
 	
-	protected double[] listToArray(List<Double> list) {
+	protected double[] asArray(Collection<Double> list) {
 		double[] array = new double[list.size()]; 
 		int i = 0;
 		for (double value : list) {
@@ -223,6 +217,14 @@ public abstract class TestSingleOperator {
 			i++;
 		}
 		return array;
+	}
+	
+	protected ArrayList<Double> asList(double[] array) {
+	    ArrayList<Double> list = new ArrayList<>();
+	    for (Double x : array) {
+	        list.add(x);
+	    }
+	    return list;
 	}
 	
 	protected static ArrayList<ACGWithBlocks> readSamplesFromNexus(String path) throws IOException {

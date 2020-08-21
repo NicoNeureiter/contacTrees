@@ -2,6 +2,7 @@
        namespace='beast.evolution.tree.coalescent
                  :beast.evolution.alignment
                  :beast.evolution.operators
+                 :beast.math.distributions
                  :beast.core
                  :beast.core.parameter
                  :contactrees
@@ -30,62 +31,57 @@
 
 <run id="mcmc" spec="MCMC" chainLength="$(chainLength)">
 
- 	<state id="state" storeEvery="$(logInterval)">
-    	<!-- Define the conversion graph -->
+    <state id="state" storeEvery="$(logInterval)">
+        <!-- Define the conversion graph -->
         <stateNode id="acg" spec="ConversionGraph">
-	        <taxonset id="taxa" spec="TaxonSet" alignment="@data:nodata"/>
+            <taxonset id="taxa" spec="TaxonSet" alignment="@data:nodata"/>
         </stateNode>
-    	
+        
         <plate var="n" range="0,1,2,3,4,5,6,7,8,9">
-			<stateNode idref="block.$(n)"/>
-		</plate>
+            <stateNode idref="block.$(n)"/>
+        </plate>
         
         <stateNode id="pMove" spec="RealParameter" estimate="false" value="$(pMove)"/>
-		<stateNode id="conversionRate" spec="RealParameter" estimate="false" value="$(convRate)"/>
-        <stateNode id="popSize" spec="RealParameter" estimate="false" value="$(popSize)"/>
- 	</state>
- 	
- 	<init id="RandomACG" spec="beast.evolution.tree.RandomTree" estimate="false" initial="@acg" taxa="@data:nodata">
-        <populationModel id="ConstantPopulation0.t" spec="ConstantPopulation" popSize="@popSize"/>
-    </init>
+        <stateNode id="conversionRate" spec="RealParameter" estimate="false" value="$(convRate)"/>
+        <stateNode id="birthRate" spec="RealParameter" estimate="false" value="$(birthRate)"/>
+    </state>
 
-   <distribution id="posterior" spec="util.CompoundDistribution">
-        <distribution id="prior" spec="util.CompoundDistribution">
-            <distribution id="CoalescentConstant.t:treeSim" spec="Coalescent">
-                <populationModel id="ConstantPopulation.t" spec="ConstantPopulation" popSize="@popSize"/>
-                <treeIntervals id="TreeIntervals.t:treeSim" spec="TreeIntervals" tree="@acg"/>
-            </distribution>
-
-            <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
-            <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+    <distribution id="prior" spec="util.CompoundDistribution">
+        <distribution id="ACGYulePrior.t" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
+            <cfModel id="YuleModel" spec="beast.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
         </distribution>
+        <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+        <!-- 
+        <distribution id="convRatePrior" spec="Prior" x="@conversionRate">
+            <distr id="LogNormalDistr.convRatePrior" spec="LogNormalDistributionModel" meanInRealSpace="true" M="$(convRate)" S="1.0"/>
+        </distribution>
+        <distribution id="pMovePrior" spec="Prior" x="@pMove">
+            <distr id="BetaDistr.pMovePrior" spec="Beta" alpha="30.0" beta="70.0"/>
+        </distribution>
+         -->
     </distribution>
-	
 
-	<operatorschedule id="schedule" spec="contactrees.test.OrderedOperatorSchedule">
-	 	<operator id="SimumlateOp" spec="contactrees.test.SimulatorOperator" network="@acg" blockSet="@allBlocks" 
-	 	 		  pMove="@pMove" conversionRate="@conversionRate" weight="1.0">
-	 		<populationModel spec="ConstantPopulation" popSize="$(popSize)"/>
-	 	</operator>		 
-	 	
-	 	<operator id="ACGscale.rootOnly.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="9999.0" rootOnly="true"/> 
-	</operatorschedule>
-	
-	
+    <operatorschedule id="schedule" spec="contactrees.test.StationarityTestSchedule" logInterval="$(logInterval)">
+        <simulatorOperator id="SimumlaterOperator" spec="contactrees.test.SimulatorOperator" distribution="@prior" state="@state" weight="1"/>
+        <operator id="ACGscale.rootOnly.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="1" rootOnly="true"/>
+    </operatorschedule>
+    
     <logger id="screenlog" logEvery="$(logInterval)">
-        <log idref="posterior"/>
         <log idref="prior"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="pMove"/>
+        <log idref="conversionRate"/>
     </logger>
 
     <logger logEvery="$(logInterval)" fileName="$(filebase).stats">
-        <log idref="posterior"/>
         <log idref="prior"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="pMove"/>
+        <log idref="conversionRate"/>
     </logger>
 
     <logger logEvery="$(logInterval)" fileName="$(filebase).trees">
-    	<log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
+        <log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
     </logger>
 </run>
   

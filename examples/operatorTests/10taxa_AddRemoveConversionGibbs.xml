@@ -6,29 +6,28 @@
        namespace='beast.evolution.tree.coalescent
                  :beast.evolution.alignment
                  :beast.evolution.operators
+                 :beast.math.distributions
                  :beast.core
                  :beast.core.parameter
                  :beast.evolution.sitemodel
-                 :beast.evolution.substitutionmodel
+                 :beast.evolution.substitutionmodel                
                  :contactrees
                  :contactrees.model
                  :contactrees.util
                  :contactrees.operators'>
 
-
 <data id="data:nodata" name="alignment" dataType="binary">
-    <sequence id="seq_A" taxon="A" totalcount="2" value="?"/>
-    <sequence id="seq_B" taxon="B" totalcount="2" value="?"/>
-    <sequence id="seq_C" taxon="C" totalcount="2" value="?"/>
-    <sequence id="seq_D" taxon="D" totalcount="2" value="?"/>
-    <sequence id="seq_E" taxon="E" totalcount="2" value="?"/>
-    <sequence id="seq_F" taxon="F" totalcount="2" value="?"/>
-    <sequence id="seq_G" taxon="G" totalcount="2" value="?"/>
-    <sequence id="seq_H" taxon="H" totalcount="2" value="?"/>
-    <sequence id="seq_I" taxon="I" totalcount="2" value="?"/>
-    <sequence id="seq_J" taxon="J" totalcount="2" value="?"/>
+	<sequence id="seq_A" taxon="A" totalcount="2" value="?"/>
+	<sequence id="seq_B" taxon="B" totalcount="2" value="?"/>
+	<sequence id="seq_C" taxon="C" totalcount="2" value="?"/>
+	<sequence id="seq_D" taxon="D" totalcount="2" value="?"/>
+	<sequence id="seq_E" taxon="E" totalcount="2" value="?"/>
+	<sequence id="seq_F" taxon="F" totalcount="2" value="?"/>
+	<sequence id="seq_G" taxon="G" totalcount="2" value="?"/>
+	<sequence id="seq_H" taxon="H" totalcount="2" value="?"/>
+	<sequence id="seq_I" taxon="I" totalcount="2" value="?"/>
+	<sequence id="seq_J" taxon="J" totalcount="2" value="?"/>
 </data>
-
 
 <stateNode spec="BlockSet" id="allBlocks" network="@acg">
     <plate var="n" range="&blockrange;">
@@ -37,16 +36,17 @@
 </stateNode>
 
 <plate var="x" range="&blockrange;">
-    <distribution id="treeLikelihood.block$(x)" spec="beast.evolution.likelihood.TreeLikelihood" data="@data:nodata">
-        <tree id="marginalTree.$(x)" spec="MarginalTree" network="@acg" block="@block.$(x)" nodetype="contactrees.MarginalNode"/>   
-        <branchRateModel spec="beast.evolution.branchratemodel.StrictClockModel" clock.rate="1.0"/>
-        <siteModel spec="SiteModel">
-            <substModel spec="GeneralSubstitutionModel" rates="1.0 1.0">
-                <frequencies spec="Frequencies" frequencies="0.5 0.5"/>
-            </substModel> 
-        </siteModel>
-    </distribution>
+	<distribution id="treeLikelihood.block$(x)" spec="beast.evolution.likelihood.TreeLikelihood" data="@data:nodata">
+	    <tree id="marginalTree.$(x)" spec="MarginalTree" network="@acg" block="@block.$(x)" nodetype="contactrees.MarginalNode"/>   
+	    <branchRateModel spec="beast.evolution.branchratemodel.StrictClockModel" clock.rate="1.0"/>
+	    <siteModel spec="SiteModel">
+	        <substModel spec="GeneralSubstitutionModel" rates="1.0 1.0">
+	            <frequencies spec="Frequencies" frequencies="0.5 0.5"/>
+	        </substModel> 
+	    </siteModel>
+	</distribution>
 </plate>
+
 
 <run id="mcmc" spec="MCMC" chainLength="$(chainLength)">
 
@@ -56,39 +56,33 @@
             <taxonset id="taxa" spec="TaxonSet" alignment="@data:nodata"/>
         </stateNode>
         
-        <plate var="n" range="&blockrange;">
+        <plate var="n" range="0,1,2,3,4,5,6,7,8,9">
             <stateNode idref="block.$(n)"/>
         </plate>
         
         <stateNode id="pMove" spec="RealParameter" estimate="false" value="$(pMove)"/>
         <stateNode id="conversionRate" spec="RealParameter" estimate="false" value="$(convRate)"/>
-        <stateNode id="popSize" spec="RealParameter" estimate="false" value="$(popSize)"/>
+        <stateNode id="birthRate" spec="RealParameter" estimate="false" value="$(birthRate)"/>
     </state>
-    
-    <init id="RandomACG" spec="beast.evolution.tree.RandomTree" estimate="false" initial="@acg" taxa="@data:nodata">
-        <populationModel id="ConstantPopulation0.t" spec="ConstantPopulation" popSize="@popSize"/>
-    </init>
 
-   <distribution id="posterior" spec="util.CompoundDistribution">
-        <distribution id="prior" spec="util.CompoundDistribution">
-            <distribution id="CoalescentConstant.t:treeSim" spec="Coalescent">
-                <populationModel id="ConstantPopulation.t" spec="ConstantPopulation" popSize="@popSize"/>
-                <treeIntervals id="TreeIntervals.t:treeSim" spec="TreeIntervals" tree="@acg"/>
-            </distribution>
-
-            <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
-            <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+    <distribution id="prior" spec="util.CompoundDistribution">
+        <distribution id="ACGYulePrior.t" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
+            <cfModel id="YuleModel" spec="beast.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
         </distribution>
+        <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+        <!-- 
+        <distribution id="convRatePrior" spec="Prior" x="@conversionRate">
+            <distr id="LogNormalDistr.convRatePrior" spec="LogNormalDistributionModel" meanInRealSpace="true" M="$(convRate)" S="1.0"/>
+        </distribution>
+        <distribution id="pMovePrior" spec="Prior" x="@pMove">
+            <distr id="BetaDistr.pMovePrior" spec="Beta" alpha="30.0" beta="70.0"/>
+        </distribution>
+         -->
     </distribution>
-    
 
-    <operatorschedule id="schedule" spec="contactrees.test.OrderedOperatorSchedule">
-        <operator id="SimumlateOp" spec="contactrees.test.SimulatorOperator" network="@acg" blockSet="@allBlocks" 
-                  pMove="@pMove" conversionRate="@conversionRate" weight="1.0">
-            <populationModel spec="ConstantPopulation" popSize="$(popSize)"/>
-        </operator>      
-        
-        <operator id="AddRemoveConversionGibbs.t" spec="AddRemoveConversionGibbs" weight="9999.0" acg="@acg" 
+    <operatorschedule id="schedule" spec="contactrees.test.StationarityTestSchedule" logInterval="$(logInterval)">
+        <simulatorOperator id="SimumlaterOperator" spec="contactrees.test.SimulatorOperator" distribution="@prior" state="@state" weight="1"/>
+        <operator id="AddRemoveConversionGibbs.t" spec="AddRemoveConversionGibbs" weight="1" acg="@acg"
                   conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks">
             <plate var="n" range="&blockrange;">
                 <treeLikelihood idref="treeLikelihood.block$(n)"/>
@@ -97,15 +91,17 @@
     </operatorschedule>
     
     <logger id="screenlog" logEvery="$(logInterval)">
-        <log idref="posterior"/>
         <log idref="prior"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="pMove"/>
+        <log idref="conversionRate"/>
     </logger>
 
     <logger logEvery="$(logInterval)" fileName="$(filebase).stats">
-        <log idref="posterior"/>
         <log idref="prior"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="pMove"/>
+        <log idref="conversionRate"/>
     </logger>
 
     <logger logEvery="$(logInterval)" fileName="$(filebase).trees">
