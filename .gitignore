@@ -28,3 +28,8 @@ hs_err_pid*
 .project
 .settings/
 simulations/
+
+# BEAST output files
+*.out.xml
+*.stats
+*.state
