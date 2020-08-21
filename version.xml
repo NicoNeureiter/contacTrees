@@ -2,4 +2,5 @@
 	<depends on='beast2' atleast='2.6.0' atmost='2.6.9'/>
 	<depends on='GEO_SPHERE' atleast='1.3.0'/>
 	<depends on="BEASTLabs" atleast='1.9.0'/>
+    <addonapp class="contactrees.acgannotator.ACGAnnotator" description="ContactreesAnnotator" icon="contactrees/acgannotator/icon.png"/>
 </package>
