@@ -1,0 +1,81 @@
+<beast version='2.0'
+       namespace='beast.evolution.tree.coalescent
+                 :beast.evolution.alignment
+                 :beast.evolution.operators
+                 :beast.math.distributions
+                 :beast.core
+                 :beast.core.parameter
+                 :contactrees
+                 :contactrees.model
+                 :contactrees.util
+                 :contactrees.operators'>
+
+<data id="data:nodata" name="alignment">
+    <sequence id="seq_A" taxon="A" totalcount="4" value="ACGT"/>
+    <sequence id="seq_B" taxon="B" totalcount="4" value="ACGT"/>
+</data>
+
+<stateNode spec="BlockSet" id="allBlocks" network="@acg">
+    <plate var="n" range="0,1,2,3,4,5,6,7,8,9">
+        <block spec="Block" id="block.$(n)"/>
+    </plate>
+</stateNode>
+
+<run id="mcmc" spec="MCMC" chainLength="$(chainLength)">
+
+ 	<state id="state" storeEvery="$(logInterval)">
+    	<!-- Define the conversion graph -->
+        <stateNode id="acg" spec="ConversionGraph">
+	        <taxonset id="taxa" spec="TaxonSet" alignment="@data:nodata"/>
+        </stateNode>
+    	
+        <plate var="n" range="0,1,2,3,4,5,6,7,8,9">
+			<stateNode idref="block.$(n)"/>
+		</plate>
+        
+        <stateNode id="pMove" spec="RealParameter" estimate="false" value="$(pMove)"/>
+		<stateNode id="conversionRate" spec="RealParameter" estimate="false" value="$(convRate)"/>
+        <stateNode id="birthRate" spec="RealParameter" estimate="false" value="$(birthRate)"/>
+ 	</state>
+
+    <distribution id="prior" spec="util.CompoundDistribution">
+        <distribution id="ACGYulePrior.t" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
+            <cfModel id="YuleModel" spec="beast.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
+        </distribution>
+        <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+        <!-- 
+        <distribution id="convRatePrior" spec="Prior" x="@conversionRate">
+            <distr id="LogNormalDistr.convRatePrior" spec="LogNormalDistributionModel" meanInRealSpace="true" M="$(convRate)" S="1.0"/>
+        </distribution>
+        <distribution id="pMovePrior" spec="Prior" x="@pMove">
+            <distr id="BetaDistr.pMovePrior" spec="Beta" alpha="30.0" beta="70.0"/>
+        </distribution>
+         -->
+    </distribution>
+
+	<operatorschedule id="schedule" spec="contactrees.test.ErgodicityTestSchedule" logInterval="$(logInterval)">
+	 	<simulatorOperator id="SimumlaterOperator" spec="contactrees.test.SimulatorOperator" distribution="@prior" state="@state" weight="1"/>
+	 	<operator id="ConversionSplit.t" spec="ConversionSplit" acg="@acg" weight="1" 
+	 	          blockSet="@allBlocks" conversionRate="@conversionRate" pMove="@pMove"/> 
+	</operatorschedule>
+	
+    <logger id="screenlog" logEvery="$(logInterval)">
+        <log idref="prior"/>
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="pMove"/>
+        <log idref="conversionRate"/>
+    </logger>
+
+    <logger id="logger" logEvery="$(logInterval)" fileName="$(filebase).stats">
+        <log idref="prior"/>
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="pMove"/>
+        <log idref="conversionRate"/>
+    </logger>
+
+    <logger logEvery="$(logInterval)" fileName="$(filebase).trees">
+    	<log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
+    </logger>
+</run>
+  
+</beast>
