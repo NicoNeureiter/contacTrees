@@ -38,14 +38,11 @@ public class ResampleConversionMoves extends ACGOperator {
 //            0.1); 
 
     protected BlockSet blockSet;
-    protected double pMove, resampleFraction;
 
     @Override
     public void initAndValidate() {
         super.initAndValidate();
         blockSet = blockSetInput.get();
-        pMove = pMoveInput.get().getValue();
-//        resampleFraction = resampleFractionInput.get();
     }
     
     @Override
@@ -71,6 +68,7 @@ public class ResampleConversionMoves extends ACGOperator {
      * @return log probability density of chosen attachment.
      */
     public double drawAffectedBlocks(Conversion conv) {
+        double pMove = pMoveInput.get().getValue();
         double logP = 0;
         
         if (pMove == 0.) {
@@ -102,6 +100,7 @@ public class ResampleConversionMoves extends ACGOperator {
      * @return log probability density
      */
     public double getAffectedBlocksProb(Conversion conv) {
+        double pMove = pMoveInput.get().getValue();
         int affectedBlockCount = blockSet.getAffectedBlockIDs(conv).size();
         int unaffectedBlockCount = blockSet.getBlockCount() - affectedBlockCount;
         

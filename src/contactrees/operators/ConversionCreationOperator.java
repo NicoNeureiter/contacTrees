@@ -18,7 +18,7 @@ import beast.util.Randomizer;
  * Abstract class of ACG operators that add new converted edges   
  * and their affected sites to an existing ConversionGraph.
  *
- * @author Nico Neureiter (nico.neureiter@gmail.com)
+ * @author Nico Neureiter
  */
 public abstract class ConversionCreationOperator extends EdgeCreationOperator {
 	
@@ -32,14 +32,12 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
             "BEASTObject computing the tree likelihood.",
             new ArrayList<TreeLikelihood>());
 
-    double pMove;
     protected List<TreeLikelihood> treeLHs;
     
     
     @Override
     public void initAndValidate() {
         super.initAndValidate();
-        pMove = pMoveInput.get().getValue();
         treeLHs = treeLHsInput.get();
     }
 
@@ -50,6 +48,7 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      * @return log probability density of chosen attachment.
      */
     public double drawAffectedBlocks(Conversion conv) {
+        double pMove = pMoveInput.get().getValue();
         double logP = 0;
         
         if (pMove == 0.) {
@@ -77,6 +76,7 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      * @return log probability density
      */
     public double getAffectedBlocksProb(Conversion conv) {
+        double pMove = pMoveInput.get().getValue();
         int affectedBlockCount = blockSet.getAffectedBlockIDs(conv).size();
         int unaffectedBlockCount = blockSet.getBlockCount() - affectedBlockCount;
         
@@ -115,6 +115,8 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      * @return log-prob. difference between state before and after the move.
      */
     public double sampleBlockMove(Conversion conv, TreeLikelihood treeLH) {
+        double pMove = pMoveInput.get().getValue();
+        
         MarginalTree marginalTree = (MarginalTree) treeLH.treeInput.get();
         Block block = marginalTree.block;
         
@@ -156,6 +158,8 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      * @return log probability density
      */
     public double getAffectedBlocksProbGibbs(Conversion conv) {
+        double pMove = pMoveInput.get().getValue();
+        
 //        return treeLHs.size() * Math.log(1-pMove);
         double logP = 0;
         for (TreeLikelihood treeLH : treeLHs) {            

@@ -27,12 +27,9 @@ public abstract class GibbsBlockMovesOperator extends ACGOperator {
             Input.Validate.REQUIRED);
     
 
-    protected double pMove;
-
     @Override
     public void initAndValidate() {
         super.initAndValidate();
-        pMove = pMoveInput.get().getValue();
     }
 
     public double sampleBlockMove(Conversion conv, TreeLikelihood treeLH) {
@@ -42,7 +39,8 @@ public abstract class GibbsBlockMovesOperator extends ACGOperator {
     }
     
     public double sampleBlockMove(Block block, Conversion conv, MarginalTree marginalTree, TreeLikelihood treeLH) {
-
+        double pMove = pMoveInput.get().getValue();
+        
         // Get prior and likelihood for current block move
         boolean moveOld = block.isAffected(conv); 
         double priorOld = moveOld ? pMove : (1 - pMove);
