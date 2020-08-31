@@ -709,7 +709,7 @@ analysis using BEASTling and the above configuration may not be valid.
     <frequencies id="vocabulary:dummyfrequences.s" spec="Frequencies" frequencies="0.5 0.5" />
   </substModel>
 
-  <run id="mcmc" spec="MCMC" chainLength="15000000">
+  <run id="mcmc" spec="MCMC" chainLength="10000000">
 
     <state id="state" storeEvery="5000">
       <tree id="Tree.t:beastlingTree" name="stateNode">
