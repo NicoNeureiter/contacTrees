@@ -24,6 +24,7 @@ public class Block extends StateNode {
 
     // The indices (in the ConversionList) of the conversions affecting this block. 
     List<Integer> convIDs, convIDsStored;
+    boolean aheadOfMTree;
 
     @Override
     public void initAndValidate() {
@@ -134,6 +135,7 @@ public class Block extends StateNode {
 
     @Override
     public void assignFrom(StateNode other) {
+        aheadOfMTree = true;
         final Block block = (Block) other;
         setID(block.getID());
         convIDs = Util.deepCopyIntegers(block.convIDs);
@@ -150,12 +152,25 @@ public class Block extends StateNode {
         List<Integer> tmp = convIDs;
         convIDs = convIDsStored;
         convIDsStored = tmp;
+        
+        // Marginal trees are not stored/restored
+        //  => restore leads to out-dated MTree
+        aheadOfMTree = true;
     }
     
     @Override
     public void startEditing(Operator operator) {
+        aheadOfMTree = true;
         if (state != null)
             super.startEditing(operator);
+    }
+    
+    public void updatedMarginalTree() {
+        aheadOfMTree = false;
+    }
+    
+    public boolean isAheadOfMarginalTree() {
+        return aheadOfMTree;
     }
 
     @Override
@@ -170,7 +185,14 @@ public class Block extends StateNode {
 
     @Override
     public void setEverythingDirty(boolean isDirty) {
+        aheadOfMTree = true;
         setSomethingIsDirty(isDirty);
+    }
+
+    @Override
+    public void setSomethingIsDirty(final boolean isDirty) {
+        aheadOfMTree = true;
+        super.setSomethingIsDirty(isDirty);
     }
 
     @Override
@@ -185,6 +207,10 @@ public class Block extends StateNode {
 
     public Block() {
         super();
+    }
+    
+    public String toString() {
+        return convIDs.toString();
     }
 
     /**
