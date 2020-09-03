@@ -160,11 +160,12 @@ public class CFEventList {
      * to these events.
      */
     public void updateEvents() {
-        if (!dirty)
+        if (!dirty) {
+            assert is_consistent();
             return;
+        }
         
         clearEvents();
-        // events.clear();
         
         // Create event list
         for (Node node : acg.getNodesAsArray()) {
@@ -174,10 +175,10 @@ public class CFEventList {
         
         // Sort events in increasing order of their heights
         Collections.sort(events, (Event o1, Event o2) -> {
-            if (o1.t<o2.t)
+            if (o1.t < o2.t)
                 return -1;
             
-            if (o2.t<o1.t)
+            if (o2.t < o1.t)
                 return 1;
 
             if (o1.getNode().getParent() == o2.getNode())
@@ -235,4 +236,24 @@ public class CFEventList {
         return volumes;
     }
     
+    /**
+     * Method for testing dirty logic: Assert that no changes 
+     * happened when the cfEventList is marked as not dirty.
+     */
+    protected boolean is_consistent() {
+        for (Event e : events) {
+            int nodeNr = e.node.getNr();
+            Node acgNode = acg.getNode(nodeNr);
+            
+            // Event node is still in the tree
+            if (acgNode != e.node)
+                return false;
+            
+            // Height is still up to date
+            if (acgNode.getHeight() != e.getHeight())
+                return false;
+        }
+        
+        return true;
+    }
 }

@@ -234,8 +234,9 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 	 */
 	static public BlockSet create(ConversionGraph acg, ArrayList<Block> blocks) {
 		BlockSet bs = new BlockSet();
-		bs.initAndValidate();
-		bs.acg = acg;
+		bs.initByName("network", acg);
+//		bs.initAndValidate();
+//		bs.acg = acg;
 		bs.blocks = blocks;
 		return bs;
 	}

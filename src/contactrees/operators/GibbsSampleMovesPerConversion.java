@@ -8,7 +8,6 @@ import java.util.List;
 
 import beast.core.Input;
 import beast.evolution.likelihood.TreeLikelihood;
-import contactrees.Block;
 import contactrees.BlockSet;
 import contactrees.Conversion;
 import contactrees.MarginalTree;

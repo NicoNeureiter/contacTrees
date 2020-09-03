@@ -2,7 +2,7 @@ package contactrees.test;
 
 import org.junit.Test;
 
-import contactrees.model.ConversionPrior;
+import contactrees.model.ACGDistribution;
 import contactrees.util.Util;
 
 public class ConversionPriorTest extends ContactreesTest {
@@ -14,7 +14,7 @@ public class ConversionPriorTest extends ContactreesTest {
 		
 		String newick = "(1:1.0,2:1.0)3:0.0;";
 		setupFromNewick(newick);
-		ConversionPrior prior = new ConversionPrior();
+		ACGDistribution prior = new ACGDistribution();
 		prior.initByName("network", acg, "conversionRate", "0.5");
 		
 		for (int i=0; i<N; i++) {

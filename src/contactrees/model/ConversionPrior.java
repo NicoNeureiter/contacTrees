@@ -42,19 +42,17 @@ public class ConversionPrior extends Distribution {
             "Upper bound on conversion count.", Integer.MAX_VALUE);
 	
 	ConversionGraph acg;
-	double convRate;
 	
 	@Override
 	public void initAndValidate() {
 		super.initAndValidate();
 		acg = networkInput.get();
-		convRate = conversionRateInput.get().getValue();
 	}
 	
 	@Override
 	public double calculateLogP() {
 		logP = 0.0;
-		convRate = conversionRateInput.get().getValue();
+		double convRate = conversionRateInput.get().getValue();
 		
         // Check whether conversion count exceeds bounds.
         if (acg.getConvCount()<lowerCCBoundInput.get()
