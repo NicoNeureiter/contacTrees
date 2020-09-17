@@ -2,73 +2,77 @@
 <!DOCTYPE note [
   <!ENTITY concepts "1pl_excl,1pl_incl,1sg,2pl,2sg_informal,2sg_polite,3pl,3sg,Earth,God,above,adultery,alive,all,and,angry,animal,ant,arm,arrow,ash,at,axe,back,bad,bamboo,banana,bark_of_tree,bat,battle,bean,because,bed,bedbug,below,betel_nut_areca,betel_vine,big,bird,bitter,black,blind,blood,blue,blunt,body,body_hair,bone,bow,branch,breadfruit,breast,bride_price,broom,brother,brother_in_law,burden_stick,butterfly,candle,canoe,carry,cassava,ceremonial_place,chair,cheap,cheek,chest,chew_betel,chicken,chieftain,child,chin,church,civet_cat,clan,claw,clay,clean,clothing,cloud,coconut,coconut_shell,cold,cold_influenza,comb,conjunctivitis,cooked_corn,cooked_rice,cookhouse,coral_reef,coral_rock,corn_maize,correct,crocodile,cross_cousin,cuscus,dark,day,day_after_tomorrow,day_before_yesterday,deaf,deer,dibble_stick,difficult,digging_stick,dirty,dog,dolphin,door,dowry,drizzle,dry,dry_in_sun,dust,ear,earring,earthquake,earthworm,easy,edge,egg,eight,empty,enemy,excrement,expensive,eye,far,fat,father,fathers_sister,feather,fence,fever,few,field,finger,fingernail,finished,fire,firewood,fish,fish_trap,fishing_hook,fishnet,five,flat,flea,floor,flower,fly,flying_fox,foam,fog,foot,forehead,forest,four,fowl,friend,frog,fruit,full,garden,gebang_palm,good,grains,grandchild,grandfather,grandmother,grass,grasshopper,gravel,green,guilty,gum_tree,guts,hair,hand,head,heart,heavy,heel,here,hill_ridge,hole,holy,honey,horn,hot,hour,house,how,how_much_how_many,hungry,husband,ice,if,initiation_ceremony,innocent,inside,island,itchy,jackfruit,judge,kidney,king_ruler,knee,knife,lake,lamp,language,lazy,leaf,left_side,leg,light_not_dark,light_weight,lightning,lime,lips,liver,lizard,long,lontar_palm,loom,louse_clothing,louse_eggs,louse_in_hair,lungs,machete,man,mango,many,market,marriage,marungga,mat,meat,meeting_house,milk,millet,money,monitor_lizard,moon,morning,mortar,mosque,mosquito,mother,mothers_brother,mountain,mouth,mucus,mud,murder,name,narrow,navel,near,neck,necklace,needle,nephew_niece,new,night,nine,no_not,nose,nostril,now,old_people,old_worn_house,older_brother,older_sibling,older_sister,one,one_hundred,other,oven,palm_of_hand,papaya,penalty,penis,person,pestle,pig,poor,pregnant,price,priest_modern,rack_above_hearth,rain,rainbow,raised_platform,rat,rattan,red,rib,rice_ear_bug,rice_field,rice_grains,rice_plant,rich,ridge,right_side,ringworm,ripe,ritual_mound,river_stream,road,root,rope,rotten,rough,round,sacrifice,sago,sail,salt,salty,same,sand,sarong_women,scabies,scared,scorpion,sea,seed,sermon,seven,shark,sharp,shirt,short,shoulder,shy_ashamed,sick_painful,sister,six,skin,skinny,sky,slave,sleepy,small,smoke,smooth,snake,snow,soil,sole_of_foot,some,sorcerer,sour,spear,spider,spine_lower_back,star,starfish,stick_pole,stomach_belly,stone,storage_house,straight,stranger,sugar_palm,sugarcane,sun,sweat,sweet,sweet_potato,tail,tall,taro,tear,teeth,ten,testicles,that,thatch_for_roofing,thatched_roof,there,thick,thin,thirsty,this,thorn,thousand,thread,three,thunder,tinea,to_accuse,to_answer,to_ask_question,to_bark,to_bathe,to_bathe_a_child,to_be_silent,to_bite,to_bless,to_blow,to_borrow,to_breathe,to_burn_clear_land,to_bury,to_buy,to_call_out,to_chase_away_to_run_after,to_chew,to_choose,to_climb,to_close,to_come,to_command,to_cook,to_cough,to_count,to_crouch,to_cry,to_curse,to_cut,to_cut_down,to_dance,to_defend,to_die,to_dig,to_divide,to_dream,to_drink,to_drop,to_dwell,to_eat,to_fall_from_above,to_fall_over,to_fight,to_float,to_flow,to_fly,to_fold,to_freeze,to_give,to_go,to_grasp,to_grow,to_guard,to_hear,to_help,to_hide,to_hit,to_hit_drum,to_hold,to_hunt,to_invite,to_kill,to_know,to_laugh,to_learn,to_let_go,to_lie_down,to_open,to_own,to_plant_rice,to_plant_yam,to_play,to_pound,to_pray,to_promise,to_pull,to_push,to_refuse,to_rub,to_rule,to_run,to_sail,to_say,to_scratch,to_search_for_to_hunt_for,to_see,to_sell,to_sew,to_shine,to_shoo_to_chase_away_to_send_away,to_shoot,to_shoot_with_slingshot,to_sing,to_sit,to_skewer,to_slap,to_sleep,to_smell,to_speak,to_spit,to_split,to_squeeze,to_stab,to_stand,to_steal,to_suck,to_surrender,to_swell,to_swim,to_teach,to_tell,to_tell_untruth,to_think,to_throw,to_tie,to_trade,to_turn,to_vomit,to_wait,to_wake_someone_up,to_wake_up,to_walk,to_wash,to_weave,to_whisper,to_wipe,to_work,to_worship,to_yawn,tomorrow,tongue,traditional_house,treaty,tree,trousers,turtle,twilight_dawn,two,uncooked_rice,urine,vagina,vein,village,voice,waist,wall,water,wave,wet,whale,what,when,where,white,who,why,wide,wife,wind,window,wing,with,woman,womans_younger_sister,wood,word,wound,wrong,year,yellow,yesterday,young_people,younger_brother,younger_sibling">
 ]>
-<beast beautitemplate="Standard" beautistatus="" namespace="beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood" version="2.0">
+<beast beautitemplate="Standard" beautistatus=""  version="2.0"
+       namespace="beast.core:beast.evolution.alignment
+                 :beast.evolution.tree.coalescent
+                 :beast.core.util:beast.evolution.nuc
+                 :beast.evolution.operators
+                 :beast.evolution.sitemodel
+                 :beast.evolution.substitutionmodel
+                 :beast.evolution.likelihood
+                 :beast.evolution.branchratemodel
+                 :beast.core.parameter
+                 :contactrees
+                 :contactrees.model
+                 :contactrees.util
+                 :contactrees.operators">
   <taxonset id="taxa" spec="TaxonSet">
     <plate var="language" range="abui1241-fuime,abui1241-papun,abui1241-petle,abui1241-takal,abui1241-ulaga,adan1251-lawah,adan1251-otvai,atim1239,baka1276,blag1240-bama,blag1240-kulij,blag1240-manat,blag1240-nule,blag1240-tuntu,blag1240-warsa,buna1278-bobon,buna1278-malia,buna1278-suai,dein1238,fata1247,hama1240,kabo1247,kaer1234,kafo1240,kama1365,kelo1247-bring,kelo1247-hopte,kira1248,kuii1253,kula1280-lanto,lamm1241-westp,maka1316,nede1245,oira1263,pura1258,rett1240,rett1240-hula,rett1240-tern,sarr1247,sawi1256,sibo1242,sibo1242-atii,teiw1235,teiw1235-adiab,teiw1235-nule,tiay1238,wers1238-marit,wers1238-taram">
       <taxon id="$(language)" />
     </plate>
   </taxonset>
-  <!--Generated by BEASTling 1.4.1 on Tuesday, 10 Mar 2020 02:22 AM.
+  <!--
+    # -*- coding: utf-8 -*-
+    [admin]
+    basename = tap-contactrees
+    log_params = False
 
-Original config file:
+    [MCMC]
+    chainlength = ?
+    path_sampling = False
 
-# -*- coding: utf-8 -*-
-[admin]
-basename = tap-phylogeny-L1
-log_params = False
+    [languages]
+    exclusions = p-east2519, p-alor1249, p-timo1261, indo1316-lexi,
+    	tetu1245-suai, tetu1245-vique, tetu1246
+    tree_prior = birthdeath
 
-[MCMC]
-chainlength = 5000000
-path_sampling = True
-steps = 20
+    [language_groups]
+    >> COULD BE REMOVED >> east2519 = buna1278-bobon, buna1278-suai, buna1278-malia, fata1247, maka1316, oira1263
+    abui = atim1239, abui1241-fuime, abui1241-petle, abui1241-takal, abui1241-ulaga,
+    	abui1241-papun, sibo1242-atii, sibo1242
+    adang = adan1251-otvai, adan1251-lawah
+    teiwa = teiw1235, teiw1235-adiab, teiw1235-nule
+    blagar = blag1240-bama, blag1240-kulij, blag1240-nule, pura1258, blag1240-tuntu,
+    	blag1240-warsa, blag1240-manat
+    retta = rett1240, rett1240-hula, rett1240-tern
+    eastalor = wers1238-taram, wers1238-marit, sawi1256, kula1280-lanto, kama1365, tiay1238
+    nuclearalor = sibo1242-atii, tiay1238, abui, adang, baka1276, blagar, dein1238,
+    	hama1240, kabo1247, kaer1234, kafo1240, kira1248, kelo1247-bring, kelo1247-hopte,
+    	kuii1253, nede1245, retta, teiwa, sarr1247, lamm1241-westp
+    alor1249 = nuclearalor, eastalor
+    timo1261 = alor1249, east2519
 
-[languages]
-exclusions = p-east2519, p-alor1249, p-timo1261, indo1316-lexi,
-	tetu1245-suai, tetu1245-vique, tetu1246
-tree_prior = birthdeath
+    [calibration]
+    originate(oira1263) = 279-286
+    alor1249 = normal(3137.5, 162.6)
+    timo1261 = 3000-12000
 
-[language_groups]
-                  >>>>>>>>>> COULD BE REMOVED >>>>>>>>> east2519 = buna1278-bobon, buna1278-suai, buna1278-malia, fata1247, maka1316, oira1263
-abui = atim1239, abui1241-fuime, abui1241-petle, abui1241-takal, abui1241-ulaga,
-	abui1241-papun, sibo1242-atii, sibo1242
-adang = adan1251-otvai, adan1251-lawah
-teiwa = teiw1235, teiw1235-adiab, teiw1235-nule
-blagar = blag1240-bama, blag1240-kulij, blag1240-nule, pura1258, blag1240-tuntu,
-	blag1240-warsa, blag1240-manat
-retta = rett1240, rett1240-hula, rett1240-tern
-eastalor = wers1238-taram, wers1238-marit, sawi1256, kula1280-lanto, kama1365, tiay1238
-nuclearalor = sibo1242-atii, tiay1238, abui, adang, baka1276, blagar, dein1238,
-	hama1240, kabo1247, kaer1234, kafo1240, kira1248, kelo1247-bring, kelo1247-hopte,
-	kuii1253, nede1245, retta, teiwa, sarr1247, lamm1241-westp
-alor1249 = nuclearalor, eastalor
-timo1261 = alor1249, east2519
+    [clock default]
+    type = strict_with_prior
+    prior = lognormal(-6.9077552789821368, 2.3025850929940459)
 
-[calibration]
-originate(oira1263) = 279-286
-alor1249 = normal(3137.5, 162.6)
-timo1261 = 3000-12000
-
-[clock default]
-type = strict_with_prior
-prior = lognormal(-6.9077552789821368, 2.3025850929940459)
-
-[model vocabulary]
-model = covarion
-rate_variation = True
-frequencies = estimate
-data = ../data/autocode-infomap-055-all/forms.csv
-file_format = cldf
-value_column = Cognateset_ID
-exclusions = eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen,
-	eighteen, nineteen, twenty, twenty_one, twenty_two, twenty_three,
-	twenty_four, twenty_five, thirty, forty, fifty, sixty, seventy, eighty,
-	ninety, one_hundred_and_twenty_three, two_hundred, one_hundred_thousand
-
-
-Please DO NOT manually edit this file without removing this message or editing
-it to describe the changes made.  Otherwise attempts to replicate your
-analysis using BEASTling and the above configuration may not be valid.
--->
+    [model vocabulary]
+    model = covarion
+    rate_variation = True
+    frequencies = estimate
+    data = ../data/autocode-infomap-055-all/forms.csv
+    file_format = cldf
+    value_column = Cognateset_ID
+    exclusions = eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen,
+    	eighteen, nineteen, twenty, twenty_one, twenty_two, twenty_three,
+    	twenty_four, twenty_five, thirty, forty, fifty, sixty, seventy, eighty,
+    	ninety, one_hundred_and_twenty_three, two_hundred, one_hundred_thousand
+  -->
   <map name="Beta">beast.math.distributions.Beta</map>
   <map name="Exponential">beast.math.distributions.Exponential</map>
   <map name="InverseGamma">beast.math.distributions.InverseGamma</map>
@@ -703,43 +707,70 @@ analysis using BEASTling and the above configuration may not be valid.
   <data id="feature_data_vocabulary:younger_brother" spec="FilteredAlignment" data="@data_vocabulary" filter="9487-9500" ascertained="true" excludefrom="0" excludeto="2" userDataType="@TwoStateCovarionDatatype"/>
   <data id="feature_data_vocabulary:younger_sibling" spec="FilteredAlignment" data="@data_vocabulary" filter="9501-9518" ascertained="true" excludefrom="0" excludeto="2" userDataType="@TwoStateCovarionDatatype"/>
 
-  <branchRateModel id="StrictClockModel.c:default" spec="beast.evolution.branchratemodel.StrictClockModel" clock.rate="@clockRate.c:default" />
+  <!-- <branchRateModel id="clock" spec="StrictClockModel" clock.rate="@clockRate" /> -->
+  <branchRateModel id="clock" spec="UCRelaxedClockModel" rateCategories="@rateCategories.c:clock" tree="@acg" clock.rate="@clockRate" >
+      <LogNormal id="LogNormalDistributionModel.c:clock" S="@ucldStdev.c:clock" meanInRealSpace="true" name="distr" M="1.0" />
+  </branchRateModel>
+
   <substModel id="covarion.s:vocabulary" spec="BinaryCovarion" alpha="@covarion_alpha.s:vocabulary" switchRate="@covarion_s.s:vocabulary" vfrequencies="@freqs_param.s:vocabulary">
     <parameter id="vocabulary:hiddenfrequencies.s" dimension="2" lower="0.0" name="hfrequencies" upper="1.0">0.5 0.5</parameter>
     <frequencies id="vocabulary:dummyfrequences.s" spec="Frequencies" frequencies="0.5 0.5" />
   </substModel>
 
-  <run id="mcmc" spec="MCMC" chainLength="10000000">
+  <siteModel id="SiteModel.vocabulary" spec="SiteModel" gammaCategoryCount="4" shape="@gammaShape.siteModel">
+      <substModel idref="covarion.s:vocabulary"/>
+  </siteModel>
+
+
+  <!-- BLOCK-SET -->
+  <stateNode spec="BlockSet" id="allBlocks" network="@acg">
+    <plate var="concept" range="&concepts;">
+      <block spec="Block" id="block.$(concept)"/>
+    </plate>
+  </stateNode>
+
+  <run id="mcmc" spec="beast.coupledMCMC.CoupledMCMC" chainLength="10000000" chains="10" deltaTemperature="0.05" optimise="true" resampleEvery="50">
 
     <state id="state" storeEvery="5000">
-      <tree id="Tree.t:beastlingTree" name="stateNode">
-        <taxonset idref="taxa" />
-      </tree>
-      <parameter id="birthRate.t:beastlingTree" name="stateNode">0.0008</parameter>
-      <parameter id="deathRate.t:beastlingTree" name="stateNode">0.5</parameter>
-      <parameter id="sampling.t:beastlingTree" name="stateNode">0.2</parameter>
-      <parameter id="clockRate.c:default" upper="1000.0" name="stateNode">0.0010000000000000002</parameter>
+      <stateNode id="acg" spec="ConversionGraph" taxonset="@taxa" newick="(((((((((((abui1241-fuime:153.7312,atim1239:153.7312):77.6818,(abui1241-petle:149.5724,abui1241-takal:149.5724):81.8406):152.0459,abui1241-ulaga:383.4589):212.1743,abui1241-papun:595.6333):163.9134,kafo1240:759.5467):241.7847,(kira1248:415.6252,kuii1253:415.6252):585.7063):330.9157,(kama1365:481.38,((sibo1242:230.1557,sibo1242-atii:230.1557):156.4757,tiay1238:386.6314):94.7486):850.8671):449.2548,((((adan1251-lawah:248.5494,kabo1247:248.5494):96.5328,(adan1251-otvai:204.3183,hama1240:204.3183):140.764):904.3934,(kelo1247-bring:125.1184,kelo1247-hopte:125.1184):1124.3572):306.3257,((((((((baka1276:94.7846,blag1240-nule:94.7846):17.1648,blag1240-kulij:111.9494):219.7599,(blag1240-manat:279.1912,pura1258:279.1912):52.518):63.5487,((blag1240-bama:98.8404,blag1240-tuntu:98.8404):122.1473,blag1240-warsa:220.9877):174.2703):177.8481,((rett1240:104.9567,rett1240-hula:104.9567):82.5222,rett1240-tern:187.4789):385.6273):181.1622,kaer1234:754.2684):363.9565,(((dein1238:326.9686,((sarr1247:155.7357,teiw1235-nule:155.7357):93.309,teiw1235-adiab:249.0447):77.9239):110.9953,teiw1235:437.9639):465.3917,nede1245:903.3556):214.8693):165.5755,lamm1241-westp:1283.8004):272.0009):225.7006):600.0868,((kula1280-lanto:630.1394,sawi1256:630.1394):217.3985,(wers1238-marit:187.9912,wers1238-taram:187.9912):659.5468):1534.0507):2010.137,((fata1247:278.7208,oira1263:278.7208):682.3934,maka1316:961.1142):3430.6115):242.5534,((buna1278-bobon:55.7024,buna1278-suai:55.7024):113.6187,buna1278-malia:169.3211):4464.958):0;" />
+
+      <parameter id="birthRate.t:acg" name="stateNode">0.0008</parameter>
+      <parameter id="deathRate.t:acg" name="stateNode">0.5</parameter>
+      <parameter id="sampling.t:acg" name="stateNode">0.2</parameter>
+      <parameter id="clockRate" upper="1000.0" name="stateNode">0.001</parameter>
+      <parameter id="ucldStdev.c:clock" estimate="true" name="stateNode" lower="0.0" upper="Infinity">1.0</parameter>
       <stateNode id="freqs_param.s:vocabulary" spec="parameter.RealParameter" dimension="2" lower="0.0" upper="1.0">0.5 0.5</stateNode>
-      <plate var="rate" range="&concepts;">
-        <parameter id="featureClockRate:vocabulary:$(rate)" name="stateNode">1.0</parameter>
-      </plate>
-      <parameter id="featureClockRateGammaShape:vocabulary" lower="1.1" upper="100.0" name="stateNode">5.0</parameter>
-      <parameter id="featureClockRateGammaScale:vocabulary" name="stateNode">0.2</parameter>
       <parameter id="covarion_alpha.s:vocabulary" lower="1.0E-4" name="stateNode" upper="1.0">0.5</parameter>
       <parameter id="covarion_s.s:vocabulary" lower="1.0E-4" name="stateNode" upper="Infinity">0.5</parameter>
+      <parameter id="gammaShape.siteModel" estimate="true" name="stateNode" lower="0.0" upper="Infinity">1.0</parameter>
+      <stateNode id="rateCategories.c:clock" spec="parameter.IntegerParameter" dimension="94">1</stateNode>
+
+      <plate var="concept" range="&concepts;">
+        <stateNode idref="block.$(concept)"/>
+      </plate>
+
+      <stateNode id="pMove" spec="RealParameter" estimate="true" value="0.15" lower="0.0" upper="0.4"/>
+
+      <stateNode id="expectedConversions" spec="RealParameter" estimate="false" value="5"/>
+      <stateNode id="conversionRate" spec="ConversionRate" expectedConversions="@expectedConversions" network="@acg"/>
+
+      <!-- <stateNode id="conversionRate" spec="RealParameter" estimate="true" value="0.00001" upper="0.001"/> -->
+
     </state>
 
-    <init estimate="false" id="startingTree" initial="@Tree.t:beastlingTree" taxonset="@taxa" spec="beast.evolution.tree.RandomTree" rootHeight="4310.5208">
+    <!--
+    <init estimate="false" id="startingTree" initial="@acg" taxonset="@taxa" spec="beast.evolution.tree.RandomTree" rootHeight="4310.5208">
       <populationModel spec="ConstantPopulation">
         <popSize spec="parameter.RealParameter" value="1" />
       </populationModel>
     </init>
+    -->
 
     <distribution id="posterior" spec="util.CompoundDistribution">
 
       <!--           PRIOR           -->
       <distribution id="prior" spec="util.CompoundDistribution">
-        <distribution id="alor1249MRCA" monophyletic="true" spec="beast.math.distributions.MRCAPrior" tree="@Tree.t:beastlingTree">
+        <distribution id="alor1249MRCA" monophyletic="true" spec="beast.math.distributions.MRCAPrior" tree="@acg">
           <taxonset id="alor1249" spec="TaxonSet">
             <plate var="language" range="abui1241-fuime,abui1241-papun,abui1241-petle,abui1241-takal,abui1241-ulaga,adan1251-lawah,adan1251-otvai,atim1239,baka1276,blag1240-bama,blag1240-kulij,blag1240-manat,blag1240-nule,blag1240-tuntu,blag1240-warsa,dein1238,hama1240,kabo1247,kaer1234,kafo1240,kama1365,kelo1247-bring,kelo1247-hopte,kira1248,kuii1253,kula1280-lanto,lamm1241-westp,nede1245,pura1258,rett1240,rett1240-hula,rett1240-tern,sarr1247,sawi1256,sibo1242,sibo1242-atii,teiw1235,teiw1235-adiab,teiw1235-nule,tiay1238,wers1238-marit,wers1238-taram">
               <taxon idref="$(language)" />
@@ -747,39 +778,28 @@ analysis using BEASTling and the above configuration may not be valid.
           </taxonset>
           <Normal id="DistributionForalor1249MRCA" name="distr" offset="0.0" mean="3137.5" sigma="162.6" />
         </distribution>
-        <distribution id="oira1263_originateMRCA" monophyletic="true" spec="beast.math.distributions.MRCAPrior" tree="@Tree.t:beastlingTree" useOriginate="true">
+        <distribution id="oira1263_originateMRCA" monophyletic="true" spec="beast.math.distributions.MRCAPrior" tree="@acg" useOriginate="true">
           <taxonset id="tx_oira1263" spec="TaxonSet">
             <taxon idref="oira1263" />
           </taxonset>
           <Normal id="DistributionForoira1263_originateMRCA" name="distr" offset="0.0" mean="282.5" sigma="1.7857142857142858" />
         </distribution>
-        <distribution id="timo1261MRCA" monophyletic="true" spec="beast.math.distributions.MRCAPrior" tree="@Tree.t:beastlingTree">
+        <distribution id="timo1261MRCA" monophyletic="true" spec="beast.math.distributions.MRCAPrior" tree="@acg">
           <taxonset idref="taxa" />
           <Normal id="DistributionFortimo1261MRCA" name="distr" offset="0.0" mean="7500.0" sigma="2295.918367346939" />
         </distribution>
-        <distribution id="BirthDeathModel.t:beastlingTree" tree="@Tree.t:beastlingTree" spec="beast.evolution.speciation.BirthDeathGernhard08Model" birthDiffRate="@birthRate.t:beastlingTree" relativeDeathRate="@deathRate.t:beastlingTree" sampleProbability="@sampling.t:beastlingTree" type="unscaled" />
-        <prior id="BirthRatePrior.t:beastlingTree" name="distribution" x="@birthRate.t:beastlingTree">
+
+        <prior id="BirthRatePrior.t:acg" name="distribution" x="@birthRate.t:acg">
           <Uniform id="Uniform.0" name="distr" upper="Infinity" />
         </prior>
-        <prior id="relativeDeathRatePrior.t:beastlingTree" name="distribution" x="@deathRate.t:beastlingTree">
+        <prior id="relativeDeathRatePrior.t:acg" name="distribution" x="@deathRate.t:acg">
           <Uniform id="Uniform.1" name="distr" upper="Infinity" />
         </prior>
-        <prior id="samplingPrior.t:beastlingTree" name="distribution" x="@sampling.t:beastlingTree">
+        <prior id="samplingPrior.t:acg" name="distribution" x="@sampling.t:acg">
           <Uniform id="Uniform.3" name="distr" lower="0" upper="1" />
         </prior>
-        <prior id="clockPrior:default" name="distribution" x="@clockRate.c:default">
+        <prior id="clockPrior:default" name="distribution" x="@clockRate">
           <LogNormal id="DistributionForclockPrior:default" name="distr" offset="0.0" M="-6.907755278982137" S="2.302585092994046" />
-        </prior>
-        <prior id="featureClockRatePrior.s:vocabulary" name="distribution">
-          <input id="featureClockRateCompound:vocabulary" spec="beast.core.parameter.CompoundValuable" name="x">
-            <plate var="rate" range="&concepts;">
-              <var idref="featureClockRate:vocabulary:$(rate)" />
-            </plate>
-          </input>
-          <input id="featureClockRatePriorGamma:vocabulary" spec="beast.math.distributions.Gamma" name="distr" alpha="@featureClockRateGammaShape:vocabulary" beta="@featureClockRateGammaScale:vocabulary" />
-        </prior>
-        <prior id="featureClockRateGammaScalePrior.s:vocabulary" name="distribution" x="@featureClockRateGammaScale:vocabulary">
-          <Exponential id="featureClockRateGammaShapePriorExponential.s:vocabulary" mean="0.23" name="distr" />
         </prior>
         <prior id="covarion_alpha_prior.s:vocabulary" name="distribution" x="@covarion_alpha.s:vocabulary">
           <Uniform id="CovAlphaUniform:vocabulary" name="distr" upper="Infinity" />
@@ -790,66 +810,132 @@ analysis using BEASTling and the above configuration may not be valid.
             <parameter id="covarion_switch_gamma_param2:vocabulary" name="beta" lower="0.0" upper="0.0">10.0</parameter>
           </Gamma>
         </prior>
+
+        <prior id="GammaShapePrior.siteModel" name="distribution" x="@gammaShape.siteModel">
+            <Exponential id="Exponential.0" name="distr">
+                <parameter id="RealParameter.0" estimate="false" name="mean">1.0</parameter>
+            </Exponential>
+        </prior>
+
+
+        <distribution id="ACGBirtDeathModel" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
+            <cfModel id="BirthDeathModel.t:acg" tree="@acg" spec="beast.evolution.speciation.BirthDeathGernhard08Model" birthDiffRate="@birthRate.t:acg" relativeDeathRate="@deathRate.t:acg" sampleProbability="@sampling.t:acg" type="unscaled" />
+        </distribution>
+        <distribution id="ConvMovePrior" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+
+        <!--
+        <prior id="convRatePrior" name="distribution" x="@conversionRate">
+            <Exponential id="Exponential.convRate" name="distr" mean="0.00002"/>
+        </prior>
+        <prior id="pMovePrior" name="distribution" x="@pMove">
+            <Beta id="Beta.pMove" name="distr" alpha="2.0" beta="18.0"/>
+        </prior>
+        -->
       </distribution>
 
       <!--          LIKELIHOOD          -->
-      <distribution id="likelihood" spec="util.CompoundDistribution">
+      <distribution id="likelihood" spec="util.CompoundDistribution" useThreads="true">
         <plate var="concept" range="&concepts;">
-          <distribution id="featureLikelihood:vocabulary:$(concept)" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree" data="@feature_data_vocabulary:$(concept)">
-            <siteModel id="SiteModel.vocabulary:$(concept)" spec="SiteModel" mutationRate="@featureClockRate:vocabulary:$(concept)" proportionInvariant="0" substModel="@covarion.s:vocabulary"/>
+          <distribution id="treeLikelihood.$(concept)" spec="TreeLikelihood" useAmbiguities="true" data="@feature_data_vocabulary:$(concept)" branchRateModel="@clock">
+            <siteModel idref="SiteModel.vocabulary"/>
+            <tree id="marginalTree.$(concept)" spec="MarginalTree" network="@acg" block="@block.$(concept)"/>
           </distribution>
         </plate>
       </distribution>
     </distribution>
 
     <!--          OPERATORS          -->
-    <operator id="SubtreeSlide.t:beastlingTree" spec="SubtreeSlide" tree="@Tree.t:beastlingTree" markclades="true" weight="15.0" />
-    <operator id="narrow.t:beastlingTree" spec="Exchange" tree="@Tree.t:beastlingTree" markclades="true" weight="15.0" />
-    <operator id="wide.t:beastlingTree" isNarrow="false" spec="Exchange" tree="@Tree.t:beastlingTree" markclades="true" weight="3.0" />
-    <operator id="WilsonBalding.t:beastlingTree" spec="WilsonBalding" tree="@Tree.t:beastlingTree" markclades="true" weight="3.0" />
-    <operator id="UniformOperator.t:beastlingTree" spec="Uniform" tree="@Tree.t:beastlingTree" weight="30.0" />
-    <operator id="treeScaler.t:beastlingTree" scaleFactor="0.5" spec="ScaleOperator" tree="@Tree.t:beastlingTree" weight="3.0" />
-    <operator id="treeRootScaler.t:beastlingTree" scaleFactor="0.5" spec="ScaleOperator" tree="@Tree.t:beastlingTree" rootOnly="true" weight="3.0" />
-    <operator id="UpDown" spec="UpDownOperator" scaleFactor="0.5" weight="3.0">
-      <tree idref="Tree.t:beastlingTree" name="up" />
-      <parameter idref="birthRate.t:beastlingTree" name="down" />
-      <parameter idref="clockRate.c:default" name="down" />
+    <operator id="ACGscale.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="4.0"/>
+    <operator id="ACGscale.rootOnly.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="2.0" rootOnly="true"/>
+    <operator id="CFWilsonBalding.t" spec="CFWilsonBalding" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" includeRoot="false" alpha="0.1"  weight="2.0"/>
+    <operator id="CFUniform.t" spec="CFUniform" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" weight="22.0"/>
+    <operator id="CFNarrowExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="true" weight="10.0"/>
+    <operator id="CFWideExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="false" weight="2.0"/>
+
+    <operator id="AddRemoveConversion.t" spec="AddRemoveConversionGibbs" weight="35.0" acg="@acg" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" state="@state">
+        <plate var="concept" range="&concepts;">
+          <treeLikelihood idref="treeLikelihood.$(concept)"/>
+        </plate>
     </operator>
-    <operator id="YuleBirthRateScaler.t:beastlingTree" spec="ScaleOperator" parameter="@birthRate.t:beastlingTree" scaleFactor="0.5" weight="3.0" />
-    <operator id="SamplingScaler.t:beastlingTree" spec="ScaleOperator" parameter="@sampling.t:beastlingTree" scaleFactor="0.8" weight="1.0" />
-    <operator id="DeathRateScaler.t:beastlingTree" spec="ScaleOperator" parameter="@deathRate.t:beastlingTree" scaleFactor="0.5" weight="3.0" />
-    <operator id="clockScaler.c:default" spec="ScaleOperator" parameter="@clockRate.c:default" scaleFactor="0.5" weight="3.0" />
-    <operator id="frequency_sampler.s:vocabulary" spec="DeltaExchangeOperator" parameter="@freqs_param.s:vocabulary" delta="0.01" weight="1.0" />
-    <operator id="featureClockRateGammaUpDown:vocabulary" spec="UpDownOperator" scaleFactor="0.5" weight="0.3">
-      <parameter idref="featureClockRateGammaShape:vocabulary" name="up" />
-      <parameter idref="featureClockRateGammaScale:vocabulary" name="down" />
-    </operator>
-    <operator id="covarion_alpha_scaler.s:vocabulary" spec="ScaleOperator" parameter="@covarion_alpha.s:vocabulary" scaleFactor="0.5" weight="1.0" />
-    <operator id="vocabulary:covarion_s_scaler.s" spec="ScaleOperator" parameter="@covarion_s.s:vocabulary" scaleFactor="0.5" weight="1.0" />
-    <operator id="featureClockRateDeltaExchanger:default" spec="DeltaExchangeOperator" weight="3.0">
-      <plate var="rate" range="&concepts;">
-        <parameter idref="featureClockRate:vocabulary:$(rate)" />
-      </plate>
-      <weightvector id="featureClockRateWeightParameter:default" spec="parameter.IntegerParameter" dimension="568" estimate="false">7 8 4 12 12 9 11 8 11 7 18 11 13 18 19 26 12 24 4 16 17 15 9 20 11 8 9 17 9 15 12 17 17 12 17 3 3 15 21 9 6 21 3 19 14 12 13 10 11 14 17 16 20 11 20 14 19 20 7 12 3 18 20 5 15 13 17 14 11 13 20 17 9 16 12 24 22 15 20 16 4 3 16 21 12 20 16 15 10 27 22 3 18 14 20 4 18 12 20 20 19 15 3 14 33 21 8 14 15 17 19 8 13 18 12 12 20 21 13 2 18 12 14 15 12 11 16 10 12 12 16 20 12 25 16 28 11 8 15 8 18 5 18 11 9 8 19 26 8 15 15 9 15 20 16 13 28 6 14 16 17 15 17 19 18 7 11 27 23 20 20 21 21 16 7 19 34 24 3 26 24 11 27 18 18 22 12 16 10 16 13 16 15 9 20 15 6 14 9 13 10 9 13 6 14 13 13 27 14 27 8 13 27 19 15 13 16 13 23 7 23 19 5 11 17 10 18 13 13 20 10 12 14 18 5 17 11 10 22 17 10 10 5 12 9 21 2 8 12 16 15 15 16 14 16 15 10 17 16 15 25 11 10 18 15 19 10 8 8 11 16 16 26 11 14 20 7 8 2 12 7 18 14 16 13 2 4 14 3 8 8 17 11 22 14 7 19 11 20 12 12 19 14 11 23 7 21 19 9 20 21 16 8 19 30 14 16 15 12 7 12 13 16 8 13 21 8 5 20 11 10 9 12 9 13 21 20 20 17 6 14 16 16 23 2 14 10 15 10 9 14 13 3 13 11 11 26 21 14 17 15 14 9 21 16 15 15 7 5 14 15 23 15 18 21 17 10 6 22 24 11 23 16 10 12 18 17 3 7 5 7 19 17 13 19 18 15 11 16 16 15 11 16 15 17 28 14 8 28 15 22 19 22 19 13 13 20 3 9 16 20 18 24 19 27 17 8 15 17 20 12 30 9 17 20 22 25 16 12 6 18 14 24 12 10 15 18 14 15 16 12 23 7 29 16 19 19 14 13 17 13 22 18 10 14 19 11 11 15 19 17 10 16 7 9 13 30 8 15 23 11 10 31 28 14 19 17 4 18 15 11 17 22 17 14 20 15 10 7 17 18 11 13 13 17 25 29 15 21 12 30 24 20 15 21 16 28 16 15 20 8 12 20 20 12 27 15 10 14 19 25 8 17 3 11 12 10 9 12 14 11 18 18 17 10 8 17 13 13 16 16 23 19 8 11 20 19 14 14 15 17 9 7 10 16 23 12 16</weightvector>
+    <operator id="ConvertedEdgeSlide.t" spec="ConvertedEdgeSlide" acg="@acg" weight="20.0"/>
+    <operator id="ConvertedEdgeFlip.t" spec="ConvertedEdgeFlip" acg="@acg" weight="5.0"/>
+  <operator id="ConversionSplit.t" spec="ConversionSplit" acg="@acg" weight="3.0" 
+            blockSet="@allBlocks" conversionRate="@conversionRate" flip="false" pMove="@pMove"/> 
+  <operator id="ConversionSplitAndFlip.t" spec="ConversionSplit" acg="@acg" weight="2.0" 
+            blockSet="@allBlocks" conversionRate="@conversionRate" flip="true" pMove="@pMove"/> 
+
+    <operator id="GibbsSampleMovesPerConversion.t" spec="GibbsSampleMovesPerConversion" weight="20.0" acg="@acg" pMove="@pMove" blockSet="@allBlocks">
+        <plate var="concept" range="&concepts;">
+          <treeLikelihood idref="treeLikelihood.$(concept)"/>
+        </plate>
     </operator>
 
+    <!--
+    <operator id="ConversionRateScaler" spec="ScaleOperator" parameter="@conversionRate" scaleFactor="0.5" weight="5.0"/>
+    <operator id="PMoveScaler" spec="ScaleOperator" parameter="@pMove" scaleFactor="0.5" weight="5.0"/>
+    -->
+
+    <operator id="YuleBirthRateScaler.t:acg" spec="ScaleOperator" parameter="@birthRate.t:acg" scaleFactor="0.5" weight="3.0" />
+    <operator id="SamplingScaler.t:acg" spec="ScaleOperator" parameter="@sampling.t:acg" scaleFactor="0.8" weight="1.0" />
+    <operator id="DeathRateScaler.t:acg" spec="ScaleOperator" parameter="@deathRate.t:acg" scaleFactor="0.5" weight="3.0" />
+
+    <operator id="frequency_sampler.s:vocabulary" spec="DeltaExchangeOperator" parameter="@freqs_param.s:vocabulary" delta="0.01" weight="1.0" />
+    <operator id="covarion_alpha_scaler.s:vocabulary" spec="ScaleOperator" parameter="@covarion_alpha.s:vocabulary" scaleFactor="0.5" weight="1.0" />
+    <operator id="vocabulary:covarion_s_scaler.s" spec="ScaleOperator" parameter="@covarion_s.s:vocabulary" scaleFactor="0.5" weight="1.0" />
+    <operator id="gammaShapeScaler.siteModel" spec="ScaleOperator" parameter="@gammaShape.siteModel" scaleFactor="0.5" weight="0.4"/>
+
+    <operator id="clockScaler.c:default" spec="ScaleOperator" parameter="@clockRate" scaleFactor="0.5" weight="3.0" />
+    <operator id="ucldStdevScaler.c:clock" spec="ScaleOperator" parameter="@ucldStdev.c:clock" scaleFactor="0.5" weight="3.0"/>
+    <operator id="CategoriesRandomWalk.c:clock" spec="IntRandomWalkOperator" parameter="@rateCategories.c:clock" weight="8.0" windowSize="1"/>
+    <operator id="CategoriesSwapOperator.c:clock" spec="SwapOperator" intparameter="@rateCategories.c:clock" weight="8.0"/>
+    <operator id="CategoriesUniform.c:clock" spec="UniformOperator" parameter="@rateCategories.c:clock" weight="8.0"/>
+
+
+    <!-- OLD OPERATORS
+    <operator id="SubtreeSlide.t:acg" spec="SubtreeSlide" tree="@acg" markclades="true" weight="15.0" />
+    <operator id="narrow.t:acg" spec="Exchange" tree="@acg" markclades="true" weight="15.0" />
+    <operator id="wide.t:acg" isNarrow="false" spec="Exchange" tree="@acg" markclades="true" weight="3.0" />
+    <operator id="WilsonBalding.t:acg" spec="WilsonBalding" tree="@acg" markclades="true" weight="3.0" />
+    <operator id="UniformOperator.t:acg" spec="Uniform" tree="@acg" weight="30.0" />
+    <operator id="treeScaler.t:acg" scaleFactor="0.5" spec="ScaleOperator" tree="@acg" weight="3.0" />
+    <operator id="treeRootScaler.t:acg" scaleFactor="0.5" spec="ScaleOperator" tree="@acg" rootOnly="true" weight="3.0" />
+    <operator id="UpDown" spec="UpDownOperator" scaleFactor="0.5" weight="3.0">
+      <tree idref="acg" name="up" />
+      <parameter idref="birthRate.t:acg" name="down" />
+      <parameter idref="clockRate" name="down" />
+    </operator>
+    -->
+
     <!--           LOGGERS           -->
-    <logger id="screenlog" logEvery="1000">
-      <log arg="@posterior" id="ESS.0" spec="util.ESS" />
-      <log idref="prior" />
-      <log idref="likelihood" />
-      <log idref="posterior" />
+    <logger id="screenlog" spec="Logger" logEvery="1000">
+        <log arg="@posterior" id="ESS.0" spec="util.ESS"/>
+        <log idref="posterior"/>
+        <log idref="likelihood"/>
+        <log idref="prior"/>
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="conversionRate"/>
+        <log idref="pMove"/>
+        <log idref="gammaShape.siteModel"/>
+        <log idref="clockRate"/>
+        <log idref="ucldStdev.c:clock"/>
     </logger>
-    <logger id="tracelog" fileName="tap-phylogeny-L1.log" logEvery="1000" sort="smart">
-      <log idref="prior" />
-      <log idref="likelihood" />
-      <log idref="posterior" />
-      <log idref="alor1249MRCA" />
-      <log idref="oira1263_originateMRCA" />
-      <log idref="timo1261MRCA" />
+    <logger id="tracelog" spec="Logger" fileName="$(filebase).log" logEvery="1000"
+            sanitiseHeaders="true" sort="smart">
+        <log idref="posterior"/>
+        <log idref="likelihood"/>
+        <log idref="prior"/>
+        <log idref="alor1249MRCA" />
+        <log idref="oira1263_originateMRCA" />
+        <log idref="timo1261MRCA" />
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="conversionRate"/>
+        <log idref="pMove"/>
+        <log idref="gammaShape.siteModel"/>
+        <log idref="clockRate"/>
+        <log idref="ucldStdev.c:clock"/>
     </logger>
-    <logger mode="tree" fileName="tap-phylogeny-L1.nex" logEvery="500" id="treeLogger">
-      <log id="TreeLoggerWithMetaData" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:beastlingTree" dp="4" />
+    <logger spec="Logger" fileName="$(filebase).trees" logEvery="500" mode="tree">
+      <log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
     </logger>
 
   </run>
