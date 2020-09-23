@@ -1,8 +1,8 @@
 package contactrees;
 
+import java.util.List;
 import java.util.TreeMap;
 
-import beast.evolution.branchratemodel.BranchRateModel;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 
@@ -25,6 +25,13 @@ public class MarginalNode extends Node {
      * 
      */
     public double lastEventHeight = 0.0;
+
+    /**
+     * @return unmodifiable list of children of this node
+     */
+    public List<Node> getChildren() {
+        return children;
+    }
     
     private ConversionGraph acg;
     

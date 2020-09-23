@@ -143,7 +143,7 @@ public class Block extends StateNode {
     }
 
     @Override
-    protected void store() {
+    public void store() {
         convIDsStored = Util.deepCopyIntegers(convIDs);
     }
 
@@ -185,7 +185,6 @@ public class Block extends StateNode {
 
     @Override
     public void setEverythingDirty(boolean isDirty) {
-        aheadOfMTree = true;
         setSomethingIsDirty(isDirty);
     }
 

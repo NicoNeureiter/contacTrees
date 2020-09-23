@@ -51,7 +51,7 @@ public class ConversionGraph extends Tree {
     
     @Override
     public void initAndValidate() {
-        System.setProperty("java.only", "true");
+//        System.setProperty("java.only", "true");
         
         super.initAndValidate();
 
@@ -626,10 +626,14 @@ public class ConversionGraph extends Tree {
 
                 if (ctx.post().label() != null) {
                     node.setID(ctx.post().label().getText());
-                    node.setNr(Integer.parseInt(ctx.post().label().getText())
-                            - nodeNumberoffset);
+                    String lbl = ctx.post().label().getText();
+                    int nr = getTaxonset().getTaxonIndex(lbl);
+                    if (nr < 0)
+                        System.out.println(lbl);
+                    node.setNr(nr);
+//                    node.setNr(Integer.parseInt(ctx.post().label().getText())
+//                            - nodeNumberoffset);
                 }
-
                 node.setHeight(Double.parseDouble(ctx.post().length.getText()));
 
                 return node;
