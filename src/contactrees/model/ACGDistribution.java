@@ -20,9 +20,7 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.State;
 import beast.core.parameter.RealParameter;
-import beast.evolution.speciation.YuleModel;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeDistribution;
 import beast.util.Randomizer;
 
@@ -43,9 +41,14 @@ public class ACGDistribution extends Distribution {
 	
 	final public Input<RealParameter> conversionRateInput = new Input<>(
 			"conversionRate",
-			"The rate at which a pair of lineages will get in contact and form a conversion.",
-			Input.Validate.REQUIRED);
-
+			"The rate at which a pair of lineages will get in contact and form a conversion."
+			);
+	
+	final public Input<RealParameter> expectedConversionsInput = new Input<>(
+	        "expectedConversions",
+	        "The expected number of conversions in the whole phylogeny (alternative parameterization to conversionRate).",
+	        Input.Validate.XOR, conversionRateInput);
+	
 	final public Input<Integer> lowerCCBoundInput = new Input<>("lowerConvCountBound",
             "Lower bound on conversion count.", 0);
 
@@ -53,7 +56,6 @@ public class ACGDistribution extends Distribution {
             "Upper bound on conversion count.", Integer.MAX_VALUE);
 	
 	ConversionGraph acg;
-	double convRate;
 	TreeDistribution cfModel;
 	
 	@Override
@@ -61,13 +63,21 @@ public class ACGDistribution extends Distribution {
 		super.initAndValidate();
 		acg = networkInput.get();
 		cfModel = cfModelInput.get();
-		convRate = conversionRateInput.get().getValue();
+	}
+	
+	protected double getExpectedConversions() {
+	    if (conversionRateInput.get() != null) {
+	        double convRate = conversionRateInput.get().getValue();
+	        return convRate * acg.getClonalFramePairedLength();
+        } else {
+            return expectedConversionsInput.get().getValue(); 
+        }
 	}
 	
 	@Override
 	public double calculateLogP() {
-	    convRate = conversionRateInput.get().getValue();
-	    
+//	    System.out.print("_");	   
+//	    System.out.printf("[%.2f vs %.2f]", logP, storedLogP);
 		logP = cfModel.calculateLogP();
 
         // Check whether conversion count exceeds bounds.
@@ -78,7 +88,7 @@ public class ACGDistribution extends Distribution {
         }
 
         // Poisson prior on the number of conversions
-        double poissonMean = convRate * acg.getClonalFramePairedLength();
+        double poissonMean = getExpectedConversions();
         logP += -poissonMean + acg.getConvCount() * Math.log(poissonMean);
         
         assert poissonMean >= 0.0;
@@ -107,8 +117,8 @@ public class ACGDistribution extends Distribution {
                         "prior density required by conversion number constraint.");
             }
         }
-        
-		return logP;
+
+        return logP;
 	}
 
 	public double calculateConversionLogP(Conversion conv) {
@@ -120,6 +130,7 @@ public class ACGDistribution extends Distribution {
 	
 	@Override
     protected boolean requiresRecalculation() {
+//	    System.out.println("?");
 		// For now we use the safe version (always recalculate)
 		return true;
 		// TODO: Use the version below when sure that dirty logic is fine in ACG.
@@ -153,21 +164,20 @@ public class ACGDistribution extends Distribution {
         sampleConditions(state, random);
         cfModel.sample(state, random);
         
-        acg = (ConversionGraph) cfModel.treeInput.get();
-        convRate = conversionRateInput.get().getValue();
+        acg.assignFromFragile((ConversionGraph) cfModel.treeInput.get());
         
-        generateConversions();
+        generateConversions(getExpectedConversions());
 	}
     
 	/**
 	 * Sample conversion edges according to the current convRate 
 	 * in the current clonal frame.
 	 */
-    private void generateConversions() {
+    private void generateConversions(double expectedConversions) {
         acg.removeAllConversions();
         
         // Draw number of conversions:
-        double nConvMean = convRate * acg.getClonalFramePairedLength();
+        double nConvMean = expectedConversions;
         int nConv = (int) Randomizer.nextPoisson(nConvMean);
 
         // Generate conversions:
@@ -209,5 +219,26 @@ public class ACGDistribution extends Distribution {
         
         assert conv.isValid();
     }
+    
+    public void printDebug() {
+        System.out.println(getID() + "  \t" + isDirtyCalculation() + "\t\t" + logP); // + " \t\t" + calculateLogP());
+    }
+    
+//    public void store() {
+//        System.out.printf("STORE ACGDistribution [%.4f | %.4f]", logP, storedLogP);
+//        super.store();
+//    }
+//    
+//    public void restore() {
+//        System.out.printf("RESTORE ACGDistribution [%.4f | %.4f]", storedLogP, logP);
+//        super.restore();
+//    }
+//    
+//    public double getNonStochasticLogP() {
+//        double res = super.getNonStochasticLogP();
+//        System.out.println();
+//        System.out.println("||" + res);
+//        return res;
+//    }
 
 }

@@ -5,14 +5,7 @@ import contactrees.Conversion;
 import contactrees.util.Util;
 import beast.core.Description;
 import beast.core.Input;
-import beast.core.parameter.BooleanParameter;
 import beast.evolution.tree.Node;
-import beast.util.Randomizer;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.print.attribute.standard.MediaSize.Other;
 
 /**
  * Swap attachment points of a subtree and a conversion, keeping heights constant.
@@ -104,7 +97,7 @@ public class CFConversionSwap extends CFOperator {
         }
         
         if (resampleMovesInput.get()) {
-            logHGF += drawAffectedBlocksGibbs(conv);
+            logHGF += drawAffectedBlocksGibbs(conv, true);
         } else {
             invertAffectedBlocks(conv);
         }

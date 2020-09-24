@@ -8,7 +8,6 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.likelihood.TreeLikelihood;
 import beast.util.Randomizer;
 import contactrees.Block;
-import contactrees.BlockSet;
 import contactrees.Conversion;
 import contactrees.MarginalTree;
 import contactrees.util.Util;
@@ -39,14 +38,20 @@ public abstract class GibbsBlockMovesOperator extends ACGOperator {
     }
     
     public double sampleBlockMove(Block block, Conversion conv, MarginalTree marginalTree, TreeLikelihood treeLH) {
+//        System.out.println();
         double pMove = pMoveInput.get().getValue();
+        
         
         // Get prior and likelihood for current block move
         boolean moveOld = block.isAffected(conv); 
         double priorOld = moveOld ? pMove : (1 - pMove);
-        marginalTree.recalculate();
-        double logLHOld = treeLH.calculateLogP();
+//        marginalTree.recalculate();
+//        double logLHOld = treeLH.calculateLogP();
+        double logLHOld= treeLH.getCurrentLogP();
         double logPosteriorOld = Math.log(priorOld) + logLHOld;
+        
+//        System.out.println("|");
+        treeLH.store();
         
         // Compute prior and likelihood for flipped block move
         double priorNew = 1 - priorOld;
@@ -58,8 +63,13 @@ public abstract class GibbsBlockMovesOperator extends ACGOperator {
         // Revert flip with probability $p_old / (p_old + p_new)$
         double logPRevert = logPosteriorOld - Util.logAddExp(logPosteriorOld, logPosteriorNew);
         boolean revert = (Math.log(Randomizer.nextDouble()) < logPRevert);
-        if (revert)
+        if (revert) {
             flipBlockMove(block, conv);
+            treeLH.restore();
+            marginalTree.setManuallyUpdated();
+        } else {
+            marginalTree.setManuallyUpdated();
+        }
         
         return Double.POSITIVE_INFINITY;
     }

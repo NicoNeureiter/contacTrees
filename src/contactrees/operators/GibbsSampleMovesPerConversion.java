@@ -30,14 +30,12 @@ public class GibbsSampleMovesPerConversion extends GibbsBlockMovesOperator {
             new ArrayList<TreeLikelihood>());
 
     protected BlockSet blockSet;
-    protected List<TreeLikelihood> treeLHs;
     protected List<MarginalTree> marginalTrees;
 
     @Override
     public void initAndValidate() {
         super.initAndValidate();
         blockSet = blockSetInput.get();
-        treeLHs = treeLHsInput.get();
     }
     
     @Override
@@ -49,7 +47,7 @@ public class GibbsSampleMovesPerConversion extends GibbsBlockMovesOperator {
         Conversion conv = acg.getConversions().getRandomConversion();
         
         // Iterate over all blocks and resample the move over the chosen conversion
-        for (TreeLikelihood treeLH : treeLHs) {
+        for (TreeLikelihood treeLH : treeLHsInput.get()) {
             sampleBlockMove(conv, treeLH);
         }
         

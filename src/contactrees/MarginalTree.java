@@ -42,25 +42,27 @@ public class MarginalTree extends Tree {
     public ConversionGraph acg;
     public Block block;
     protected BranchRateModel.Base branchRateModel;
-    private double[] branchRateCache;
     private boolean hasBranchRates;
     
     protected boolean outdated;
-    protected boolean nextTimeDirty;
+    protected boolean manuallyUpdated = false;
+    String lastBlockState;
+    
+    public void setManuallyUpdated() {
+        manuallyUpdated = true;
+    }
 
     public void initAndValidate() {
         
         acg = networkInput.get();
         block = blockInput.get();
         
-        branchRateCache = new double[acg.getNodeCount()];
         if (branchRateModelInput.get() != null) {
             branchRateModel = branchRateModelInput.get();
             hasBranchRates = true;
         } else {
             branchRateModel = new StrictClockModel();
             hasBranchRates = false;
-            Arrays.fill(branchRateCache, 1.);
         }
         
         // Initialize to clonal frame of acg
@@ -72,29 +74,92 @@ public class MarginalTree extends Tree {
         recalculate();
            
         outdated = true;
-        nextTimeDirty = true;
+        manuallyUpdated = false;
     }
     
     @Override
     public boolean requiresRecalculation() {
-        recalculate();
-        return true;
+        outdated = checkOutdated();
+        
+        if (outdated) {          
+            recalculate();
 
-//        outdated = outdated || checkOutdated();
-//        
-//        // Recalculate right away if needed
-//        if (outdated) {
-//            recalculate();
-//            outdated = false;
-//            return true;
-//        } else {
-//            System.out.println("MarginalTree: Not outdated");
-//            return false;
+            if (manuallyUpdated) {
+//                manuallyUpdated = false;
+                return false;
+            } else 
+                return true;
+            
+            
+        } else {
+            return false;
+        }
+        
+//        recalculate();
+//        return true;
+    }
+
+    @Override
+    public boolean somethingIsDirty() {
+        if (manuallyUpdated) {
+            manuallyUpdated = false;
+            return false;
+        } else {
+            return checkOutdated();
+        }
+        
+//        boolean rootIsDirty = (root.isDirty() >= Tree.IS_DIRTY);
+//        if (!rootIsDirty) {
+//            System.out.println();
+//            System.out.println("+++++++++++++++++++++++++");
+//            System.out.println();
 //        }
+//        
+//        return (rootIsDirty);
+        
+//        return requiresRecalculation();
+//        return checkOutdated();
+//        return true;
     }
     
+
+//    public boolean checkOutdated() {
+//        boolean res = _checkOutdated();
+//        if (res)
+//            root.makeDirty(Tree.IS_FILTHY);
+//            
+//        return res;
+//    }
+        
+    
     public boolean checkOutdated() {
-        return (acg.somethingIsDirty() || block.somethingIsDirty());
+//        System.out.print(0);
+        
+        if (acg.somethingIsDirty()) {
+            return true;
+        }
+        
+//        System.out.print(1);
+        
+        if (block.isAheadOfMarginalTree())
+            return true;
+//        else {
+//            assert lastBlockState.equals(block.toString());
+//        }
+        
+//        System.out.print(2);
+        
+        if (branchRateModel.isDirtyCalculation())
+            return true;
+        
+//        System.out.print(3);
+//        
+//        if (!outdated)
+//            System.out.println("+");
+        
+        return outdated;
+//        return true;
+        
 //      // Check whether a clonal frame edge is dirty
 //      if (!outdated) {
 //          for (Node cfNode : acg.getNodesAsArray()) {
@@ -145,6 +210,7 @@ public class MarginalTree extends Tree {
     
     public void recalculate() {
         startEditing(null);
+//        System.out.print("*");
         
         List<Event> cfEvents = acg.getCFEvents();
         Map<Node, MarginalNode> activeCFlineages = new HashMap<>();
@@ -165,8 +231,6 @@ public class MarginalTree extends Tree {
         int iConv = 0;
         int nLeafs = acg.getLeafNodeCount();
         int nextNonLeafNr = nLeafs;
-        if (hasBranchRates)
-            Arrays.fill(branchRateCache, 0.);
         
         for (int iEvent = 0; iEvent < cfEvents.size(); iEvent++) {
             Event event = cfEvents.get(iEvent);
@@ -274,20 +338,9 @@ public class MarginalTree extends Tree {
             rollOutTime(newRoot, newRoot.getHeight());
         }
         
-//        assert activeCFlineages.size() == 1;
-//        assert activeCFlineages.containsKey(acg.getRoot());
-//        assert m_nodes.length == acg.getNodeCount()
-//        assert m_nodes[getNodeCount() - 1] == root;
-//        assert root.isRoot();
-//        assert root == getRoot();
-//        int rootCount = 0;
-//        for (Node node : getNodesAsArray()) {
-//            assert node != null;
-//            if (node.isRoot())
-//                rootCount += 1;
-//        }
-//        assert rootCount == 1;
-
+        outdated = false;
+        block.updatedMarginalTree();
+//        lastBlockState = block.toString();
     }
 
     public MarginalNode registerLeafNode(Node node) {
@@ -304,19 +357,20 @@ public class MarginalTree extends Tree {
     public MarginalNode registerNode(Node node, Map<Node, MarginalNode> activeCFlineages, int nodeNr) {
         Node left = node.getChild(0);
         Node right = node.getChild(1);
+        double height = node.getHeight();
         MarginalNode marginalLeft = activeCFlineages.get(left);
         MarginalNode marginalRight = activeCFlineages.get(right);
         
         MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
-        marginalNode.update(node.getHeight(), marginalLeft, marginalRight);
+        marginalNode.update(height, marginalLeft, marginalRight);
         marginalNode.timeLength = 0;
-        marginalNode.lastEventHeight = node.getHeight();
+        marginalNode.lastEventHeight = height;
         marginalNode.makeDirty(Tree.IS_FILTHY);
         
         // Update time-length of both children
         if (hasBranchRates) {
-            updateTimeLength(node.getHeight(), left, marginalLeft);
-            updateTimeLength(node.getHeight(), right, marginalRight);
+            updateTimeLength(height, left, marginalLeft);
+            updateTimeLength(height, right, marginalRight);
         }
         
         return marginalNode;
@@ -325,35 +379,27 @@ public class MarginalTree extends Tree {
     public MarginalNode registerNode(Conversion conv, Map<Node, MarginalNode> activeCFlineages, int nodeNr) {
         Node left = conv.getNode1();
         Node right = conv.getNode2();
+        double height = conv.getHeight();
         MarginalNode marginalLeft = activeCFlineages.get(left);
         MarginalNode marginalRight = activeCFlineages.get(right);
         
         MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
-        marginalNode.update(conv.getHeight(), marginalLeft, marginalRight);
+        marginalNode.update(height, marginalLeft, marginalRight);
         marginalNode.timeLength = 0;
-        marginalNode.lastEventHeight = conv.getHeight();
+        marginalNode.lastEventHeight = height;
         marginalNode.makeDirty(Tree.IS_FILTHY);
 
         // Update time-length of both children
         if (hasBranchRates) {
-            updateTimeLength(conv.getHeight(), left, marginalLeft);
-            updateTimeLength(conv.getHeight(), right, marginalRight);
+            updateTimeLength(height, left, marginalLeft);
+            updateTimeLength(height, right, marginalRight);
         }
         
         return marginalNode;
     }
     
-    double getRateForBranch(Node node) {
-        int nr = node.getNr();
-        if (branchRateCache[nr] == 0)
-            branchRateCache[nr] = branchRateModel.getRateForBranch(node);
-
-        return branchRateCache[nr];
-    }
-    
     void updateTimeLength(double parentHeight, Node child, MarginalNode marginalChild) {
-        double newLength = parentHeight - marginalChild.lastEventHeight;
-        marginalChild.timeLength += newLength * getRateForBranch(child);
+        marginalChild.timeLength += (parentHeight - marginalChild.lastEventHeight) * branchRateModel.getRateForBranch(child);
         marginalChild.lastEventHeight = parentHeight;
     }
 
@@ -373,28 +419,20 @@ public class MarginalTree extends Tree {
             rollOutTime(child, rootHeight - child.timeLength);
         }
     }
-
-    @Override
-    public boolean somethingIsDirty() {
-        return true;
-//        // Would be dirty if either ACG or BlockSet is dirty
-//        return (acg.somethingIsDirty() || block.somethingIsDirty());
-    }
     
     @Override
     public void store() {}
     
     @Override
     public void restore() {
-//      System.out.println("################################### RESTORE ###################################");
         postCache = null;
-        block.setSomethingIsDirty(true);
-        acg.setSomethingIsDirty(true);
-        nextTimeDirty = true;
-        outdated = true;
+        
+//        outdated = true;
+        manuallyUpdated = false;
+//        System.out.print("r");
+        recalculate();
     }
     
-
     protected void initArraysSlim() { 
         // initialise tree-as-array representation + its stored variant
         m_nodes = new MarginalNode[nodeCount];

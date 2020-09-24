@@ -27,13 +27,11 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
         Conversion conv = chooseConversion();
         
         // Compute back probability
-        logHGF += getAffectedBlocksProbGibbs(conv);
+        logHGF += getAffectedBlocksProbGibbs(conv, false);
 
         // Choose whether to move departure or arrival point
         boolean moveDeparture = conv.getNode2().isRoot() || Randomizer.nextBoolean();
-
         double height = conv.getHeight();
-        Node convNode = moveDeparture ? conv.getNode1() : conv.getNode2();
 
         // Find list of CF edges alive at pointHeight
         HashSet<Node> activeLineages = acg.getLineagesAtHeight(height);
@@ -54,7 +52,7 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
         assert !acg.isInvalid() : "CEHContemp produced invalid state.";
         
         // Resample affected blocks
-        logHGF -= drawAffectedBlocksGibbs(conv);
+        logHGF -= drawAffectedBlocksGibbs(conv, true);
 
         return logHGF;
     }

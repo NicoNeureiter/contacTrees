@@ -3,6 +3,9 @@ package contactrees.operators;
 import contactrees.Conversion;
 
 import beast.core.Description;
+import beast.core.Input;
+import beast.core.State;
+import beast.evolution.likelihood.TreeLikelihood;
 import beast.util.Randomizer;
 
 /**
@@ -10,16 +13,25 @@ import beast.util.Randomizer;
  */
 @Description("Operator which adds and removes conversions to/from an ACG.")
 public class AddRemoveConversionGibbs extends ConversionCreationOperator {
+
+    public Input<State> stateInput = new Input<>(
+            "state",
+            "",
+            Input.Validate.REQUIRED);
     
     public AddRemoveConversionGibbs() { }
     
     @Override
     public double proposal() {
         double logHGF = 0;
+        for (TreeLikelihood treeLH : treeLHsInput.get()) treeLH.store();
 
         if (Randomizer.nextBoolean()) {
             
+            
+//            acg.store();
             // Add
+//            System.out.println("ADD");
             
             logHGF += Math.log(1.0/(acg.getConvCount()+1));
             logHGF -= drawNewConversion();
@@ -27,6 +39,7 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
         } else {
             
             // Remove
+//            System.out.println("REMOVE");
             
             if (acg.getConvCount()==0)
                 return Double.NEGATIVE_INFINITY;
@@ -44,6 +57,7 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
         }
         
         assert !acg.isInvalid() : "AddRemoveConv produced invalid state.";
+        stateInput.get().checkCalculationNodesDirtiness();
         
         return logHGF;
     }
@@ -58,7 +72,7 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
         Conversion newConversion = addNewConversion();
 
         double logP = attachEdge(newConversion);
-        logP += drawAffectedBlocksGibbs(newConversion);
+        logP += drawAffectedBlocksGibbs(newConversion, false);
         
 //        // TODO Remove after testing is done (quite expensive)!!!
 //        double logP2 = getConversionProb(newConversion);

@@ -1,13 +1,10 @@
 package contactrees.operators;
 
 import contactrees.Conversion;
-import contactrees.util.Util;
 import beast.core.Input;
-import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.util.Randomizer;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -15,6 +12,10 @@ import java.util.List;
  * @author Nico Neureiter
  */
 public abstract class CFOperator extends ConversionCreationOperator {
+
+    public Input<Boolean> gibbsSampleBlockMovesInput = new Input<Boolean>("gibbsSampleBlockMoves",
+            "Sample block-moves via added conversions using Gibbs sampling ().",
+            Boolean.TRUE);
 
     /**
      * Take conversions which connect to edge above srcNode at times greater than
@@ -84,7 +85,11 @@ public abstract class CFOperator extends ConversionCreationOperator {
         
         // individual conversion states
         for (Conversion conv : toRemove) {
-        	logP += Math.log(1.0/L) + getAffectedBlocksProb(conv);
+        	logP += Math.log(1.0/L);
+        	if (gibbsSampleBlockMovesInput.get())
+        	    logP += getAffectedBlocksProbGibbs(conv, true);
+        	else
+        	    logP += getAffectedBlocksProb(conv);
 
             removeConversion(conv);
         }
@@ -182,8 +187,11 @@ public abstract class CFOperator extends ConversionCreationOperator {
                 conv.setNode1(other);
                 conv.setNode2(srcNode);
             }
-
-            logP += drawAffectedBlocks(conv);
+            
+            if (gibbsSampleBlockMovesInput.get())
+                logP += drawAffectedBlocksGibbs(conv, true);
+            else
+                logP += drawAffectedBlocks(conv);
         }
         
         return logP;

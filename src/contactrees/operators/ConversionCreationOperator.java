@@ -1,7 +1,6 @@
 package contactrees.operators;
 
 import contactrees.Block;
-import contactrees.BlockSet;
 import contactrees.Conversion;
 import contactrees.MarginalTree;
 import contactrees.util.Util;
@@ -31,14 +30,10 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
             "treeLikelihood",
             "BEASTObject computing the tree likelihood.",
             new ArrayList<TreeLikelihood>());
-
-    protected List<TreeLikelihood> treeLHs;
-    
     
     @Override
     public void initAndValidate() {
         super.initAndValidate();
-        treeLHs = treeLHsInput.get();
     }
 
     /**
@@ -100,13 +95,37 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      * @param conv
      * @return
      */
-    public double drawAffectedBlocksGibbs(Conversion conv) {
+    public double drawAffectedBlocksGibbs(Conversion conv, boolean mtreesChanged) {
         double logP = 0;
-        for (TreeLikelihood treeLH : treeLHs) {
-            logP += sampleBlockMove(conv, treeLH);
+        for (TreeLikelihood treeLH : treeLHsInput.get()) {
+            logP += sampleBlockMove(conv, treeLH, mtreesChanged);
         }
         return logP;
     }
+    public double drawAffectedBlocksGibbs(Conversion conv) {
+        return drawAffectedBlocksGibbs(conv, true);
+    }
+    
+
+//    protected double evaluateTreeLH() {
+//        double logP = 0.0;
+//
+//        State state = stateInput.get();
+//        state.storeCalculationNodes();
+//        state.checkCalculationNodesDirtiness();
+//
+//        try {
+//            logP = treeLG.calculateLogP();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            System.exit(1);
+//        }
+//
+//        state.restore();
+//        state.store(currentState);
+//
+//        return logP;
+//    };
 
     /**
      * Sample the move of specific block over a specific conversion. 
@@ -114,22 +133,33 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      * @param treeLH
      * @return log-prob. difference between state before and after the move.
      */
-    public double sampleBlockMove(Conversion conv, TreeLikelihood treeLH) {
+    public double sampleBlockMove(Conversion conv, TreeLikelihood treeLH, boolean mtreeChanged) {
         double pMove = pMoveInput.get().getValue();
         
         MarginalTree marginalTree = (MarginalTree) treeLH.treeInput.get();
         Block block = marginalTree.block;
+
+        treeLH.store();
+//        block.store();
         
         // Get prior and likelihood for current block move
         boolean moveOld = block.isAffected(conv); 
         double priorOld = moveOld ? pMove : (1 - pMove);
-        marginalTree.recalculate();
-        double logLHOld = treeLH.calculateLogP();
+        double logLHOld;
+        
+        if (mtreeChanged) {
+            marginalTree.recalculate();
+            logLHOld = treeLH.calculateLogP();
+        } else {
+            logLHOld= treeLH.getCurrentLogP();
+        }
+
         double logPosteriorOld = Math.log(priorOld) + logLHOld;
         
         // Compute prior and likelihood for flipped block move
         double priorNew = 1 - priorOld;
         GibbsBlockMovesOperator.flipBlockMove(block, conv);
+        
         marginalTree.recalculate();
         double logLHNew = treeLH.calculateLogP();
         double logPosteriorNew = Math.log(priorNew) + logLHNew;
@@ -140,15 +170,48 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
         
         // Compute the hastings ratio, to remove effect of block move from acceptance-ratio
         // (We can't just return positive infinity, because of combined moves)
+        double p = 0.0;
         if (revert) {
+//            System.out.println("°");
             GibbsBlockMovesOperator.flipBlockMove(block, conv);
-            return logPRevert;
+            treeLH.restore();
+//            marginalTree.setManuallyUpdated();
+            p = logPRevert;
         } else {
+//            System.out.println("'");
             double pRevert = Math.exp(logPRevert);
-            return Math.log(1 - pRevert);
+            // Not optimal, but we need to restore here, so that beast.core.MCMC doesn't store the updated likelihood.
+            // (would lead to wrong restored likelihood, if the operator is rejected)
+            treeLH.restore();   
+            marginalTree.setManuallyUpdated();
+            p = Math.log(1 - pRevert);
+        }
+        
+//        block.setEverythingDirty(true);
+//        skipNextStateInitialisation = true;
+        
+        return p;
+    }
+    
+    public double sampleBlockMove(Conversion conv, TreeLikelihood treeLH) {
+        return sampleBlockMove(conv, treeLH, true);
+    }
+    
+    boolean skipNextStateInitialisation = false;
+
+    @Override
+    public boolean requiresStateInitialisation() {
+
+        // TODO See whether we can use this to avoid unnecesary restore
+        // Store ACG and Blocks before!
+        
+        if (skipNextStateInitialisation) {
+            skipNextStateInitialisation = false;
+            return false;
+        } else {
+            return true;  
         }
     }
-
 
     /**
      * Calculate probability of choosing region affected by the
@@ -156,24 +219,34 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
      *
      * @param conv conversion region is associated with
      * @return log probability density
-     */
-    public double getAffectedBlocksProbGibbs(Conversion conv) {
+     */   
+    public double getAffectedBlocksProbGibbs(Conversion conv, boolean mtreesChanged) {
         double pMove = pMoveInput.get().getValue();
-        
-//        return treeLHs.size() * Math.log(1-pMove);
         double logP = 0;
-        for (TreeLikelihood treeLH : treeLHs) {            
+        
+        for (TreeLikelihood treeLH : treeLHsInput.get()) {            
             // Get block corresponding to treeLH
             MarginalTree marginalTree = (MarginalTree) treeLH.treeInput.get();
             Block block = marginalTree.block;
 
+            treeLH.store();
             
             // Get prior and likelihood for current block move
             boolean moveOld = block.isAffected(conv); 
             double priorOld = moveOld ? pMove : (1 - pMove);
-            marginalTree.recalculate();
-            double logLHOld = treeLH.calculateLogP();
+            double logLHOld;
+            
+            if (mtreesChanged) {
+                marginalTree.recalculate();
+                logLHOld = treeLH.calculateLogP();
+            } else {
+                logLHOld= treeLH.getCurrentLogP();
+            }
+
+//            marginalTree.recalculate();
+//            double logLHOld = treeLH.calculateLogP();
             double logPosteriorOld = Math.log(priorOld) + logLHOld;
+
             
             // Compute prior and likelihood for flipped block move
             double priorNew = 1 - priorOld;
@@ -189,9 +262,16 @@ public abstract class ConversionCreationOperator extends EdgeCreationOperator {
             GibbsBlockMovesOperator.flipBlockMove(block, conv);
                         
             assert block.isAffected(conv) == moveOld;
+            
+            treeLH.restore();
+//            marginalTree.setManuallyUpdated();
         }
         
         return logP;
+    }
+
+    public double getAffectedBlocksProbGibbs(Conversion conv) {
+        return getAffectedBlocksProbGibbs(conv, true);
     }
     
 }

@@ -21,10 +21,8 @@ import beast.core.Input;
 import beast.evolution.tree.Node;
 import beast.util.Randomizer;
 
-import java.util.Random;
-
 /**
- * @author Tim Vaughan (tgvaughan@gmail.com)
+ * @author Nico Neureiter
  */
 @Description("Implementation of subtree slide that aims to sensibly deal " +
         "with conversions")
