@@ -347,7 +347,7 @@
   </stateNode>
 
 
-  <run id="mcmc" spec="CoupledMCMC" chainLength="1000000" chains="4" deltaTemperature="0.05" optimise="false" resampleEvery="250" heatLikelihoodOnly="true" logHeatedChains="true">
+  <run id="mcmc" spec="CoupledMCMC" chainLength="10000000" chains="12" deltaTemperature="0.02" optimise="false" resampleEvery="100" heatLikelihoodOnly="true" logHeatedChains="true">
   <!--run id="mcmc" spec="MCMC" chainLength="1000000"-->
 
     <state id="state" storeEvery="5000">
@@ -521,288 +521,312 @@
 
         <!-- Topology priors -->
         <distribution id="Post_OI.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Post_OI" spec="TaxonSet">
-              <taxon idref="Irish_A" />
-              <taxon idref="Scots_Gaelic" />
-            </taxonset>
+          <taxonset id="Post_OI" spec="TaxonSet">
+            <taxon idref="Irish_A" />
+            <taxon idref="Scots_Gaelic" />
+          </taxonset>
+          
         </distribution>
         <distribution id="Old_Irish_Irish_Scots.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Old_Irish_Irish_Scots" spec="TaxonSet">
-              <taxon idref="Old_Irish" />
-              <taxon idref="Irish_A" />
-              <taxon idref="Scots_Gaelic" />
-            </taxonset>
+          <taxonset id="Old_Irish_Irish_Scots" spec="TaxonSet">
+            <taxon idref="Old_Irish" />
+            <taxon idref="Irish_A" />
+            <taxon idref="Scots_Gaelic" />
+          </taxonset>
+          
         </distribution>
         <distribution id="Brythonic.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Brythonic" spec="TaxonSet">
-              <taxon idref="Welsh_N" />
-              <taxon idref="Welsh_C" />
-              <taxon idref="Breton_List" />
-              <taxon idref="Breton_Se" />
-              <taxon idref="Breton_ST" />
-              <taxon idref="Cornish" />
-            </taxonset>
+          <taxonset id="Brythonic" spec="TaxonSet">
+            <taxon idref="Welsh_N" />
+            <taxon idref="Welsh_C" />
+            <taxon idref="Breton_List" />
+            <taxon idref="Breton_Se" />
+            <taxon idref="Breton_ST" />
+            <taxon idref="Cornish" />
+          </taxonset>
+          <distr id="Brythonic.tmrca" spec="Normal" mean="1550" sigma="25"/>
         </distribution>
         <distribution id="Celtic.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Celtic" spec="TaxonSet">
-              <taxon idref="Old_Irish" />
-              <taxon idref="Irish_A" />
-              <taxon idref="Scots_Gaelic" />
-              <taxon idref="Welsh_N" />
-              <taxon idref="Welsh_C" />
-              <taxon idref="Breton_List" />
-              <taxon idref="Breton_Se" />
-              <taxon idref="Breton_ST" />
-              <taxon idref="Cornish" />
-            </taxonset>
+          <taxonset id="Celtic" spec="TaxonSet">
+            <taxon idref="Old_Irish" />
+            <taxon idref="Irish_A" />
+            <taxon idref="Scots_Gaelic" />
+            <taxon idref="Welsh_N" />
+            <taxon idref="Welsh_C" />
+            <taxon idref="Breton_List" />
+            <taxon idref="Breton_Se" />
+            <taxon idref="Breton_ST" />
+            <taxon idref="Cornish" />
+          </taxonset>
+          <distr id="Celtic.tmrca" spec="Uniform" lower="1700" upper="10000.0"/>
         </distribution>
-        <distribution id="French/Iberian.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="French/Iberian" spec="TaxonSet">
-              <taxon idref="Provencal" />
-              <taxon idref="French" />
-              <taxon idref="Walloon" />
-              <taxon idref="Spanish" />
-              <taxon idref="Portuguese_ST" />
-              <taxon idref="Catalan" />
-            </taxonset>
+        <distribution id="FrenchIberian.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
+          <taxonset id="FrenchIberian" spec="TaxonSet">
+            <taxon idref="Provencal" />
+            <taxon idref="French" />
+            <taxon idref="Walloon" />
+            <taxon idref="Spanish" />
+            <taxon idref="Portuguese_ST" />
+            <taxon idref="Catalan" />
+          </taxonset>
+          <distr id="FrenchIberian.tmrca" spec="Normal" mean="1400" sigma="100"/>
         </distribution>
         <distribution id="Post_Latin.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Post_Latin" spec="TaxonSet">
-              <taxon idref="Provencal" />
-              <taxon idref="French" />
-              <taxon idref="Walloon" />
-              <taxon idref="Spanish" />
-              <taxon idref="Portuguese_ST" />
-              <taxon idref="Catalan" />
-              <taxon idref="Sardinian_N" />
-              <taxon idref="Sardinian_L" />
-              <taxon idref="Sardinian_C" />
-              <taxon idref="Rumanian_List" />
-              <taxon idref="Vlach" />
-              <taxon idref="Italian" />
-              <taxon idref="Ladin" />
-              <taxon idref="Friulian" />
-              <taxon idref="Romansh" />
-            </taxonset>
+          <taxonset id="Post_Latin" spec="TaxonSet">
+            <taxon idref="Provencal" />
+            <taxon idref="French" />
+            <taxon idref="Walloon" />
+            <taxon idref="Spanish" />
+            <taxon idref="Portuguese_ST" />
+            <taxon idref="Catalan" />
+            <taxon idref="Sardinian_N" />
+            <taxon idref="Sardinian_L" />
+            <taxon idref="Sardinian_C" />
+            <taxon idref="Rumanian_List" />
+            <taxon idref="Vlach" />
+            <taxon idref="Italian" />
+            <taxon idref="Ladin" />
+            <taxon idref="Friulian" />
+            <taxon idref="Romansh" />
+          </taxonset>
+          
         </distribution>
         <distribution id="Latin_Romance.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Latin_Romance" spec="TaxonSet">
-              <taxon idref="Latin" />
-              <taxon idref="Provencal" />
-              <taxon idref="French" />
-              <taxon idref="Walloon" />
-              <taxon idref="Spanish" />
-              <taxon idref="Portuguese_ST" />
-              <taxon idref="Catalan" />
-              <taxon idref="Sardinian_N" />
-              <taxon idref="Sardinian_L" />
-              <taxon idref="Sardinian_C" />
-              <taxon idref="Rumanian_List" />
-              <taxon idref="Vlach" />
-              <taxon idref="Italian" />
-              <taxon idref="Ladin" />
-              <taxon idref="Friulian" />
-              <taxon idref="Romansh" />
-            </taxonset>
+          <taxonset id="Latin_Romance" spec="TaxonSet">
+            <taxon idref="Latin" />
+            <taxon idref="Provencal" />
+            <taxon idref="French" />
+            <taxon idref="Walloon" />
+            <taxon idref="Spanish" />
+            <taxon idref="Portuguese_ST" />
+            <taxon idref="Catalan" />
+            <taxon idref="Sardinian_N" />
+            <taxon idref="Sardinian_L" />
+            <taxon idref="Sardinian_C" />
+            <taxon idref="Rumanian_List" />
+            <taxon idref="Vlach" />
+            <taxon idref="Italian" />
+            <taxon idref="Ladin" />
+            <taxon idref="Friulian" />
+            <taxon idref="Romansh" />
+          </taxonset>
+          <distr id="Latin_Romance.tmrca" spec="Normal" mean="2000" sigma="135"/>
         </distribution>
         <distribution id="Italic.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Italic" spec="TaxonSet">
-              <taxon idref="Umbrian" />
-              <taxon idref="Oscan" />
-              <taxon idref="Latin" />
-              <taxon idref="Provencal" />
-              <taxon idref="French" />
-              <taxon idref="Walloon" />
-              <taxon idref="Spanish" />
-              <taxon idref="Portuguese_ST" />
-              <taxon idref="Catalan" />
-              <taxon idref="Sardinian_N" />
-              <taxon idref="Sardinian_L" />
-              <taxon idref="Sardinian_C" />
-              <taxon idref="Rumanian_List" />
-              <taxon idref="Vlach" />
-              <taxon idref="Italian" />
-              <taxon idref="Ladin" />
-              <taxon idref="Friulian" />
-              <taxon idref="Romansh" />
-            </taxonset>
+          <taxonset id="Italic" spec="TaxonSet">
+            <taxon idref="Umbrian" />
+            <taxon idref="Oscan" />
+            <taxon idref="Latin" />
+            <taxon idref="Provencal" />
+            <taxon idref="French" />
+            <taxon idref="Walloon" />
+            <taxon idref="Spanish" />
+            <taxon idref="Portuguese_ST" />
+            <taxon idref="Catalan" />
+            <taxon idref="Sardinian_N" />
+            <taxon idref="Sardinian_L" />
+            <taxon idref="Sardinian_C" />
+            <taxon idref="Rumanian_List" />
+            <taxon idref="Vlach" />
+            <taxon idref="Italian" />
+            <taxon idref="Ladin" />
+            <taxon idref="Friulian" />
+            <taxon idref="Romansh" />
+          </taxonset>
+          
         </distribution>
         <distribution id="Post_ON.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Post_ON" spec="TaxonSet">
-              <taxon idref="Icelandic_ST" />
-              <taxon idref="Faroese" />
-            </taxonset>
+          <taxonset id="Post_ON" spec="TaxonSet">
+            <taxon idref="Icelandic_ST" />
+            <taxon idref="Faroese" />
+          </taxonset>
+          
         </distribution>
         <distribution id="Old_Norse_Icelandic_Faroese.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Old_Norse_Icelandic_Faroese" spec="TaxonSet">
-              <taxon idref="Old_Norse" />
-              <taxon idref="Icelandic_ST" />
-              <taxon idref="Faroese" />
-            </taxonset>
+          <taxonset id="Old_Norse_Icelandic_Faroese" spec="TaxonSet">
+            <taxon idref="Old_Norse" />
+            <taxon idref="Icelandic_ST" />
+            <taxon idref="Faroese" />
+          </taxonset>
+          
         </distribution>
         <distribution id="NorthGermanic.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="NorthGermanic" spec="TaxonSet">
-              <taxon idref="Swedish_Up" />
-              <taxon idref="Swedish_Vl" />
-              <taxon idref="Swedish" />
-              <taxon idref="Danish" />
-              <taxon idref="Old_Norse" />
-              <taxon idref="Icelandic_ST" />
-              <taxon idref="Faroese" />
-            </taxonset>
+          <taxonset id="NorthGermanic" spec="TaxonSet">
+            <taxon idref="Swedish_Up" />
+            <taxon idref="Swedish_Vl" />
+            <taxon idref="Swedish" />
+            <taxon idref="Danish" />
+            <taxon idref="Old_Norse" />
+            <taxon idref="Icelandic_ST" />
+            <taxon idref="Faroese" />
+          </taxonset>
+          
         </distribution>
         <distribution id="Post_OHG.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Post_OHG" spec="TaxonSet">
-              <taxon idref="German" />
-              <taxon idref="Luxembourgish" />
-            </taxonset>
+          <taxonset id="Post_OHG" spec="TaxonSet">
+            <taxon idref="German" />
+            <taxon idref="Luxembourgish" />
+          </taxonset>
+          
         </distribution>
         <distribution id="High_German.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="High_German" spec="TaxonSet">
-              <taxon idref="Old_High_German" />
-              <taxon idref="German" />
-              <taxon idref="Luxembourgish" />
-            </taxonset>
+          <taxonset id="High_German" spec="TaxonSet">
+            <taxon idref="Old_High_German" />
+            <taxon idref="German" />
+            <taxon idref="Luxembourgish" />
+          </taxonset>
+          
         </distribution>
         <distribution id="English_Clade.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="English_Clade" spec="TaxonSet">
-              <taxon idref="Old_English" />
-              <taxon idref="English" />
-            </taxonset>
+          <taxonset id="English_Clade" spec="TaxonSet">
+            <taxon idref="Old_English" />
+            <taxon idref="English" />
+          </taxonset>
+          
         </distribution>
         <distribution id="WestGermanic.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="WestGermanic" spec="TaxonSet">
-              <taxon idref="Dutch_List" />
-              <taxon idref="Flemish" />
-              <taxon idref="Frisian" />
-              <taxon idref="Old_High_German" />
-              <taxon idref="German" />
-              <taxon idref="Luxembourgish" />
-              <taxon idref="Old_English" />
-              <taxon idref="English" />
-            </taxonset>
+          <taxonset id="WestGermanic" spec="TaxonSet">
+            <taxon idref="Dutch_List" />
+            <taxon idref="Flemish" />
+            <taxon idref="Frisian" />
+            <taxon idref="Old_High_German" />
+            <taxon idref="German" />
+            <taxon idref="Luxembourgish" />
+            <taxon idref="Old_English" />
+            <taxon idref="English" />
+          </taxonset>
+          <distr id="WestGermanic.tmrca" spec="Normal" mean="1550" sigma="25"/>
         </distribution>
-        <distribution id="Northwest-Germanic.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Northwest-Germanic" spec="TaxonSet">
-              <taxon idref="Swedish_Up" />
-              <taxon idref="Swedish_Vl" />
-              <taxon idref="Swedish" />
-              <taxon idref="Danish" />
-              <taxon idref="Old_Norse" />
-              <taxon idref="Icelandic_ST" />
-              <taxon idref="Faroese" />
-              <taxon idref="Dutch_List" />
-              <taxon idref="Flemish" />
-              <taxon idref="Frisian" />
-              <taxon idref="Old_High_German" />
-              <taxon idref="German" />
-              <taxon idref="Luxembourgish" />
-              <taxon idref="Old_English" />
-              <taxon idref="English" />
-            </taxonset>
+        <distribution id="NorthWestGermanic.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
+          <taxonset id="NorthWestGermanic" spec="TaxonSet">
+            <taxon idref="Swedish_Up" />
+            <taxon idref="Swedish_Vl" />
+            <taxon idref="Swedish" />
+            <taxon idref="Danish" />
+            <taxon idref="Old_Norse" />
+            <taxon idref="Icelandic_ST" />
+            <taxon idref="Faroese" />
+            <taxon idref="Dutch_List" />
+            <taxon idref="Flemish" />
+            <taxon idref="Frisian" />
+            <taxon idref="Old_High_German" />
+            <taxon idref="German" />
+            <taxon idref="Luxembourgish" />
+            <taxon idref="Old_English" />
+            <taxon idref="English" />
+          </taxonset>
+          <distr id="NorthWestGermanic.tmrca" spec="Normal" mean="1875" sigma="67"/>
         </distribution>
         <distribution id="Germanic.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Germanic" spec="TaxonSet">
-              <taxon idref="Gothic" />
-              <taxon idref="Swedish_Up" />
-              <taxon idref="Swedish_Vl" />
-              <taxon idref="Swedish" />
-              <taxon idref="Danish" />
-              <taxon idref="Old_Norse" />
-              <taxon idref="Icelandic_ST" />
-              <taxon idref="Faroese" />
-              <taxon idref="Dutch_List" />
-              <taxon idref="Flemish" />
-              <taxon idref="Frisian" />
-              <taxon idref="Old_High_German" />
-              <taxon idref="German" />
-              <taxon idref="Luxembourgish" />
-              <taxon idref="Old_English" />
-              <taxon idref="English" />
-            </taxonset>
+          <taxonset id="Germanic" spec="TaxonSet">
+            <taxon idref="Gothic" />
+            <taxon idref="Swedish_Up" />
+            <taxon idref="Swedish_Vl" />
+            <taxon idref="Swedish" />
+            <taxon idref="Danish" />
+            <taxon idref="Old_Norse" />
+            <taxon idref="Icelandic_ST" />
+            <taxon idref="Faroese" />
+            <taxon idref="Dutch_List" />
+            <taxon idref="Flemish" />
+            <taxon idref="Frisian" />
+            <taxon idref="Old_High_German" />
+            <taxon idref="German" />
+            <taxon idref="Luxembourgish" />
+            <taxon idref="Old_English" />
+            <taxon idref="English" />
+          </taxonset>
+          
         </distribution>
-        <distribution id="Lithuanian/Latvian.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Lithuanian/Latvian" spec="TaxonSet">
-              <taxon idref="Lithuanian_ST" />
-              <taxon idref="Latvian" />
-            </taxonset>
+        <distribution id="LithuanianLatvian.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
+          <taxonset id="LithuanianLatvian" spec="TaxonSet">
+            <taxon idref="Lithuanian_ST" />
+            <taxon idref="Latvian" />
+          </taxonset>
+          <distr id="LithuanianLatvian.tmrca" spec="Normal" mean="1350" sigma="25"/>
         </distribution>
         <distribution id="Baltic.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Baltic" spec="TaxonSet">
-              <taxon idref="Old_Prussian" />
-              <taxon idref="Lithuanian_ST" />
-              <taxon idref="Latvian" />
-            </taxonset>
+          <taxonset id="Baltic" spec="TaxonSet">
+            <taxon idref="Old_Prussian" />
+            <taxon idref="Lithuanian_ST" />
+            <taxon idref="Latvian" />
+          </taxonset>
+          
         </distribution>
         <distribution id="South_Slavic.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="South_Slavic" spec="TaxonSet">
-              <taxon idref="Macedonian" />
-              <taxon idref="Bulgarian" />
-              <taxon idref="Serbocroatian" />
-              <taxon idref="Old_Church_Slavonic" />
-            </taxonset>
+          <taxonset id="South_Slavic" spec="TaxonSet">
+            <taxon idref="Macedonian" />
+            <taxon idref="Bulgarian" />
+            <taxon idref="Serbocroatian" />
+            <taxon idref="Old_Church_Slavonic" />
+          </taxonset>
+          
         </distribution>
         <distribution id="Slavic.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Slavic" spec="TaxonSet">
-              <taxon idref="Slovenian" />
-              <taxon idref="Lower_Sorbian" />
-              <taxon idref="Upper_Sorbian" />
-              <taxon idref="Czech" />
-              <taxon idref="Slovak" />
-              <taxon idref="Czech_E" />
-              <taxon idref="Ukrainian" />
-              <taxon idref="Byelorussian" />
-              <taxon idref="Polish" />
-              <taxon idref="Russian" />
-              <taxon idref="Macedonian" />
-              <taxon idref="Bulgarian" />
-              <taxon idref="Serbocroatian" />
-              <taxon idref="Old_Church_Slavonic" />
-            </taxonset>
+          <taxonset id="Slavic" spec="TaxonSet">
+            <taxon idref="Slovenian" />
+            <taxon idref="Lower_Sorbian" />
+            <taxon idref="Upper_Sorbian" />
+            <taxon idref="Czech" />
+            <taxon idref="Slovak" />
+            <taxon idref="Czech_E" />
+            <taxon idref="Ukrainian" />
+            <taxon idref="Byelorussian" />
+            <taxon idref="Polish" />
+            <taxon idref="Russian" />
+            <taxon idref="Macedonian" />
+            <taxon idref="Bulgarian" />
+            <taxon idref="Serbocroatian" />
+            <taxon idref="Old_Church_Slavonic" />
+          </taxonset>
+          <distr id="Slavic.tmrca" spec="LogNormalDistributionModel" offset="1200.0" M="300" S="0.6" meanInRealSpace="true"/>
         </distribution>
         <distribution id="Balto-Slavic.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Balto-Slavic" spec="TaxonSet">
-              <taxon idref="Old_Prussian" />
-              <taxon idref="Lithuanian_ST" />
-              <taxon idref="Latvian" />
-              <taxon idref="Slovenian" />
-              <taxon idref="Lower_Sorbian" />
-              <taxon idref="Upper_Sorbian" />
-              <taxon idref="Czech" />
-              <taxon idref="Slovak" />
-              <taxon idref="Czech_E" />
-              <taxon idref="Ukrainian" />
-              <taxon idref="Byelorussian" />
-              <taxon idref="Polish" />
-              <taxon idref="Russian" />
-              <taxon idref="Macedonian" />
-              <taxon idref="Bulgarian" />
-              <taxon idref="Serbocroatian" />
-              <taxon idref="Old_Church_Slavonic" />
-            </taxonset>
+          <taxonset id="Balto-Slavic" spec="TaxonSet">
+            <taxon idref="Old_Prussian" />
+            <taxon idref="Lithuanian_ST" />
+            <taxon idref="Latvian" />
+            <taxon idref="Slovenian" />
+            <taxon idref="Lower_Sorbian" />
+            <taxon idref="Upper_Sorbian" />
+            <taxon idref="Czech" />
+            <taxon idref="Slovak" />
+            <taxon idref="Czech_E" />
+            <taxon idref="Ukrainian" />
+            <taxon idref="Byelorussian" />
+            <taxon idref="Polish" />
+            <taxon idref="Russian" />
+            <taxon idref="Macedonian" />
+            <taxon idref="Bulgarian" />
+            <taxon idref="Serbocroatian" />
+            <taxon idref="Old_Church_Slavonic" />
+          </taxonset>
+          <distr id="Balto-Slavic.tmrca" spec="Uniform" lower="2200" upper="3400"/>
         </distribution>
         <distribution id="Modern_Greek.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Modern_Greek" spec="TaxonSet">
-              <taxon idref="Greek_Mod" />
-              <taxon idref="Greek_Ml" />
-            </taxonset>
+          <taxonset id="Modern_Greek" spec="TaxonSet">
+            <taxon idref="Greek_Mod" />
+            <taxon idref="Greek_Ml" />
+          </taxonset>
+          
         </distribution>
         <distribution id="Greek.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Greek" spec="TaxonSet">
-              <taxon idref="Ancient_Greek" />
-              <taxon idref="Greek_Mod" />
-              <taxon idref="Greek_Ml" />
-            </taxonset>
+          <taxonset id="Greek" spec="TaxonSet">
+            <taxon idref="Ancient_Greek" />
+            <taxon idref="Greek_Mod" />
+            <taxon idref="Greek_Ml" />
+          </taxonset>
+          
         </distribution>
         <distribution id="Albanian.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
-            <taxonset id="Albanian" spec="TaxonSet">
-              <taxon idref="Albanian_Top" />
-              <taxon idref="Albanian_G" />
-              <taxon idref="Albanian_K" />
-              <taxon idref="Albanian_C" />
-            </taxonset>
+          <taxonset id="Albanian" spec="TaxonSet">
+            <taxon idref="Albanian_Top" />
+            <taxon idref="Albanian_G" />
+            <taxon idref="Albanian_K" />
+            <taxon idref="Albanian_C" />
+          </taxonset>
+          
         </distribution>
-
 
       </distribution>
 
@@ -821,9 +845,9 @@
     <!-- ########################################   OPERATORS   ######################################## -->
 
     <operator id="ACGscale.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="3.0"/>
-    <operator id="ACGscale.rootOnly.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="1.0" rootOnly="true"/>
+    <operator id="ACGscale.rootOnly.t" spec="ACGScaler" acg="@acg" scaleFactor="0.85" weight="1.0" rootOnly="true"/>
     <operator id="CFWilsonBalding.t" spec="CFWilsonBalding" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" includeRoot="false" alpha="0.1"  weight="1.0"/>
-    <operator id="CFUniform.t" spec="CFUniform" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" weight="25.0"/>
+    <operator id="CFUniform.t" spec="CFUniform" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" scaleFactor="0.9" weight="25.0"/>
     <operator id="CFNarrowExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="true" weight="10.0"/>
     <operator id="CFWideExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="false" weight="1.0"/>
 
@@ -838,14 +862,14 @@
         </plate>
     </operator>
 
-    <operator id="ConvertedEdgeSlide.t" spec="ConvertedEdgeSlide" acg="@acg" weight="15.0"/>
+    <operator id="ConvertedEdgeSlide.t" spec="ConvertedEdgeSlide" acg="@acg" apertureSize="0.08" weight="15.0"/>
     <operator id="ConvertedEdgeFlip.t" spec="ConvertedEdgeFlip" acg="@acg" weight="2.0"/>
-    <operator id="ConversionSplit.t" spec="ConversionSplit" acg="@acg" weight="2.0" 
+    <operator id="ConversionSplit.t" spec="ConversionSplit" acg="@acg" weight="5.0" 
             blockSet="@allBlocks" conversionRate="@conversionRate" flip="false" pMove="@pMove"/> 
     <!--operator id="ConversionSplitAndFlip.t" spec="ConversionSplit" acg="@acg" weight="1.0" 
-            blockSet="@allBlocks" conversionRate="@conversionRate" flip="true" pMove="@pMove"/> 
+            blockSet="@allBlocks" conversionRate="@conversionRate" flip="true" pMove="@pMove"/-->
     <operator id="CFConversionSwap.t" spec="CFConversionSwap" acg="@acg" conversionRate="@conversionRate"
-                  pMove="@pMove" blockSet="@allBlocks" weight="30.0"/-->
+                  pMove="@pMove" blockSet="@allBlocks" resampleMoves="true" weight="5.0"/>
 
     <!-- Tree prior (birth-death) -->
     <operator id="YuleBirthRateScaler.t:acg" spec="ScaleOperator" parameter="@birthRate.t:acg" scaleFactor="0.5" weight="2.0" />
@@ -855,7 +879,7 @@
     <!-- Clock model (relaxed log-normal) -->
     <operator id="clockScaler.c:default" spec="ScaleOperator" parameter="@clockRate" scaleFactor="0.5" weight="3.0" />
     <operator id="ucldStdevScaler.c:clock" spec="ScaleOperator" parameter="@ucldStdev.c:clock" scaleFactor="0.5" weight="3.0"/>
-    <operator id="CategoriesRandomWalk.c:clock" spec="IntRandomWalkOperator" parameter="@rateCategories.c:clock" weight="5.0" windowSize="5"/>
+    <operator id="CategoriesRandomWalk.c:clock" spec="IntRandomWalkOperator" parameter="@rateCategories.c:clock" weight="5.0" windowSize="8"/>
     <operator id="CategoriesSwapOperator.c:clock" spec="SwapOperator" intparameter="@rateCategories.c:clock" weight="5.0"/>
     <operator id="CategoriesUniform.c:clock" spec="UniformOperator" parameter="@rateCategories.c:clock" weight="5.0"/>
 
@@ -887,6 +911,8 @@
         <log idref="pMove"/>
         <log idref="clockRate"/>
         <log idref="ucldStdev.c:clock"/>
+        <log idref="gammaShape:siteModel"/>
+        <log idref="covarion_alpha.s:vocabulary"/>
     </logger>
     <logger id="tracelog" spec="Logger" fileName="$(filebase).log" logEvery="1000"
             sanitiseHeaders="true" sort="smart">
@@ -898,8 +924,10 @@
         <log idref="pMove"/>
         <log idref="clockRate"/>
         <log idref="ucldStdev.c:clock"/>
+        <log idref="gammaShape:siteModel"/>
+        <log idref="covarion_alpha.s:vocabulary"/>
     </logger>
-    <logger spec="Logger" fileName="$(filebase).trees" logEvery="500" mode="tree">
+    <logger spec="Logger" fileName="$(filebase).trees" logEvery="1000" mode="tree">
       <log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
     </logger>
 
