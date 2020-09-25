@@ -558,7 +558,7 @@
             <taxon idref="Breton_ST" />
             <taxon idref="Cornish" />
           </taxonset>
-          <distr id="Celtic.tmrca" spec="Uniform" lower="1700" upper="10000.0"/>
+          <distr id="Celtic.tmrca" spec="beast.math.distributions.Uniform" lower="1700" upper="10000.0"/>
         </distribution>
         <distribution id="FrenchIberian.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
           <taxonset id="FrenchIberian" spec="TaxonSet">
@@ -801,7 +801,7 @@
             <taxon idref="Serbocroatian" />
             <taxon idref="Old_Church_Slavonic" />
           </taxonset>
-          <distr id="Balto-Slavic.tmrca" spec="Uniform" lower="2200" upper="3400"/>
+          <distr id="Balto-Slavic.tmrca" spec="beast.math.distributions.Uniform" lower="2200" upper="3400"/>
         </distribution>
         <distribution id="Modern_Greek.prior" spec="MRCAPrior" tree="@acg" monophyletic="true">
           <taxonset id="Modern_Greek" spec="TaxonSet">
