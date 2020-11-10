@@ -33,3 +33,5 @@ simulations/
 *.out.xml
 *.stats
 *.state
+*.trees
+*.tree
