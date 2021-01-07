@@ -1,13 +1,13 @@
 /**
- * 
+ *
  */
 package contactrees;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.HashMultiset;
 
 import beast.core.BEASTObject;
 import beast.core.Input;
@@ -15,8 +15,8 @@ import beast.core.Loggable;
 import beast.evolution.tree.Node;
 
 /**
- * 
- * 
+ *
+ *
  * @author Nico Neureiter
  */
 public class ACGStatsLogger extends BEASTObject implements Loggable {
@@ -30,10 +30,15 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
 			"blockSet",
 			"The moves each local tree takes along the conversion graph.",
 			Input.Validate.REQUIRED);
-	
+	public Input<Boolean> logGeneFlowInput = new Input<>(
+	        "logGeneFlow",
+	        "Include logs about the gene flow (percentage of blocks borrowed) between different clades of the tree.",
+	        false);
+
 	protected ConversionGraph acg;
 	protected BlockSet blockSet;
-	
+	final protected String[] columnNames = {"rootHeight", "treeLength", "pairedTreeLength", "convCount", "meanConvHeight", "moveCount", "movesPerConv"};
+
 	@Override
 	public void initAndValidate() {
 		blockSet = blockSetInput.get();
@@ -42,7 +47,13 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
 
     @Override
     public void init(final PrintStream out) {
-        out.print("rootHeight\ttreeLength\tpairedTreeLength\tconvCount\tmeanConvHeight\tmoveCount\tmovesPerConv\t");
+        for (String column : columnNames)
+            out.print(column + "\t");
+
+        if (logGeneFlowInput.get())
+            for (CladePair cladePair : getCladePairs(acg))
+                out.print(cladePair.toString() + "\t");
+
     }
 
     @Override
@@ -58,10 +69,38 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
             meanConvHeight = meanConvHeight(acg);
             movesPerConv = (double) moveCount / nConv;
         }
-        
+
         out.print(height + "\t" + treeLength + "\t" + pairedTreeLength + "\t" + nConv + "\t" + meanConvHeight + "\t" + moveCount + "\t" + movesPerConv + "\t");
+
+        if (logGeneFlowInput.get()) {
+            HashMultiset<String> geneFlows = HashMultiset.create();
+            HashMultimap<Node, Integer> branchedOut = HashMultimap.create();
+
+            int totalGeneFlow = 0;
+            for (Conversion conv : acg.getConversions().asSortedArray()) {
+                CladePair cladePair = new CladePair(conv);
+                for (int iBlock : blockSet.getAffectedBlockIDs(conv)) {
+                    if (!branchedOut.containsEntry(cladePair.target, iBlock)) {
+                        branchedOut.put(cladePair.target, iBlock);
+                        geneFlows.add(cladePair.toString());
+                        totalGeneFlow += 1;
+                    }
+
+                }
+            }
+
+
+            for (CladePair cladePair : getCladePairs(acg)) {
+                long gf = geneFlows.count(cladePair.toString());
+                out.print(gf + "\t");
+//                if (gf > 0)
+//                    System.out.println(gf);
+//                totalGeneFlow += gf;
+            }
+//            System.out.println(" " + totalGeneFlow);
+        }
     }
-	
+
 	protected double meanConvHeight(ConversionGraph acg) {
 		double sum = 0.0;
 		for (Conversion conv : acg.getConversions()) {
@@ -76,6 +115,45 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
     }
 
     /*
+     * CLADE PAIR CLASS FOR CONVENIENCE
+     */
+
+    class CladePair {
+
+        Node source, target;
+
+        public CladePair(Node target, Node source) {
+            this.target = target;
+            this.source = source;
+        }
+
+        public CladePair(Conversion conv) {
+            this(conv.node1, conv.node2);
+        }
+
+        @Override
+        public String toString() {
+            return "flow_" + source.getNr() + "_to_" + target.getNr();
+        }
+    }
+
+    public ArrayList<CladePair> getCladePairs(ConversionGraph acg) {
+        ArrayList<CladePair> cladePairs = new ArrayList<>();
+
+        for (Node source : acg.getNodesAsArray()) {
+            for (Node target : acg.getNodesAsArray()) {
+                if (source == target)
+                    continue;
+
+                if (source.isLeaf() && target.isLeaf())
+                    cladePairs.add(new CladePair(target, source));
+            }
+        }
+
+        return cladePairs;
+    }
+
+    /*
      * TESTING INTERFACE
      */
     static public ACGStatsLogger getACGStatsLogger(ConversionGraph acg, BlockSet blockSet) {
@@ -85,8 +163,9 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
     	acgStatsLogger.blockSet = blockSet;
     	return acgStatsLogger;
     }
-    
+
     public ConversionGraph getACG() {
     	return acg;
     }
+
 }
