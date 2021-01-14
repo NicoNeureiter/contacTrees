@@ -27,10 +27,10 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 	        "deferNetworkSpecification",
 	        "Set this flag to allow deferring the specification of the network input (usually to be set in ACGWithBlocks).",
 	        Input.Validate.XOR, networkInput);
-	
+
 	protected ArrayList<Block> blocks;
 	protected ConversionGraph acg;
-	
+
 	@Override
 	public void initAndValidate() {
 		blocks = blocksInput.get();
@@ -46,46 +46,62 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 	public void setNetwork(ConversionGraph acg) {
 	    this.acg = acg;
 	}
-	
+
 	public ArrayList<Block> getBlocks(){
 		return blocks;
 	}
-	
+
 	public int getBlockCount() {
 		return blocks.size();
 	}
-	
+
 	@Override
     protected boolean requiresRecalculation() {
-		// TODO Remove this
-		return true;
+        return true;
+//        for (Block block : this) {
+//            if (block.somethingIsDirty())
+//                return true;
+//        }
+//        return false;
     }
-	
+
 	public void removeConversion(Conversion conv) {
 		for (Block block : blocks) {
 			if (block.isAffected(conv)) {
 				removeBlockMove(conv, block);
 			}
 		}
-		
+
 	}
-	
+
 	public void addBlockMove(Conversion conv, Block block) {
 		block.addMove(conv);
 	}
-	
+
 	public void removeBlockMove(Conversion conv, Block block) {
 		block.removeMove(conv);
 	}
-	
+
 	public void addBlockMove(Conversion conv, int blockID) {
 		addBlockMove(conv, blocks.get(blockID));
 	}
-	
+
+    public void addBlockMove(Conversion conv, String blockName) {
+        addBlockMove(conv, getBlockByName(blockName));
+    }
+
+    public Block getBlockByName(String blockName) {
+        for (Block block : blocks)
+            if (block.getID().equals(blockName))
+                return block;
+        System.out.println("blockName: " + blockName);
+        throw new RuntimeException("Block not found: " + blockName);
+    }
+
 	public void removeBlockMove(Conversion conv, int blockID) {
 		removeBlockMove(conv, blocks.get(blockID));
 	}
-	
+
 	/**
 	 * Obtain the IDs of the blocks currently affected by the given conversion.
 	 * @return List of affected blocks.
@@ -93,15 +109,15 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 
 	public List<Integer> getAffectedBlockIDs(Conversion conv){
 		List<Integer> affectedBlocks = new ArrayList<>();
-		
+
 		for (int i = 0; i<blocks.size(); i++) {
 			if (blocks.get(i).isAffected(conv))
 				affectedBlocks.add(i);
 		}
-		
+
 		return affectedBlocks;
 	}
-    
+
     /**
      * Obtain the blocks currently affected by the given conversion.
      * @return List of affected blocks.
@@ -114,14 +130,30 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
         }
         return affectedBlocks;
     }
-    
+
+    /**
+     * Obtain the IDs of the blocks currently affected by the given conversion.
+     * @return List of affected blocks.
+     */
+
+    public List<String> getAffectedBlockNames(Conversion conv){
+        List<String> affectedBlocks = new ArrayList<>();
+
+        for (Block block : this) {
+            if (block.isAffected(conv))
+                affectedBlocks.add(block.getID());
+        }
+
+        return affectedBlocks;
+    }
+
     /**
      * Obtain a hash-map, mapping each conversion to the IDs of the currently affected blocks.
      * @return Map from conversion to affected block IDs.
      */
     public HashMap<Conversion, List<Integer>> getAffectedBlockIDs(){
         HashMap<Conversion, List<Integer>> affectedBlocksByConv = new HashMap<>();
-        
+
         assert acg != null;
         for (Conversion conv : acg.getConversions()) {
             affectedBlocksByConv.put(conv, getAffectedBlockIDs(conv));
@@ -136,17 +168,17 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
      */
     public HashMap<Conversion, List<Block>> getAffectedBlocks(){
         HashMap<Conversion, List<Block>> affectedBlocksByConv = new HashMap<>();
-        
+
         for (Conversion conv : acg.getConversions()) {
             affectedBlocksByConv.put(conv, getAffectedBlocks(conv));
         }
 
         return affectedBlocksByConv;
     }
-	
+
 	/**
      * Count the number of blocks affected by any conversion.
-     * 
+     *
      * @return Number of blocks
      */
     public int countAffectedBlocks() {
@@ -155,13 +187,13 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
             if (block.countMoves() > 0)
                 affectedCount++;
         }
-        
+
         return affectedCount;
     }
 
     /**
      * Count the number of blocks affected by the given conversion.
-     * 
+     *
      * @conv the conversion edge.
      * @return Number of blocks
      */
@@ -174,7 +206,7 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
         }
         return affectedCount;
     }
-    
+
 	/**
      * Count the number of times a block is affected by a conversion edge.
      *
@@ -191,24 +223,24 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 
     /**
      * Obtain the set of conversion edges which do not affect any blocks.
-     * 
+     *
      * @return The edges without an affected blocks.
      */
     public HashSet<Conversion> getUselessConversions() {
         HashSet<Conversion> uselessConvs = new HashSet<>(acg.getConversions().getConversions());
-        
+
         for (Block block : blocks) {
 	        for (int convId : block.getConversionIDs()) {
 	            uselessConvs.remove(acg.getConversions().get(convId));
 	        }
         }
-        
+
         return uselessConvs;
     }
 
     /**
      * Count the number of conversion edges which do not affect any block.
-     * 
+     *
      * @return The number of edges without an affected block.
      */
     public int countUselessConversion() {
@@ -219,16 +251,15 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 	public Iterator<Block> iterator() {
 		return blocks.iterator();
 	}
-	
+
 	public int size() {
 	    return blocks.size();
 	}
-	
+
 	public Block get(int i) {
 	    return blocks.get(i);
 	}
 
-	
 	/*
 	 * TESTING INTERFACE
 	 */
@@ -254,12 +285,12 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
         for (Block b : blocks) {
             otherBlocks.add(b.copy());
         }
-        
+
         BlockSet other = new BlockSet();
         other.initByName("block", otherBlocks,
                          "network", newACG);
 
         return other;
     }
-	
+
 }

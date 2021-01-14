@@ -17,37 +17,36 @@
 
 package contactrees.operators;
 
-import contactrees.Conversion;
-import contactrees.ConversionGraph;
-
 import javax.naming.directory.InvalidAttributesException;
 
 import beast.core.Input;
 import beast.core.Operator;
 import beast.evolution.tree.Node;
+import contactrees.Conversion;
+import contactrees.ConversionGraph;
 
 /**
  * Abstract class of operators which act on the ConversionGraph state.
- * 
- * @author Nico Neureiter <nico.neureiter@gmail.com>
+ *
+ * @author Nico Neureiter
  */
 public abstract class ACGOperator extends Operator {
-    
+
     public Input<ConversionGraph> acgInput = new Input<>(
             "acg",
             "Ancestral conversion graph.",
             Input.Validate.REQUIRED);
-	
+
 	protected ConversionGraph acg;
 
     @Override
     public void initAndValidate() {
         acg = acgInput.get();
     }
-    
+
     /**
      * Return sister of node.
-     * 
+     *
      * @param node to return sister of
      * @return sister of node
      */
@@ -66,7 +65,7 @@ public abstract class ACGOperator extends Operator {
      * are re-attached to sister.
      *
      * Conversions on edge above node are not modified.
-     * 
+     *
      * @param node base of edge to detach.
      */
     protected void disconnectEdge(Node node) {
@@ -107,7 +106,7 @@ public abstract class ACGOperator extends Operator {
      * are transferred to the new edge above node.parent.
      *
      * Conversions on edge above node are not modified.
-     * 
+     *
      * @param node base of edge to attach
      * @param destEdgeBase base of edge to be bisected
      * @param destTime height at which bisection will occur
@@ -118,9 +117,9 @@ public abstract class ACGOperator extends Operator {
             throw new IllegalArgumentException("Programmer error: "
                     + "root argument passed to connectEdge().");
 
-        // Old parent of "node" is moved to the destination 
+        // Old parent of "node" is moved to the destination
         Node parent = node.getParent();
-        
+
         if (destEdgeBase.isRoot()) {
             parent.addChild(destEdgeBase);
         } else {
@@ -144,7 +143,7 @@ public abstract class ACGOperator extends Operator {
 
     /**
      * @return conversion selected uniformly at random
-     * @throws InvalidAttributesException 
+     * @throws InvalidAttributesException
      */
     protected Conversion chooseConversion() {
 		return acg.getConversions().getRandomConversion();

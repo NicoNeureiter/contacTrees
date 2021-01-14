@@ -1,29 +1,9 @@
-/*
- * Copyright (C) 2015 Tim Vaughan (tgvaughan@gmail.com)
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package contactrees.operators;
 
-import contactrees.Conversion; 
 import beast.core.Description;
 import beast.core.Input;
 import beast.evolution.tree.Node;
 import beast.util.Randomizer;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Uniform operator for clonal frame nodes. This operator is capable of
@@ -31,7 +11,7 @@ import java.util.List;
  * rates than the standard uniform operator when a large number of conversions
  * is present.
  *
- * @author Nico Neureiter (nico.neureiter@gmail.com)
+ * @author Nico Neureiter
  */
 @Description("Uniform operator for clonal frame nodes.")
 public class CFUniform extends CFOperator {
@@ -43,8 +23,6 @@ public class CFUniform extends CFOperator {
     public double proposal() {
 
         double logHGF = 0.0;
-
-        double logHalf = Math.log(0.5);
 
         // Select internal non-root node at random.
         Node node = acg.getNode(acg.getLeafNodeCount()
@@ -66,25 +44,25 @@ public class CFUniform extends CFOperator {
             double f = Randomizer.uniform(fMin, fMax);
             newHeight = node.getHeight() * f;
             logHGF += Math.log(1.0/f);
-            
+
             if (newHeight < maxChildHeight)
                 return Double.NEGATIVE_INFINITY;
         } else {
             Node parent = node.getParent();
             newHeight = Randomizer.uniform(maxChildHeight, parent.getHeight());
-            // Choice of height is symmetric -> no effect on HGF 
+            // Choice of height is symmetric -> no effect on HGF
         }
 
         if (newHeight>oldHeight) {
-        	logHGF -= expandConversions(node.getLeft(), node.getRight(), newHeight);
+            logHGF -= expandConversions(leftChild, rightChild, newHeight);
         } else {
-        	logHGF += collapseConversions(node.getLeft(), node.getRight(), newHeight);
+            logHGF += collapseConversions(leftChild, rightChild, newHeight);
         }
-        
+
         if (logHGF > Double.NEGATIVE_INFINITY)
             assert !acg.isInvalid() : "CFUniform proposed invalid state.";
 
         return logHGF;
     }
-    
+
 }

@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package contactrees;
 
@@ -20,11 +20,11 @@ import contactrees.util.Util;
  * @author Nico Neureiter
  */
 @Description("A block which is affected by a marginal tree and defined through a set of conversions wihtin a network.")
-public class Block extends StateNode { 
+public class Block extends StateNode {
 
-    // The indices (in the ConversionList) of the conversions affecting this block. 
+    // The indices (in the ConversionList) of the conversions affecting this block.
     List<Integer> convIDs, convIDsStored;
-    boolean aheadOfMTree;
+    protected boolean aheadOfMTree;
 
     @Override
     public void initAndValidate() {
@@ -44,8 +44,8 @@ public class Block extends StateNode {
 
         convIDs.add(conv.getID());
     }
-    
-    
+
+
     /**
      * Remove a conversion move from this blocks history.
      * @param The conversion to be removed.
@@ -53,20 +53,20 @@ public class Block extends StateNode {
     public void removeMove(Conversion conv) {
         startEditing(null);
         Integer cid = conv.getID();
-        
+
         convIDs.removeAll(Arrays.asList(cid));
-        
+
         assert !convIDs.contains(cid);
     }
 
     /**
-     * Remove all conversion moves from this blocks history. 
+     * Remove all conversion moves from this blocks history.
      */
     public void removeAllMoves() {
         startEditing(null);
         convIDs.clear();
     }
-    
+
     /**
      * Evaluate whether this block was affected by the given conversion.
      * @param The conversion in question.
@@ -74,7 +74,7 @@ public class Block extends StateNode {
      */
     public boolean isAffected(Conversion conv) {
         // TODO resolve overshadowed conversions somewhere
-        return convIDs.contains(conv.getID()); 
+        return convIDs.contains(conv.getID());
     }
 
     public int countMoves() {
@@ -88,16 +88,16 @@ public class Block extends StateNode {
     public int size() {
         return convIDs.size();
     }
-    
+
     public List<Integer> getConversionIDs(){
         return convIDs;
     }
 
-    
+
     /*
-     * Loggable implementations 
+     * Loggable implementations
      */
-    
+
     /**
      * init() and close() can stay empty.
      */
@@ -105,7 +105,7 @@ public class Block extends StateNode {
     public void init(PrintStream out) {}
     @Override
     public void close(PrintStream out) {}
-    
+
     @Override
     public int getDimension() {
         return 1;
@@ -117,11 +117,11 @@ public class Block extends StateNode {
     @Override
     public Block copy() {
         Block copy = new Block();
-        
+
         copy.setID(getID());
         copy.convIDs = Util.deepCopyIntegers(convIDs);
         copy.convIDsStored = Util.deepCopyIntegers(convIDsStored);
-        
+
         return copy;
     }
 
@@ -143,7 +143,7 @@ public class Block extends StateNode {
     }
 
     @Override
-    public void store() {
+    protected void store() {
         convIDsStored = Util.deepCopyIntegers(convIDs);
     }
 
@@ -152,23 +152,22 @@ public class Block extends StateNode {
         List<Integer> tmp = convIDs;
         convIDs = convIDsStored;
         convIDsStored = tmp;
-        
+
         // Marginal trees are not stored/restored
         //  => restore leads to out-dated MTree
         aheadOfMTree = true;
     }
-    
+
     @Override
     public void startEditing(Operator operator) {
         aheadOfMTree = true;
-        if (state != null)
-            super.startEditing(operator);
+        super.startEditing(operator);
     }
-    
+
     public void updatedMarginalTree() {
         aheadOfMTree = false;
     }
-    
+
     public boolean isAheadOfMarginalTree() {
         return aheadOfMTree;
     }
@@ -177,7 +176,7 @@ public class Block extends StateNode {
     public void assignFromFragile(StateNode other) {
         assignFrom(other);
     }
-    
+
     @Override
     public double getArrayValue(int dim) {
         return convIDs.size();
@@ -201,13 +200,14 @@ public class Block extends StateNode {
 
     @Override
     public int scale(double scale) {
-        throw new UnsupportedOperationException("StateNode method scale() not applicable to Block."); 
+        throw new UnsupportedOperationException("StateNode method scale() not applicable to Block.");
     }
 
     public Block() {
         super();
     }
-    
+
+    @Override
     public String toString() {
         return convIDs.toString();
     }
@@ -221,4 +221,16 @@ public class Block extends StateNode {
         this();
         setID(ID);
     }
+
+    @Override
+    public int getChecksum() {
+        Integer[] hashValues = new Integer[2];
+        hashValues[0] = countMoves();
+        hashValues[1] = 0;
+        for (int cID : getConversionIDs())
+            hashValues[1] = 31 * hashValues[1] + cID;
+
+        return Arrays.deepHashCode(hashValues);
+    }
+
 }

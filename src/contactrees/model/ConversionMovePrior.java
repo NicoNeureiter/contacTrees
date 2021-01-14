@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package contactrees.model;
 
@@ -17,8 +17,8 @@ import contactrees.Conversion;
 import contactrees.ConversionGraph;
 
 /**
- * 
- * 
+ *
+ *
  * @author Nico Neureiter
  */
 public class ConversionMovePrior extends Distribution {
@@ -33,7 +33,7 @@ public class ConversionMovePrior extends Distribution {
 			"The blockSet containing all blocks that evolve along the clonal frame and "
 			+ "move over conversion edges in the network.",
 			Input.Validate.REQUIRED);
-	
+
 	final public Input<RealParameter> pMoveInput = new Input<>(
 			"pMove",
 			"The probability of a block moving over (being transferred at) a conversion edge.",
@@ -41,31 +41,31 @@ public class ConversionMovePrior extends Distribution {
 
 	ConversionGraph acg;
 	BlockSet blockSet;
-	
+
 	@Override
 	public void initAndValidate() {
 		super.initAndValidate();
 		acg = networkInput.get();
 		blockSet = blockSetInput.get();
 	}
-	
+
 	@Override
 	public double calculateLogP() {
 		logP = 0.0;
         double pMove = pMoveInput.get().getValue();
 		int moveCount = blockSet.countMoves();
 		int n = acg.getConvCount() * blockSet.getBlockCount();
-		
+
         if (pMove == 0.) {
         	assert moveCount == 0;
         	return 0;
         }
-		
+
 		logP = moveCount * Math.log(pMove) + (n-moveCount) * Math.log(1-pMove);
-		
+
 		return logP;
 	}
-	
+
 	@Override
     protected boolean requiresRecalculation() {
 		// For now we use the safe version (always recalculate)
@@ -73,7 +73,7 @@ public class ConversionMovePrior extends Distribution {
 		// TODO: Use the version below when sure that dirty logic is fine in ACG and BlockSet.
 		// return acg.somethingIsDirty() || blockSet.somethingIsDirty();
     }
-	
+
 	@Override
 	public List<String> getArguments() {
         List<String> arguments = new ArrayList<>();
@@ -103,12 +103,12 @@ public class ConversionMovePrior extends Distribution {
         acg = networkInput.get();
         blockSet = blockSetInput.get();
         double pMove = pMoveInput.get().getValue();
-        
+
 
         for (Block block : blockSet) {
             // Remove old conversion moves
             block.removeAllMoves();
-            
+
             // Sample new conversion moves
             for (Conversion conv : acg.getConversions()) {
                 if (random.nextDouble() < pMove) {
@@ -117,5 +117,10 @@ public class ConversionMovePrior extends Distribution {
             }
         }
 	}
+
+    @Override
+    public void printDebug() {
+        System.out.println(getID() + "  \t" + isDirtyCalculation() + "\t\t" + logP + " \t\t" + calculateLogP());
+    }
 
 }

@@ -1,9 +1,10 @@
 /**
- * 
+ *
  */
 package contactrees;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,36 +38,36 @@ public class ConversionGraph extends Tree {
             "dropNewickConvs",
             "Drop the conversions specified in the extended Newick tree.",
             false);
-    
-    
+
+
     /**
      * List of conversion edges on graph (and a copy for restore).
      */
     protected ConversionList convs, storedConvs;
-    
+
     /**
      * Clonal frame event list.
      */
     protected CFEventList cfEventList;
-    
+
     @Override
     public void initAndValidate() {
 //        System.setProperty("java.only", "true");
-        
+
         super.initAndValidate();
 
         // Initialise conversions lists
         convs = new ConversionList(this);
         storedConvs = new ConversionList(this);
-        
+
 
         if (newickInput.get() != null) {
             fromExtendedNewick(newickInput.get());
         }
-        
+
         cfEventList = new CFEventList(this);
     }
-    
+
     /**
      * Add conversion event to graph.
      *
@@ -74,37 +75,37 @@ public class ConversionGraph extends Tree {
      */
     public void addConversion(Conversion conv) {
         startEditing(null);
-        
-        conv.setConversionGraph(this);        
+
+        conv.setConversionGraph(this);
         convs.add(conv);
     }
-    
+
     /**
      * Create a new conversion, add it to the graph and return it.
-     * 
+     *
      * @return The newly created conversion
      */
     public Conversion addNewConversion() {
         startEditing(null);
-        
+
         Conversion conv = convs.addNewConversion();
         conv.setConversionGraph(this);
         return conv;
     }
-    
+
     /**
      * Create a new conversion, add it to the graph and return it.
-     * 
+     *
      * @return The newly created conversion
      */
     public Conversion addDuplicateConversion(Conversion original) {
         startEditing(null);
-        
+
         Conversion copy = convs.duplicateConversion(original);
         copy.setConversionGraph(this);
         return copy;
     }
-   
+
     /**
      * Remove a conversion edge from the graph.
      *
@@ -114,7 +115,7 @@ public class ConversionGraph extends Tree {
         startEditing(null);
         convs.remove(conv);
     }
-    
+
     /**
      * Retrieve list of conversions associated with given locus.
      *
@@ -124,7 +125,7 @@ public class ConversionGraph extends Tree {
     public ConversionList getConversions() {
         return convs;
     }
-    
+
     /**
      * Remove all conversion edges from the graph.
      */
@@ -132,7 +133,7 @@ public class ConversionGraph extends Tree {
         startEditing(null);
         convs.clear();
     }
-    
+
     /**
      * Obtain total number of conversion events.
      *
@@ -146,24 +147,24 @@ public class ConversionGraph extends Tree {
      * Obtain ordered list of events that make up the clonal frame.  Used
      * for ACG probability density calculations and for various state proposal
      * operators.
-     * 
+     *
      * @return List of events.
      */
     public List<CFEventList.Event> getCFEvents() {
         return cfEventList.getCFEvents();
     }
-    
+
     /**
-     * Obtain the CFEventList object, containting the ordered list of events 
+     * Obtain the CFEventList object, containting the ordered list of events
      * that make up the clonal frame and some convenience methods.
-     * 
+     *
      * @return cfEventList.
      */
     public CFEventList getCFEventList() {
     	cfEventList.updateEvents();
         return cfEventList;
     }
-    
+
     /**
      * @return Total length of all edges in clonal frame.
      */
@@ -174,7 +175,7 @@ public class ConversionGraph extends Tree {
                 continue;
             length += node.getLength();
         }
-        
+
         return length;
     }
 
@@ -183,7 +184,7 @@ public class ConversionGraph extends Tree {
      */
     public double getClonalFramePairedLength() {
     	double length = 0.0;
-    	
+
         List<CFEventList.Event> events = getCFEvents();
         for (int i = 0; i<events.size()-1; i++) {
         	CFEventList.Event eStart= events.get(i);
@@ -192,10 +193,10 @@ public class ConversionGraph extends Tree {
         	int k = eStart.lineages;
         	length += dt * k * (k-1);
         }
-        
+
         return length;
     }
-    
+
     /**
      * Obtain the set of lineages active at the specified height.
      * @param height
@@ -203,49 +204,49 @@ public class ConversionGraph extends Tree {
      */
     public HashSet<Node> getLineagesAtHeight(double height) {
     	HashSet<Node> lineages = new HashSet<>();
-    	
+
         List<CFEventList.Event> events = getCFEvents();
-        
+
         for (int i=0; i<events.size(); i++) {
         	CFEventList.Event event = events.get(i);
         	if (i < events.size()-1)
         		assert event.t <= events.get(i+1).t;
         	if (i < events.size()-1)
         		assert event.getNode().getHeight() <= events.get(i+1).getNode().getHeight();
-        	
+
         	Node node = event.getNode();
         	assert event.t == node.getHeight();
-        	
+
         	if (event.getHeight() > height) {
         		// We found the interval of "height"
         		break;
         	}
-        	
+
         	// Add new node (for COALESCENCE and SAMPLE events)
         	lineages.add(node);
         	// Remove children on COALESCENCE events
         	if (event.getType() == CFEventList.EventType.COALESCENCE) {
         		for (Node child : node.getChildren()) {
-            		lineages.remove(child);	
+            		lineages.remove(child);
         		}
         	} else {
         		assert node.isLeaf();
         	}
         }
-        
+
         return lineages;
     }
-    
+
     public int countLineagesAtHeight(double height) {
     	getCFEvents();
     	return cfEventList.getEventAtHeight(height).lineages;
     }
-    
+
     /**
      * Check validity of conversions.  Useful for probability densities
      * over the ACG to decide whether to return 0 based on an unphysical
      * state.
-     * 
+     *
      * @return true if all conversions are valid w.r.t. clonal frame.
      */
     public boolean isInvalid() {
@@ -264,7 +265,7 @@ public class ConversionGraph extends Tree {
         	if (!node.isRoot())
         		assert node.getLength() > 0;
         }
-        
+
         for (Conversion conv : convs) {
             if (!conv.isValid()) {
                 return true;
@@ -275,7 +276,7 @@ public class ConversionGraph extends Tree {
 
     /**
      * Create a copy of this conversion graph.
-     * 
+     *
      * @return The new copy of this conversion graph
      */
     @Override
@@ -292,7 +293,7 @@ public class ConversionGraph extends Tree {
 
         acg.initArrays();
         acg.m_taxonset.setValue(m_taxonset.get(), acg);
-        
+
         acg.convs = new ConversionList(this);
         acg.storedConvs = new ConversionList(this);
 
@@ -325,7 +326,7 @@ public class ConversionGraph extends Tree {
 
             convs.clear();
             storedConvs.clear();
-            
+
             for (Conversion conv : acg.convs) {
                 Conversion convCopy = conv.getCopy();
                 convCopy.setConversionGraph(this);
@@ -339,7 +340,7 @@ public class ConversionGraph extends Tree {
             else
                 cfEventList.makeDirty();
         }
-        
+
 //        nodeCount = m_nodes.length;
 //        initArrays();
         assert !isInvalid();
@@ -348,31 +349,31 @@ public class ConversionGraph extends Tree {
     /**
      * Use another StateNode to configure this ACG.  If the other StateNode
      * is merely a tree, only the clonal frame is configured.
-     * 
+     *
      * @param other StateNode used to configure ACG
      */
     @Override
     public void assignFrom(StateNode other) {
         generalAssignFrom(other, false);
     }
-    
+
     @Override
     public void assignFromFragile(StateNode other) {
         generalAssignFrom(other, true);
     }
-    
+
     /*
     * StateNode implementation
     */
-    
+
     @Override
     public void store() {
         super.store();
-        
+
         // Copy the conversion list
         storedConvs = convs.copy();
-        
-        // Change copied node references from m_nodes to m_storedNodes 
+
+        // Change copied node references from m_nodes to m_storedNodes
         for (Conversion conv : storedConvs) {
         	Conversion original = convs.get(conv.id);
             conv.setNode1(m_storedNodes[conv.getNode1().getNr()]);
@@ -383,11 +384,11 @@ public class ConversionGraph extends Tree {
         }
 
     }
-    
+
     @Override
     public void restore() {
     	super.restore();
-    	
+
         // Swap conversions with storedConversions
         ConversionList tmp = storedConvs;
         storedConvs = convs;
@@ -420,14 +421,14 @@ public class ConversionGraph extends Tree {
 
 
     /*
-    * Parsing functions 
+    * Parsing functions
     */
-    
+
     @Override
     public void fromXML(final org.w3c.dom.Node node) {
         fromExtendedNewick(node.getTextContent().replaceAll("&amp", "&"));
     }
-    
+
     /**
      * Read in an ACG from a string in extended newick format.  Assumes
      * that the network is stored with exactly the same metadata as written
@@ -639,7 +640,7 @@ public class ConversionGraph extends Tree {
                 return node;
             }
         }.visit(parseTree);
-        
+
         initAfterParsingFromNewick(root, m_nodes);
 
         cfEventList = new CFEventList(this);
@@ -653,7 +654,7 @@ public class ConversionGraph extends Tree {
     public int _getNodeCount() {
     	return nodeCount;
     }
-    
+
     public void initAfterParsingFromNewick(Node root, Node[] mnodes) {
         m_nodes = root.getAllChildNodesAndSelf().toArray(m_nodes);
         nodeCount = m_nodes.length;
@@ -665,9 +666,44 @@ public class ConversionGraph extends Tree {
     public void initTreeArrays() {
     	initArrays();
     }
-    
+
     protected int parseConvID(String sConvID) {
     	return Integer.parseInt(sConvID.substring(1));
     }
-    
+
+    /**
+     * DEBUG CHECKS
+     */
+
+    @Override
+    public int getChecksum() {
+        Integer[] hashValues = new Integer[3];
+
+        // If the ACG is the same, the following properties need to match:
+
+        // Number of conversions should be the same
+        hashValues[0] = getConvCount();
+
+        // The root height should be the same (could be moved to Tree.getChecksum())
+        hashValues[1] = Double.hashCode(getRoot().getHeight());
+
+        // The mean conversion height should be the same
+//        hashValues[2] = Double.hashCode(getMeanConvHeight());
+        // (hashing the exact Double value can lead to false alarms due to rounding errors)
+        hashValues[2] = (int) (100000 * getMeanConvHeight());
+
+        return Arrays.deepHashCode(hashValues);
+    }
+
+    public double getMeanConvHeight() {
+        if (getConvCount() == 0)
+            return 0.0;
+
+        double sumConvHeight = 0;
+        for (Conversion conv : getConversions()) {
+            sumConvHeight += conv.getHeight();
+        }
+        return sumConvHeight / getConvCount();
+    }
+
 }
