@@ -5,6 +5,7 @@ package contactrees.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 
@@ -29,54 +30,59 @@ import contactrees.util.Util;
  */
 public class ACGDistribution extends Distribution {
 
-	final public Input<ConversionGraph> networkInput = new Input<>(
-			"network",
-			"The conversion graph containing the conversion edges.",
-			Input.Validate.REQUIRED);
+    final public Input<ConversionGraph> networkInput = new Input<>(
+            "network",
+            "The conversion graph containing the conversion edges.",
+            Input.Validate.REQUIRED);
 
-	final public Input<TreeDistribution> cfModelInput = new Input<>(
-	        "cfModel",
-	        "The tree prior of the clonal frame.",
-	        Input.Validate.REQUIRED);
+    final public Input<TreeDistribution> cfModelInput = new Input<>(
+            "cfModel",
+            "The tree prior of the clonal frame.",
+            Input.Validate.REQUIRED);
 
-	final public Input<RealParameter> conversionRateInput = new Input<>(
-			"conversionRate",
-			"The rate at which a pair of lineages will get in contact and form a conversion."
-			);
+    final public Input<RealParameter> conversionRateInput = new Input<>(
+            "conversionRate",
+            "The rate at which a pair of lineages will get in contact and form a conversion.",
+            Input.Validate.REQUIRED);
 
-	final public Input<RealParameter> expectedConversionsInput = new Input<>(
-	        "expectedConversions",
-	        "The expected number of conversions in the whole phylogeny (alternative parameterization to conversionRate).",
-	        Input.Validate.XOR, conversionRateInput);
-
-	final public Input<Integer> lowerCCBoundInput = new Input<>("lowerConvCountBound",
+    final public Input<Integer> lowerCCBoundInput = new Input<>("lowerConvCountBound",
             "Lower bound on conversion count.", 0);
 
-	final public Input<Integer> upperCCBoundInput = new Input<>("upperConvCountBound",
+    final public Input<Integer> upperCCBoundInput = new Input<>("upperConvCountBound",
             "Upper bound on conversion count.", Integer.MAX_VALUE);
 
-	ConversionGraph acg;
-	TreeDistribution cfModel;
+    final public Input<Boolean> linearContactGrowthInput = new Input<>(
+            "linearContactGrowth",
+            "Contact process is applied per lineage, i.e. the expected number of contact edges grows linearly with lineages.",
+            Boolean.valueOf(false));
 
-	@Override
-	public void initAndValidate() {
-		super.initAndValidate();
-		acg = networkInput.get();
-		cfModel = cfModelInput.get();
-	}
+    ConversionGraph acg;
+    TreeDistribution cfModel;
 
-	protected double getExpectedConversions() {
-	    if (conversionRateInput.get() != null) {
-	        double convRate = conversionRateInput.get().getValue();
-	        return convRate * acg.getClonalFramePairedLength();
+    @Override
+    public void initAndValidate() {
+        super.initAndValidate();
+        acg = networkInput.get();
+        cfModel = cfModelInput.get();
+    }
+
+    protected double getExpectedConversions() {
+        double convRate = conversionRateInput.get().getValue();
+        if (linearContactGrowthInput.get()) {
+            return convRate * acg.getClonalFrameLength();
         } else {
-            return expectedConversionsInput.get().getValue();
+            return convRate * acg.getClonalFramePairedLength();
         }
-	}
+    }
 
-	@Override
-	public double calculateLogP() {
-		logP = cfModel.calculateLogP();
+    protected double getConversionRate() {
+        return conversionRateInput.get().getValue();
+    }
+
+    @Override
+    public double calculateLogP() {
+        logP = cfModel.calculateLogP();
+        double convRate = getConversionRate();
 
         // Check whether conversion count exceeds bounds.
         if (acg.getConvCount()<lowerCCBoundInput.get()
@@ -85,26 +91,50 @@ public class ACGDistribution extends Distribution {
             return logP;
         }
 
-        // Poisson prior on the number of conversions
-        double poissonMean = getExpectedConversions();
-        logP += -poissonMean + acg.getConvCount() * Math.log(poissonMean);
+        PriorityQueue<Conversion> convs = new PriorityQueue<>();
+        convs.addAll(acg.getConversions().getConversions());
 
-        assert poissonMean >= 0.0;
-        if (poissonMean == 0) {
-        	if (acg.getConvCount() == 0) {
-        	    logP = 0.0;
+        // Poisson prior on the number of conversions per event interval (between sampling/coalescent events)
+        double localConvRate = convRate;
+        List<CFEventList.Event> events = acg.getCFEvents();
+        for (int i = 0; i<events.size()-1; i++) {
+            CFEventList.Event eStart= events.get(i);
+            CFEventList.Event eEnd = events.get(i+1);
+            double dt = eEnd.getHeight() - eStart.getHeight();
+            int k = eStart.getLineageCount();
+            double waitingtime = dt * k * (k-1);
+
+            if (linearContactGrowthInput.get())
+                localConvRate = convRate / (k-1);
+
+            // Add probability for waiting time in the current interval
+            logP -= convRate * waitingtime;
+
+            // Add event probabilities for the contact edges in this interval
+            while ((convs.peek() != null) && (convs.peek().getHeight() < eEnd.getHeight())) {
+                logP += Math.log(localConvRate);
+                convs.poll();
+            }
+        }
+        assert convs.isEmpty();
+
+        assert convRate >= 0.0;
+        if (convRate == 0) {
+            if (acg.getConvCount() == 0) {
+                logP = 0.0;
             } else {
                 logP = Double.NEGATIVE_INFINITY;
-    		}
-        	return logP;
+            }
+            return logP;
         }
 
-        // Probability density of each conversion placement
-		for (Conversion conv : acg.getConversions())
-			logP += calculateConversionLogP(conv);
+//        // Probability density of each conversion placement
+//        for (Conversion conv : acg.getConversions())
+//            logP += calculateConversionLogP(conv);
 
-        // Correct for probability mass outside the specified bounds (on number of conversions)
+        // Correct for probability mass outside the specified bounds on number of conversions.
         if (lowerCCBoundInput.get()>0 || upperCCBoundInput.get()<Integer.MAX_VALUE) {
+            double poissonMean = getExpectedConversions();
             try {
                 logP -= new PoissonDistributionImpl(poissonMean)
                         .cumulativeProbability(
@@ -117,41 +147,41 @@ public class ACGDistribution extends Distribution {
         }
 
         return logP;
-	}
-
-	public double calculateConversionLogP(Conversion conv) {
-		ConversionGraph acg = networkInput.get();
-
-		// For now, a uniform distribution over time and pairs of lineages
-		return -Math.log(acg.getClonalFramePairedLength());
-	}
-
-	@Override
-    protected boolean requiresRecalculation() {
-		// For now we use the safe version (always recalculate)
-		return true;
-		// TODO: Use the version below when sure that dirty logic is fine in ACG.
-		// return networkInput.get().somethingIsDirty();
     }
 
-	@Override
-	public List<String> getArguments() {
+//    public double calculateConversionLogP(Conversion conv) {
+//        ConversionGraph acg = networkInput.get();
+//
+//        // For now, a uniform distribution over time and pairs of lineages
+//        return -Math.log(acg.getClonalFramePairedLength());
+//    }
+
+    @Override
+    protected boolean requiresRecalculation() {
+        // For now we use the safe version (always recalculate)
+        return true;
+        // TODO: Use the version below when sure that dirty logic is fine in ACG.
+        // return networkInput.get().somethingIsDirty();
+    }
+
+    @Override
+    public List<String> getArguments() {
         List<String> arguments = new ArrayList<>();
         arguments.add(networkInput.get().getID());
 
         return arguments;
-	}
+    }
 
-	@Override
-	public List<String> getConditions() {
+    @Override
+    public List<String> getConditions() {
         List<String> conditions = new ArrayList<>();
         conditions.add(conversionRateInput.get().getID());
 
         return conditions;
-	}
+    }
 
-	@Override
-	public void sample(State state, Random random) {
+    @Override
+    public void sample(State state, Random random) {
         if (sampledFlag)
             return;
         sampledFlag = true;
@@ -164,12 +194,12 @@ public class ACGDistribution extends Distribution {
         acg.assignFromFragile((ConversionGraph) cfModel.treeInput.get());
 
         generateConversions(getExpectedConversions());
-	}
+    }
 
-	/**
-	 * Sample conversion edges according to the current convRate
-	 * in the current clonal frame.
-	 */
+    /**
+     * Sample conversion edges according to the current convRate
+     * in the current clonal frame.
+     */
     private void generateConversions(double expectedConversions) {
         acg.removeAllConversions();
 
@@ -180,22 +210,23 @@ public class ACGDistribution extends Distribution {
         // Generate conversions:
         for (int i=0; i<nConv; i++) {
             Conversion conv = acg.addNewConversion();
-            associateConversionWithCF(conv);
+            attachEdge(conv);
         }
     }
 
     /**
-     * Associates recombination with the clonal frame, selecting
-     * points of departure and arrival.
+     * Attach the conversion edge at a random point in the clonal
+     * frame, selecting points of departure and arrival.
      *
      * @param conv recombination to associate
+     * @return the log probability density of the attachment points
      */
-    private void associateConversionWithCF(Conversion conv) {
+    public double attachEdge(Conversion conv) {
         CFEventList cfEventList = acg.getCFEventList();
         List<Event> cfEvents = cfEventList.getCFEvents();
 
         // Choose event interval
-        double[] intervalVolumes = cfEventList.getIntervalVolumes();
+        double[] intervalVolumes = cfEventList.getIntervalVolumes(!linearContactGrowthInput.get());
         int iEvent = Util.sampleCategorical(intervalVolumes);
         Event event = cfEvents.get(iEvent);
 
@@ -215,6 +246,11 @@ public class ACGDistribution extends Distribution {
         conv.setNode2(node2);
 
         assert conv.isValid();
+
+        if (linearContactGrowthInput.get())
+            return -Math.log(acg.getClonalFrameLength());
+        else
+            return -Math.log(acg.getClonalFramePairedLength());
     }
 
     @Override
