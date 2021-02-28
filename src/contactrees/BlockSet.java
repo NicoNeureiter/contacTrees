@@ -239,6 +239,19 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
     }
 
     /**
+     * List the names of all blocks.
+     *
+     * @return list of block names
+     */
+    public String[] getBlockNames() {
+        String[] blockNames = new String[size()];
+        for (int i=0; i<size(); i++) {
+            blockNames[i] = blocks.get(i).getID();
+        }
+        return blockNames;
+    }
+
+    /**
      * Count the number of conversion edges which do not affect any block.
      *
      * @return The number of edges without an affected block.

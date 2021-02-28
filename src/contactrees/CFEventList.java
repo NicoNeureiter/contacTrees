@@ -1,14 +1,13 @@
 package contactrees;
 
-import beast.evolution.tree.Node;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 import javax.management.InvalidAttributeValueException;
+
+import beast.evolution.tree.Node;
 
 /**
  * Maintains an ordered list of events which make up the clonal frame.
@@ -39,7 +38,7 @@ public class CFEventList {
         public Event(Node node) {
             this.fromNode(node);
         }
-        
+
         public void fromNode(Node node) {
             this.node = node;
 
@@ -47,7 +46,7 @@ public class CFEventList {
                 type = EventType.SAMPLE;
             else
                 type = EventType.COALESCENCE;
-            
+
             t = node.getHeight();
         }
 
@@ -64,7 +63,7 @@ public class CFEventList {
         public double getHeight() {
             return t;
         }
-        
+
         public EventType getType() {
             return type;
         }
@@ -72,19 +71,19 @@ public class CFEventList {
         public Node getNode() {
             return node;
         }
-        
+
         /**
          * @return number of lineages _above_ this event.
          */
         public int getLineageCount() {
             return lineages;
         }
-        
+
         @Override
         public String toString() {
             return "t: " + t + ", k: " + lineages + ", type: " + type;
         }
-    } 
+    }
 
     /**
      * Ancestral conversion graph this list belongs to.
@@ -95,14 +94,14 @@ public class CFEventList {
      * List of events on clonal frame.
      */
     private final List<Event> events;
-    private boolean dirty;
+    private boolean dirty = true;
 
     public CFEventList(ConversionGraph acg) {
         this.acg = acg;
-        
+
         events = new ArrayList<>();
         dirty = true;
-        
+
         eventDump = new LinkedList<>();
     }
 
@@ -110,7 +109,7 @@ public class CFEventList {
      * Obtain ordered list of events that make up the clonal frame.  Used
      * for ARG probability density calculations and for various state proposal
      * operators.
-     * 
+     *
      * @return List of events.
      */
     public List<Event> getCFEvents() {
@@ -133,18 +132,18 @@ public class CFEventList {
     public void makeDirty() {
         dirty = true;
     }
-    
-    
+
+
     private final LinkedList<Event> eventDump;
     int eventDumpMaxSize = 1000;
-    
+
     private void clearEvents() {
         if (eventDump.size() < eventDumpMaxSize)
             eventDump.addAll(events);
-        
+
         events.clear();
     }
-    
+
     private Event newEvent(Node node) {
         if (eventDump.isEmpty()) {
             return new Event(node);
@@ -161,23 +160,23 @@ public class CFEventList {
      */
     public void updateEvents() {
         if (!dirty) {
-            assert is_consistent();
+//            assert is_consistent();
             return;
         }
-        
+
         clearEvents();
-        
+
         // Create event list
         for (Node node : acg.getNodesAsArray()) {
             Event event = newEvent(node);
             events.add(event);
         }
-        
+
         // Sort events in increasing order of their heights
         Collections.sort(events, (Event o1, Event o2) -> {
             if (o1.t < o2.t)
                 return -1;
-            
+
             if (o2.t < o1.t)
                 return 1;
 
@@ -189,7 +188,7 @@ public class CFEventList {
 
             return 0;
         });
-        
+
         // Compute lineage counts:
         int k=0;
         for (Event event : events) {
@@ -197,63 +196,72 @@ public class CFEventList {
                 k += 1;
             else
                 k -= 1;
-            
+
             event.lineages = k;
         }
 
 
         dirty = false;
     }
-    
+
     /**
      * Get the last event below the given height.
      * @param height
      * @return
-     * @throws InvalidAttributeValueException 
+     * @throws InvalidAttributeValueException
      */
     public Event getEventAtHeight(double height) {
         updateEvents();
         int startIdx = 0;
         while ((startIdx < events.size()-1) && (events.get(startIdx+1).getHeight()<height))
             startIdx += 1;
-        
+
         return events.get(startIdx);
     }
-    
-    public double getIntervalVolume(int i) {
+
+    public double getIntervalVolume(int i, boolean edgePairVolume) {
         int k = events.get(i).lineages;
         double dt = events.get(i+1).t - events.get(i).t;
-        return dt * k * (k-1);
+        if (edgePairVolume)
+            return dt * k * (k-1);
+        else
+            return dt * k;
     }
 
     public double[] getIntervalVolumes() {
+        return getIntervalVolumes(true);
+    }
+
+    public double[] getIntervalVolumes(boolean edgePairVolume) {
         int nEvents = events.size();
         double[] volumes = new double[nEvents-1];
         for (int i=0; i<nEvents-1; i++) {
-            volumes[i] = getIntervalVolume(i);
+            volumes[i] = getIntervalVolume(i, edgePairVolume);
         }
-        
+
         return volumes;
     }
-    
+
     /**
-     * Method for testing dirty logic: Assert that no changes 
+     * Method for testing dirty logic: Assert that no changes
      * happened when the cfEventList is marked as not dirty.
      */
     protected boolean is_consistent() {
         for (Event e : events) {
             int nodeNr = e.node.getNr();
             Node acgNode = acg.getNode(nodeNr);
-            
+
             // Event node is still in the tree
-            if (acgNode != e.node)
+            if (acgNode != e.node) {
                 return false;
-            
+            }
+
             // Height is still up to date
             if (acgNode.getHeight() != e.getHeight())
                 return false;
         }
-        
+
         return true;
     }
+
 }

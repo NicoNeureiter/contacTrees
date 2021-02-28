@@ -1,20 +1,13 @@
 package contactrees.model;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.parameter.Parameter;
 import beast.core.parameter.RealParameter;
 import contactrees.ConversionGraph;
 
 
 public class ConversionRate extends RealParameter {
-    
+
     final public Input<RealParameter> expectedConversionsInput = new Input<>(
             "expectedConversions",
             "The expected number of conversions in the whole phylogeny.",
@@ -24,17 +17,21 @@ public class ConversionRate extends RealParameter {
             "network",
             "The conversion graph containing, composed of a tree (clonal frame) and conversion edges.",
             Input.Validate.REQUIRED);
-    
-    
+
+    final public Input<Boolean> linearContactGrowthInput = new Input<>(
+            "linearContactGrowth",
+            "Contact process is applied per lineage, i.e. the expected number of contact edges grows linearly with lineages.",
+            Boolean.valueOf(false));
+
     public ConversionRate() {
         valuesInput.setRule(Validate.OPTIONAL);
     }
-    
+
     @Override
     public void initAndValidate() {
 //        setInputValue("value", expectationToRate(getExpectation().getValue()));
     }
-    
+
     @Override
     public Double getValue() {
         double expectedConversions = expectedConversionsInput.get().getValue();
@@ -58,7 +55,7 @@ public class ConversionRate extends RealParameter {
 
     @Override
     public void setValue(int i, Double value) {
-        getExpectation().setValue(i, rateToExpectation(value));        
+        getExpectation().setValue(i, rateToExpectation(value));
     }
 
     @Override
@@ -110,32 +107,44 @@ public class ConversionRate extends RealParameter {
     public void swap(int i, int j) {
         getExpectation().swap(i, j);
     }
-    
+
     /*
      * Convenience methods.
      */
-    
+
     protected double expectationToRate(Double expectation) {
-        return expectation / getPairedTreeLength();
+        if (linearContactGrowthInput.get()) {
+            return expectation / getTreeLength();
+        } else {
+            return expectation / getPairedTreeLength();
+        }
     }
 
     protected double rateToExpectation(Double rate) {
-        return rate * getPairedTreeLength();
+        if (linearContactGrowthInput.get()) {
+            return rate * getTreeLength();
+        } else {
+            return rate * getPairedTreeLength();
+        }
     }
-    
+
     protected double getPairedTreeLength() {
         return networkInput.get().getClonalFramePairedLength();
     }
-    
+
+    protected double getTreeLength() {
+        return networkInput.get().getClonalFrameLength();
+    }
+
     protected RealParameter getExpectation() {
         return expectedConversionsInput.get();
     }
 
-    
+
     /*
-     * Override Parameter/StateNode methods 
+     * Override Parameter/StateNode methods
      */
-    
+
 
     @Override
     public void setEverythingDirty(final boolean isDirty) {
@@ -151,13 +160,13 @@ public class ConversionRate extends RealParameter {
     @Override
     public ConversionRate copy() {
         try {
-            return (ConversionRate) this.clone();            
+            return (ConversionRate) this.clone();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
-    
+
     @Override
     public String toString() {
         return Double.toString(getValue());
