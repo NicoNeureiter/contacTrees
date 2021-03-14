@@ -1,12 +1,12 @@
 package contactrees.operators;
 
-import contactrees.Conversion;
-import contactrees.util.Util;
+import java.util.HashSet;
+
 import beast.core.Description;
 import beast.evolution.tree.Node;
 import beast.util.Randomizer;
-
-import java.util.HashSet;
+import contactrees.Conversion;
+import contactrees.util.Util;
 
 /**
  * @author Nico Neureiter
@@ -15,7 +15,7 @@ import java.util.HashSet;
 public class ConvertedEdgeHop extends ACGOperator {
 
     public ConvertedEdgeHop() { }
-    
+
     @Override
     public double proposal() {
 
@@ -25,22 +25,18 @@ public class ConvertedEdgeHop extends ACGOperator {
         // Select recombination at random
         Conversion conv = chooseConversion();
 
-        // Choose whether to move departure or arrival point
-        boolean moveDeparture = conv.getNode2().isRoot() || Randomizer.nextBoolean();
-
-        double height = conv.getHeight();
-        Node convNode = moveDeparture ? conv.getNode1() : conv.getNode2();
-
         // Find list of CF edges alive at pointHeight
-        HashSet<Node> activeLineages = acg.getLineagesAtHeight(height);
+        HashSet<Node> activeLineages = acg.getLineagesAtHeight(conv.getHeight());
         activeLineages.remove(conv.getNode1());
         activeLineages.remove(conv.getNode2());
 
         if (activeLineages.isEmpty())
             return Double.NEGATIVE_INFINITY;
-        
+
         Node newNode = Util.sampleFrom(activeLineages);
-        
+
+        // Choose whether to move departure or arrival point
+        boolean moveDeparture = conv.getNode2().isRoot() || Randomizer.nextBoolean();
         // Select new attachment point:
         if (moveDeparture)
             conv.setNode1(newNode);
@@ -51,5 +47,5 @@ public class ConvertedEdgeHop extends ACGOperator {
 
         return 0.0;
     }
-    
+
 }
