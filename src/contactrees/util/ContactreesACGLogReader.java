@@ -1,10 +1,5 @@
 package contactrees.util;
 
-import contactrees.ACGWithBlocks;
-import contactrees.Block;
-import contactrees.BlockSet;
-import contactrees.ConversionGraph;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -12,8 +7,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
-import org.antlr.v4.runtime.misc.Pair;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+
+import contactrees.ACGWithBlocks;
+import contactrees.Block;
 
 /**
  * Class representing ACG log files.  Includes methods for
@@ -27,12 +27,12 @@ import org.antlr.v4.runtime.misc.Pair;
 public class ContactreesACGLogReader implements ACGLogReader {
     File logFile;
     BufferedReader reader;
-
+    BiMap<String, String> translate;
     List<String> preamble, postamble;
     String nextLine;
 
     int nACGs, burnin;
-    
+
     ArrayList<Block> blocks;
 
     /**
@@ -46,6 +46,7 @@ public class ContactreesACGLogReader implements ACGLogReader {
         this.logFile = logFile;
 
         reader = new BufferedReader(new FileReader(logFile));
+        translate = HashBiMap.create();
 
         preamble = new ArrayList<>();
         skipPreamble();
@@ -76,7 +77,7 @@ public class ContactreesACGLogReader implements ACGLogReader {
     private void skipPreamble() throws IOException {
         boolean recordPreamble = preamble.isEmpty();
 
-        while(true) {
+        while (true) {
             nextLine = reader.readLine();
 
             if (nextLine == null)
@@ -84,11 +85,38 @@ public class ContactreesACGLogReader implements ACGLogReader {
 
             nextLine = nextLine.trim();
 
+            if (nextLine.equals("Translate")) {
+                parseTranslationTable();
+            }
+
             if (nextLine.toLowerCase().startsWith("tree"))
                 break;
 
             if (recordPreamble)
                 preamble.add(nextLine);
+        }
+    }
+
+    private void parseTranslationTable() throws IOException {
+        while (true) {
+            nextLine = reader.readLine();
+
+            if (nextLine == null)
+                throw new IOException("Reached end of file while parsing translation table.");
+
+            nextLine = nextLine.trim();
+
+            if (nextLine.endsWith(";"))
+                return;
+
+            if (nextLine.endsWith(","))
+                nextLine = nextLine.substring(0, nextLine.length() - 1);
+
+            String[] lineSplitted = nextLine.split(" ");
+            assert lineSplitted.length == 2;
+            String taxID = lineSplitted[0];
+            String taxName = lineSplitted[1];
+            translate.put(taxID, taxName);
         }
     }
 
@@ -133,18 +161,18 @@ public class ContactreesACGLogReader implements ACGLogReader {
     /**
      * Retrieve list of blocks from preamble or postamble.
      */
-    private void extractBlocks() {        
+    private void extractBlocks() {
         List<String> prepost = new ArrayList<>();
         prepost.addAll(preamble);
         prepost.addAll(postamble);
 
-        final String PREFIX = "blockSet "; 
+        final String PREFIX = "blockSet ";
         for (String line : prepost) {
             line = line.trim();
-            
+
             if (line.startsWith(PREFIX) && line.endsWith(";")) {
                 line = line.substring(PREFIX.length(), line.length()-1);
-                
+
                 for (String blockID : line.split(" ")) {
                     blocks.add(new Block(blockID));
                 }
@@ -200,6 +228,7 @@ public class ContactreesACGLogReader implements ACGLogReader {
     /**
      * @return total number of ACGs defined by file.
      */
+    @Override
     public int getACGCount() {
         return nACGs;
     }
@@ -214,12 +243,13 @@ public class ContactreesACGLogReader implements ACGLogReader {
     /**
      * @return number of ACGs excluding burn-in
      */
+    @Override
     public int getCorrectedACGCount() {
         return nACGs - burnin;
     }
 
     /**
-     * Retrieve an iterator for iterating over the ACGs and corresponding 
+     * Retrieve an iterator for iterating over the ACGs and corresponding
      * blockSets represented by this log file. Important points
      *
      * 1. The iterator only iterates over as many (non-burnin) ACGs as exist
@@ -299,14 +329,14 @@ public class ContactreesACGLogReader implements ACGLogReader {
 
             @Override
             public ACGWithBlocks next() {
-                String result = getNextLineNoConsume();
+                String newick = getNextLineNoConsume();
                 lineConsumed = true;
-                
+
                 for (Block block : acgWithBlocks.blockSet)
                     block.removeAllMoves();
                 acgWithBlocks.removeAllConversions();
-                
-                acgWithBlocks.fromExtendedNewick(result);
+
+                acgWithBlocks.fromExtendedNewick(newick);
 
                 printProgressBar();
                 current += 1;
@@ -314,6 +344,19 @@ public class ContactreesACGLogReader implements ACGLogReader {
                 return acgWithBlocks;
             }
         };
+    }
+
+    /**
+     * Get the name for the given taxon ID.
+     * @param taxonID
+     * @return Taxon name
+     */
+    public String getTaxonName(String taxonID) {
+        return translate.get(taxonID);
+    }
+
+    public Set<String> getTaxonNames() {
+        return translate.values();
     }
 }
 

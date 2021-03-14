@@ -19,6 +19,7 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.core.Operator;
 import beast.core.StateNode;
+import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import contactrees.util.parsers.ExtendedNewickBaseVisitor;
@@ -448,7 +449,6 @@ public class ConversionGraph extends Tree {
      * @param numbered true indicates that the ACG is numbered.
      */
     public void fromExtendedNewick(String string, boolean numbered, int nodeNumberoffset) {
-
         // Spin up ANTLR
         CharStream input = CharStreams.fromString(string);
         ExtendedNewickLexer lexer = new ExtendedNewickLexer(input);
@@ -628,12 +628,13 @@ public class ConversionGraph extends Tree {
                 if (ctx.post().label() != null) {
                     node.setID(ctx.post().label().getText());
                     String lbl = ctx.post().label().getText();
-                    int nr = getTaxonset().getTaxonIndex(lbl);
-                    if (nr < 0)
-                        System.out.println(lbl);
-                    node.setNr(nr);
-//                    node.setNr(Integer.parseInt(ctx.post().label().getText())
-//                            - nodeNumberoffset);
+                    TaxonSet taxonSet = getTaxonset();
+                    if ((getTaxonset() != null) && (taxonSet.asStringList().contains(lbl))) {
+                        node.setNr(taxonSet.getTaxonIndex(lbl));
+                    } else {
+                        node.setNr(Integer.parseInt(ctx.post().label().getText())
+                                   - nodeNumberoffset);
+                    }
                 }
                 node.setHeight(Double.parseDouble(ctx.post().length.getText()));
 

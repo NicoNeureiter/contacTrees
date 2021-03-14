@@ -25,14 +25,14 @@ public class ACGWithBlocks extends ConversionGraph  {
             Input.Validate.REQUIRED);
 
 	public BlockSet blockSet;
-	
+
     @Override
     public void initAndValidate() {
         blockSet = blockSetInput.get();
         blockSet.setNetwork(this);
         super.initAndValidate();
     }
-	
+
     /**
      * Read in an ACG from a string in extended newick format.  Assumes
      * that the network is stored with exactly the same metadata as written
@@ -210,11 +210,15 @@ public class ACGWithBlocks extends ConversionGraph  {
                         for (ExtendedNewickParser.AttribContext attribCtx : ctx.post().meta().attrib()) {
                             switch (attribCtx.attribKey.getText()) {
                                 case "affectedBlocks":
-                                	List<Integer> blockIDs = parseIntList(attribCtx.attribValue().getText());
-                                	for (int blockID : blockIDs) 
-                                		blockSet.addBlockMove(conv, blockID);
-//                                	}
-                                	
+//                                    List<Integer> blockIDs = parseIntList(attribCtx.attribValue().getText());
+//                                    for (int blockID : blockIDs)
+//                                        blockSet.addBlockMove(conv, blockID);
+
+                                    String[] blockNames = parseStringList(attribCtx.attribValue().getText());
+                                    for (String blockName : blockNames) {
+                                        blockSet.addBlockMove(conv, blockName);
+                                    }
+
                                     break;
 
                                 default:
@@ -246,10 +250,10 @@ public class ACGWithBlocks extends ConversionGraph  {
             addConversion(conv);
     }
 
-    
+
     protected List<Integer> parseIntList(String listAsString) {
     	ArrayList<Integer> ints = new ArrayList<>();
-    	
+
     	String listAsStringStripped = listAsString.substring(2, listAsString.length()-2);
     	if (listAsStringStripped.length() == 0)
     		return ints;
@@ -259,44 +263,55 @@ public class ACGWithBlocks extends ConversionGraph  {
 
     	return ints;
     }
-    
+
+    protected String[] parseStringList(String listAsString) {
+        String listAsStringStripped = listAsString.substring(2, listAsString.length()-2);
+
+        if (listAsStringStripped.length() == 0)
+            return new String[0];
+
+        return listAsStringStripped.split(",");
+    }
+
+    @Override
     protected int parseConvID(String sConvID) {
     	return Integer.parseInt(sConvID.substring(1));
     }
-    
+
     public static ACGWithBlocks newFromNewick(ArrayList<Block> blocks) {
 
         BlockSet blockSet = new BlockSet();
         ACGWithBlocks acgWB = new ACGWithBlocks();
-        
+
         blockSet.initByName("block", blocks, "network", acgWB);
         acgWB.initByName("blockSet", blockSet);
-        
-        return acgWB;        
+
+        return acgWB;
     }
-    
+
     public static ACGWithBlocks newFromNewick(ArrayList<Block> blocks, String newick) {
 
         BlockSet blockSet = new BlockSet();
         ACGWithBlocks acgWB = new ACGWithBlocks();
-        
+
         blockSet.initByName("block", blocks, "network", acgWB);
         acgWB.initByName("blockSet", blockSet, "newick", newick);
-        
-        return acgWB;        
+
+        return acgWB;
     }
-    
+
     public static ACGWithBlocks newFromNewick(int nBlocks, String newick) {
         ArrayList<Block> blocks = new ArrayList<>();
         for (int i=0; i<nBlocks; i++) {
-            Block b = new Block("block" + i);
+            Block b = new Block("block." + i);
             b.initAndValidate();
             blocks.add(b);
         }
-        
+
         return newFromNewick(blocks, newick);
     }
 
+    @Override
     public ACGWithBlocks copy() {
         ACGWithBlocks other = new ACGWithBlocks();
 
@@ -310,7 +325,7 @@ public class ACGWithBlocks extends ConversionGraph  {
 
         other.initArrays();
         other.m_taxonset.setValue(m_taxonset.get(), other);
-        
+
         other.convs = new ConversionList(this);
         other.storedConvs = new ConversionList(this);
 
@@ -330,9 +345,12 @@ public class ACGWithBlocks extends ConversionGraph  {
         }
 
         other.blockSet = blockSet.copy(other);
-        
+
         return other;
-        
+
     }
 
+    public BlockSet getBlockSet() {
+        return blockSet;
+    }
 }
