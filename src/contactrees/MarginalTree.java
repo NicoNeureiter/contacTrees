@@ -1,27 +1,24 @@
 package contactrees;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import contactrees.MarginalNode;
-import contactrees.CFEventList.Event;
-import contactrees.Conversion;
 import beast.core.Input;
 import beast.core.StateNode;
 import beast.evolution.branchratemodel.BranchRateModel;
 import beast.evolution.branchratemodel.StrictClockModel;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
+import contactrees.CFEventList.Event;
 
 
 /**
  * A calculation node extracting the marginal tree for a block from the ACG.
- * The resulting marginal trees are the basis for the likelihood computation 
- * of the corresponding block.  
- * 
+ * The resulting marginal trees are the basis for the likelihood computation
+ * of the corresponding block.
+ *
  * @author Nico Neureiter
  */
 
@@ -38,25 +35,26 @@ public class MarginalTree extends Tree {
     public Input<BranchRateModel.Base> branchRateModelInput = new Input<>(
             "branchRateModel",
             "A model describing the rates on the branches of the clonal frame tree.");
-    
+
     public ConversionGraph acg;
     public Block block;
     protected BranchRateModel.Base branchRateModel;
     private boolean hasBranchRates;
-    
+
     protected boolean outdated;
     protected boolean manuallyUpdated = false;
     String lastBlockState;
-    
+
     public void setManuallyUpdated() {
         manuallyUpdated = true;
     }
 
+    @Override
     public void initAndValidate() {
-        
+
         acg = networkInput.get();
         block = blockInput.get();
-        
+
         if (branchRateModelInput.get() != null) {
             branchRateModel = branchRateModelInput.get();
             hasBranchRates = true;
@@ -64,7 +62,7 @@ public class MarginalTree extends Tree {
             branchRateModel = new StrictClockModel();
             hasBranchRates = false;
         }
-        
+
         // Initialize to clonal frame of acg
         String beastID = ID;
         assignFrom(acg);
@@ -72,94 +70,87 @@ public class MarginalTree extends Tree {
 
         super.initAndValidate();
         recalculate();
-           
+
         outdated = true;
         manuallyUpdated = false;
     }
-    
+
     @Override
     public boolean requiresRecalculation() {
         outdated = checkOutdated();
-        
-        if (outdated) {          
+
+        if (outdated) {
             recalculate();
 
             if (manuallyUpdated) {
 //                manuallyUpdated = false;
                 return false;
-            } else 
+            } else
                 return true;
-            
-            
+
+
         } else {
             return false;
         }
-        
+
 //        recalculate();
 //        return true;
     }
 
     @Override
     public boolean somethingIsDirty() {
-        if (manuallyUpdated) {
-            manuallyUpdated = false;
-            return false;
-        } else {
-            return checkOutdated();
-        }
-        
-//        boolean rootIsDirty = (root.isDirty() >= Tree.IS_DIRTY);
-//        if (!rootIsDirty) {
-//            System.out.println();
-//            System.out.println("+++++++++++++++++++++++++");
-//            System.out.println();
+        recalculate();
+        return true;
+//        // Would be dirty if either ACG or BlockSet is dirty
+//        return (acg.somethingIsDirty() || block.somethingIsDirty());
+
+
+//        if (manuallyUpdated) {
+//            manuallyUpdated = false;
+//            return false;
+//        } else {
+//            return checkOutdated();
 //        }
-//        
-//        return (rootIsDirty);
-        
-//        return requiresRecalculation();
-//        return checkOutdated();
-//        return true;
     }
-    
+
 
 //    public boolean checkOutdated() {
 //        boolean res = _checkOutdated();
 //        if (res)
 //            root.makeDirty(Tree.IS_FILTHY);
-//            
+//
 //        return res;
 //    }
-        
-    
+
+
     public boolean checkOutdated() {
 //        System.out.print(0);
-        
+
         if (acg.somethingIsDirty()) {
             return true;
         }
-        
+
 //        System.out.print(1);
-        
+
         if (block.isAheadOfMarginalTree())
             return true;
 //        else {
 //            assert lastBlockState.equals(block.toString());
 //        }
-        
+
 //        System.out.print(2);
-        
+
         if (branchRateModel.isDirtyCalculation())
             return true;
-        
+
 //        System.out.print(3);
-//        
+//
 //        if (!outdated)
 //            System.out.println("+");
-        
+
         return outdated;
 //        return true;
-        
+
 //      // Check whether a clonal frame edge is dirty
 //      if (!outdated) {
 //          for (Node cfNode : acg.getNodesAsArray()) {
@@ -169,7 +160,7 @@ public class MarginalTree extends Tree {
 //              }
 //          }
 //      }
-//      
+//
 //      // Check whether a conversion is dirty
 //      if (!outdated) {
 //          // Check whether recalculation is necessary
@@ -182,7 +173,7 @@ public class MarginalTree extends Tree {
 ////                            System.out.println("A conversion is dirty");
 //                            outdated = true;
 //                            break;
-//                        }   
+//                        }
 //                  } catch(RuntimeException e) {
 //                      outdated = true;
 //                      break;
@@ -193,11 +184,11 @@ public class MarginalTree extends Tree {
 ////                        System.out.println("ACG is dirty");
 //                      outdated = true;
 //                      break;
-//                  }   
+//                  }
 //              }
 //          }
 //      }
-//      
+//
 //      // Check whether a block is dirty
 //      if (!outdated) {
 //          if (block.somethingIsDirty()) {
@@ -206,12 +197,12 @@ public class MarginalTree extends Tree {
 //          }
 //        }
     }
-    
-    
+
+
     public void recalculate() {
         startEditing(null);
 //        System.out.print("*");
-        
+
         List<Event> cfEvents = acg.getCFEvents();
         Map<Node, MarginalNode> activeCFlineages = new HashMap<>();
         ArrayList<Conversion> convs = getBlockConversions();
@@ -227,30 +218,30 @@ public class MarginalTree extends Tree {
 
             return 0;
         });
-        
+
         int iConv = 0;
         int nLeafs = acg.getLeafNodeCount();
         int nextNonLeafNr = nLeafs;
-        
+
         for (int iEvent = 0; iEvent < cfEvents.size(); iEvent++) {
             Event event = cfEvents.get(iEvent);
             Node node = event.getNode();
-            
+
             int nActive = activeCFlineages.size();
-            
+
             // Process the current CF-event
             switch (event.getType()) {
                 case SAMPLE:
                     MarginalNode marginalLeaf = registerLeafNode(node);
                     activeCFlineages.put(node, marginalLeaf);
-                    
+
                     assert activeCFlineages.size() == nActive + 1;
                     break;
 
                 case COALESCENCE:
                     Node left = node.getChild(0);
                     Node right = node.getChild(1);
-                    
+
                     if (activeCFlineages.containsKey(left) && activeCFlineages.containsKey(right)) {
                         // Create a new marginal node at the coalescence event
                         MarginalNode marginalNode = registerNode(node, activeCFlineages, nextNonLeafNr++);
@@ -259,12 +250,12 @@ public class MarginalTree extends Tree {
                         activeCFlineages.remove(left);
                         activeCFlineages.remove(right);
                         activeCFlineages.put(node, marginalNode);
-                        
+
                         assert activeCFlineages.size() == nActive - 1;
-                        
+
                     } else {
                         // Only one side is active -> no coalescence in marginal tree (i.e. no marginal node)
-                            
+
                         if (activeCFlineages.containsKey(left)) {
                             MarginalNode marginalLeft = activeCFlineages.get(left);
                             updateTimeLength(node.getHeight(), left, marginalLeft);
@@ -282,49 +273,49 @@ public class MarginalTree extends Tree {
                             activeCFlineages.put(node, marginalRight);
                             break;
                         }
-                        
+
                         assert activeCFlineages.size() == nActive;
-                        
+
                     }
                     break;
             }
 
-            // Process all conversion below the next CF-event 
+            // Process all conversion below the next CF-event
             while (iConv < convs.size() &&
                     (event.node.isRoot() || convs.get(iConv).height < cfEvents.get(iEvent + 1).getHeight())) {
-                
+
                 nActive = activeCFlineages.size();
-                
+
                 Conversion conv = convs.get(iConv++);
                 Node node1 = conv.getNode1();
                 Node node2 = conv.getNode2();
-                
+
                 if (activeCFlineages.containsKey(node1) && activeCFlineages.containsKey(node2)) {
                     // Both lineages at the conversion are active --> coalescence in the marginal tree
-                    
+
                     // Create a MarginalNode at the point of the conversion and add it as a new lineage
                     MarginalNode convNode = registerNode(conv, activeCFlineages, nextNonLeafNr++);
-                    
+
                     // Remove child lineages and add new one
                     activeCFlineages.remove(node1);
                     activeCFlineages.remove(node2);
                     activeCFlineages.put(node2, convNode);
 
                     assert activeCFlineages.size() == nActive - 1;
-                    
+
                 } else {
                     // node1 or node2 already moved away (overshadowed by another conversion)
-                    
+
                     if (activeCFlineages.containsKey(node1)) {
                         // node1 passes conversion, but node2 branched away --> CF lineage of node2 is continued by node1
                         MarginalNode margNode1 = activeCFlineages.get(node1);
                         updateTimeLength(conv.getHeight(), node1, margNode1);
-                        
+
                         activeCFlineages.remove(node1);
                         activeCFlineages.put(node2, margNode1);
-                    }    
+                    }
                     // else: node1 already branched away --> conversion has no effect
-                    
+
                     assert activeCFlineages.size() == nActive;
                 }
             }
@@ -333,11 +324,11 @@ public class MarginalTree extends Tree {
         // A single active CF lineage (the root) should remain:;
         MarginalNode newRoot = activeCFlineages.get(acg.getRoot());
         setRootOnly(newRoot);
-        
+
         if (hasBranchRates) {
             rollOutTime(newRoot, newRoot.getHeight());
         }
-        
+
         outdated = false;
         block.updatedMarginalTree();
 //        lastBlockState = block.toString();
@@ -360,29 +351,29 @@ public class MarginalTree extends Tree {
         double height = node.getHeight();
         MarginalNode marginalLeft = activeCFlineages.get(left);
         MarginalNode marginalRight = activeCFlineages.get(right);
-        
+
         MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
         marginalNode.update(height, marginalLeft, marginalRight);
         marginalNode.timeLength = 0;
         marginalNode.lastEventHeight = height;
         marginalNode.makeDirty(Tree.IS_FILTHY);
-        
+
         // Update time-length of both children
         if (hasBranchRates) {
             updateTimeLength(height, left, marginalLeft);
             updateTimeLength(height, right, marginalRight);
         }
-        
+
         return marginalNode;
     }
-    
+
     public MarginalNode registerNode(Conversion conv, Map<Node, MarginalNode> activeCFlineages, int nodeNr) {
         Node left = conv.getNode1();
         Node right = conv.getNode2();
         double height = conv.getHeight();
         MarginalNode marginalLeft = activeCFlineages.get(left);
         MarginalNode marginalRight = activeCFlineages.get(right);
-        
+
         MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
         marginalNode.update(height, marginalLeft, marginalRight);
         marginalNode.timeLength = 0;
@@ -394,81 +385,81 @@ public class MarginalTree extends Tree {
             updateTimeLength(height, left, marginalLeft);
             updateTimeLength(height, right, marginalRight);
         }
-        
+
         return marginalNode;
     }
-    
+
     void updateTimeLength(double parentHeight, Node child, MarginalNode marginalChild) {
         marginalChild.timeLength += (parentHeight - marginalChild.lastEventHeight) * branchRateModel.getRateForBranch(child);
         marginalChild.lastEventHeight = parentHeight;
     }
 
     /**
-     * Assign new heights to the nodes in the tree by 
-     * rolling out the branch time-lengths from the 
+     * Assign new heights to the nodes in the tree by
+     * rolling out the branch time-lengths from the
      * root down (starting at rootHeight).
-     *  
+     *
      * @param root
      * @param rootHeight
      */
     void rollOutTime(MarginalNode root, double rootHeight) {
         root.setHeight(rootHeight);
-        
+
         for (Node childAsNode : root.getChildren()) {
             MarginalNode child = (MarginalNode) childAsNode;
             rollOutTime(child, rootHeight - child.timeLength);
         }
     }
-    
+
     @Override
     public void store() {}
-    
+
     @Override
     public void restore() {
         postCache = null;
-        
+
 //        outdated = true;
         manuallyUpdated = false;
 //        System.out.print("r");
         recalculate();
     }
-    
-    protected void initArraysSlim() { 
+
+    protected void initArraysSlim() {
         // initialise tree-as-array representation + its stored variant
         m_nodes = new MarginalNode[nodeCount];
         listMarginalNodes((MarginalNode) root, m_nodes);
         postCache = null;
     }
-    
+
     /**
      * convert tree to array representation *
      */
     void listMarginalNodes(final MarginalNode node, final Node[] nodes) {
         nodes[node.getNr()] = node;
         node.setTree(this);
-        
+
         for (final Node child : node.getChildren()) {
             listMarginalNodes((MarginalNode) child, nodes);
         }
     }
-    
+
     /**
      * Obtain the list of conversions which affect this block, i.e. the ones defining this marginal tree.
-     * 
-     * @return List of relevant conversions. 
+     *
+     * @return List of relevant conversions.
      */
     public ArrayList<Conversion> getBlockConversions() {
         ArrayList<Conversion> blockConvs = new ArrayList<>();
         ConversionList convList = acg.getConversions();
-        
+
         for (int cID : block.getConversionIDs()) {
             Conversion c = convList.get(cID);
             assert c != null;
             blockConvs.add(c);
         }
-        
+
         return blockConvs;
-    }    
+    }
 
     /**
      * copy of all values from existing tree *
@@ -476,25 +467,25 @@ public class MarginalTree extends Tree {
     @Override
     public void assignFrom(final StateNode other) {
         final Tree tree = (Tree) other;
-        
+
         final MarginalNode[] nodes = new MarginalNode[tree.getNodeCount()];
         for (int i = 0; i < tree.getNodeCount(); i++) {
             nodes[i] = newNode();
         }
-        
+
         setID(tree.getID());
 
         root = (MarginalNode) nodes[tree.getRoot().getNr()];
         root.assignFrom(nodes, tree.getRoot());
         root.setParent(null);
-        
+
         nodeCount = tree.getNodeCount();
         internalNodeCount = tree.getInternalNodeCount();
         leafNodeCount = tree.getLeafNodeCount();
-        
+
         initArraysSlim();
     }
-    
+
     @Override
     protected MarginalNode newNode() {
         return new MarginalNode();
@@ -506,7 +497,7 @@ public class MarginalTree extends Tree {
     @Override
     public String toString() {
         return root.toString();
-    }   
-    
+    }
+
 }
 

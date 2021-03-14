@@ -17,10 +17,13 @@
 
 package contactrees.operators;
 
+import java.util.List;
+
 import javax.naming.directory.InvalidAttributesException;
 
 import beast.core.Input;
 import beast.core.Operator;
+import beast.core.StateNode;
 import beast.evolution.tree.Node;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
@@ -158,5 +161,18 @@ public abstract class ACGOperator extends Operator {
             max = Math.max(max, child.getHeight());
 
         return max;
+    }
+
+
+    /**
+     * Include all block StateNodes in the list of affected state nodes.
+     * This does not work automatically, since blocks are only indirect
+     * inputs through the blockSet.
+     */
+    @Override
+    public List<StateNode> listStateNodes() {
+        final List<StateNode> list = super.listStateNodes();
+        list.add(acgInput.get());
+        return list;
     }
 }

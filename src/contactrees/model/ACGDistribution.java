@@ -247,15 +247,20 @@ public class ACGDistribution extends Distribution {
 
         assert conv.isValid();
 
+        return getEdgeAttachmentProb(conv);
+    }
+
+    /**
+     * Get the probability density of the attachment points of the given edge.
+     *
+     * @param conv recombination to associate
+     * @return the log probability density of the attachment points
+     */
+    public double getEdgeAttachmentProb(Conversion conv) {
         if (linearContactGrowthInput.get())
             return -Math.log(acg.getClonalFrameLength());
         else
             return -Math.log(acg.getClonalFramePairedLength());
-    }
-
-    @Override
-    public void printDebug() {
-        System.out.println(getID() + "  \t" + isDirtyCalculation() + "\t\t" + logP);
     }
 
 }

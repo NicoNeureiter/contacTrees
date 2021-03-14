@@ -17,21 +17,18 @@
 
 package contactrees.operators;
 
-import contactrees.Block;
-import contactrees.BlockSet;
-import contactrees.CFEventList;
-import contactrees.CFEventList.Event;
-import contactrees.Conversion;
-import contactrees.util.Util;
+import java.util.List;
+import java.util.Set;
+
 import beast.core.Input;
 import beast.core.StateNode;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.util.Randomizer;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import contactrees.Block;
+import contactrees.BlockSet;
+import contactrees.Conversion;
+import contactrees.model.ACGDistribution;
 
 /**
  * Abstract class of ACG operators that add new conversion
@@ -47,28 +44,31 @@ public abstract class EdgeCreationOperator extends ACGOperator {
 			Input.Validate.REQUIRED);
 
 	public Input<RealParameter> conversionRateInput = new Input<>(
-            "conversionRate", 
+            "conversionRate",
             "Rate at which conversions happen along pairs of edges on the clonal frame.",
             Input.Validate.REQUIRED);
 
+	public Input<ACGDistribution> networkPriorInput = new Input<>(
+	        "networkPrior",
+	        "The network prior defines how new edges should be sampled.",
+	        Input.Validate.REQUIRED);
+
 	protected BlockSet blockSet;
-	
+
     @Override
     public void initAndValidate() {
         super.initAndValidate();
         blockSet = blockSetInput.get();
     }
-    
+
     /**
      * Add and return a new conversion edge.
      * @return The new conversion.
      */
     protected Conversion addNewConversion() {
-    	Conversion conv = acg.addNewConversion();
-//    	blockSet.addConversion(conv);
-    	return conv;
+        return acg.addNewConversion();
     }
-    
+
     /**
      * Remove the specified conversion
      * @param The conversion to be removed
@@ -77,75 +77,45 @@ public abstract class EdgeCreationOperator extends ACGOperator {
     	acg.removeConversion(conv);
     	blockSet.removeConversion(conv);
     }
-    
+
     /**
      * Attach chosen recombination to the clonal frame.  Note that only the
      * attachment points (nodes and heights) are set, the affected region of
      * the alignment is not modified.
-     * 
+     *
      * @param conv conversion
      * @return log probability density of chosen attachment.
      */
     public double attachEdge(Conversion conv) {
-    	CFEventList cfEventList = acg.getCFEventList();
-    	List<Event> cfEvents = cfEventList.getCFEvents();
-        double logP = 0.0;
-
-        // Choose event interval
-    	double[] intervalVolumes = cfEventList.getIntervalVolumes();
-    	int iEvent = Util.sampleCategorical(intervalVolumes);
-        Event event = cfEvents.get(iEvent);
-        
-    	// Choose height within interval
-        double height = Randomizer.uniform(event.getHeight(), cfEvents.get(iEvent+1).getHeight());
-    	conv.setHeight(height);
-    	
-    	// Choose source lineage (given the height)
-    	Set<Node> activeLineages = acg.getLineagesAtHeight(height);
-    	Node node1 = Util.sampleFrom(activeLineages);
-    	conv.setNode1(node1);
-    	assert node1.getHeight() < height;
-        
-        // Choose destination lineage (given the height and node1)
-        activeLineages.remove(node1);
-        Node node2 = Util.sampleFrom(activeLineages);
-        conv.setNode2(node2);
-
-        return Math.log(1.0/acg.getClonalFramePairedLength());
+        return networkPriorInput.get().attachEdge(conv);
     }
-    
+
     /**
      * Retrieve probability density for both attachment points of the given
      * recombinant edge.
-     * 
+     *
      * @param conv conversion
      * @return log probability density
      */
     public double getEdgeAttachmentProb(Conversion conv) {
-        double logP = 0.0;
-        
-        logP += Math.log(1.0/acg.getClonalFramePairedLength());
-//        logP += getEdgeCoalescenceProb(conv);
-        
-        return logP;
+        return networkPriorInput.get().getEdgeAttachmentProb(conv);
     }
-    
+
     /**
      * Take a recombination with an existing departure point and determine
      * the arrival point by allowing it to coalesce with the clonal frame.
-     * 
+     *
      * @param conv recombination to modify
      * @return log probability density of coalescent point chosen.
      */
     public double coalesceEdge(Conversion conv) {
-    	
-    	double height = conv.getHeight();
-    	double logP = 0.0;
-        
-    	// Find the other lineages at the same height as node2. 
+        double height = conv.getHeight();
+        double logP = 0.0;
+
+        // Find the other lineages at the same height as node2.
         Set<Node> activeLineages = acg.getLineagesAtHeight(height);
         activeLineages.remove(conv.getNode1());
-        
+
         // Sample a second node uniformly at random
         int choice = Randomizer.nextInt(activeLineages.size());
         int i = 0;
@@ -156,30 +126,19 @@ public abstract class EdgeCreationOperator extends ACGOperator {
             }
             i++;
         }
-        
-        // The only random choice was the lineage 
+
+        // The only random choice was the lineage
         logP -= Math.log(activeLineages.size());
-                
+
         return logP;
     }
-    
-    /**
-     * Get probability density for the arrival time of the given recombinant
-     * edge under ClonalOrigin's coalescent model.
-     * 
-     * @param conv conversion
-     * @return log probability density
-     */
-    public double getEdgeCoalescenceProb(Conversion conv) {
-    	int nLineages = acg.countLineagesAtHeight(conv.getHeight());
-    	return - Math.log(nLineages - 1);
-    }
-    
+
     /**
      * Include all block StateNodes in the list of affected state nodes.
-     * This does not work automatically, since blocks are only indirect 
+     * This does not work automatically, since blocks are only indirect
      * inputs through the blockSet.
      */
+    @Override
     public List<StateNode> listStateNodes() {
         final List<StateNode> list = super.listStateNodes();
         for (Block block : blockSet.getBlocks()) {
@@ -187,5 +146,5 @@ public abstract class EdgeCreationOperator extends ACGOperator {
         }
         return list;
     }
-    
+
 }
