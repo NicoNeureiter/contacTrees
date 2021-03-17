@@ -1,6 +1,3 @@
-/**
- * 
- */
 package contactrees;
 
 import java.io.PrintStream;
@@ -10,70 +7,72 @@ import java.util.List;
 import java.util.Locale;
 
 import beast.core.BEASTObject;
+import beast.core.Description;
 import beast.core.Input;
 import beast.core.Loggable;
+import beast.evolution.branchratemodel.BranchRateModel;
 import beast.evolution.tree.Node;
+import beast.evolution.tree.Tree;
 
-/**
- * 
- * 
- * @author Nico Neureiter
- */
+@Description("Logs conversion graphs annotated with metadata and/or rates")
 public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
 
+    public Input<ConversionGraph> networkInput = new Input<>(
+            "network",
+            "The conversion graph to be logged.",
+            Input.Validate.REQUIRED);
+    public Input<BlockSet> blockSetInput = new Input<>(
+            "blockSet",
+            "The moves each local tree takes along the conversion graph.",
+            Input.Validate.REQUIRED);
+    public Input<BranchRateModel.Base> clockModelInput = new Input<>(
+            "branchratemodel",
+            "The branchratemodel for logging branch rates in node-attributes of the Newick trees.");
 
-	public Input<ConversionGraph> networkInput = new Input<>(
-			"network",
-			"The conversion graph to be logged.",
-			Input.Validate.REQUIRED);
-	public Input<BlockSet> blockSetInput = new Input<>(
-			"blockSet",
-			"The moves each local tree takes along the conversion graph.",
-			Input.Validate.REQUIRED);
-	
-	protected ConversionGraph acg;
-	protected BlockSet blockSet;
-	
-	@Override
-	public void initAndValidate() {
-		blockSet = blockSetInput.get();
-		acg = networkInput.get();
-	}
+    protected ConversionGraph acg;
+    protected BlockSet blockSet;
+
+    @Override
+    public void initAndValidate() {
+        blockSet = blockSetInput.get();
+        acg = networkInput.get();
+    }
 
     @Override
     public void init(PrintStream out) {
-    	Node node = acg.getRoot();
-        
+        Node node = acg.getRoot();
+
         out.println("#NEXUS\n");
         out.println("Begin taxa;");
         out.println("\tDimensions ntax=" + acg.getLeafNodeCount() + ";");
         out.println("\t\tTaxlabels");
-        acg.printTaxa(node, out, acg.getNodeCount() / 2);
+        ConversionGraph.printTaxa(node, out, acg.getNodeCount() / 2);
         out.println("\t\t\t;");
         out.println("End;\n");
 
         out.println("Begin contactrees;");
         out.print("\tblockSet");
-        for (Block block: blockSet.blocks)
+        for (Block block: blockSet.blocks) {
             out.print(" " + block.getID());			// TODO include affected sites.
+        }
         out.println(";\nEnd;\n");
 
         out.println("Begin trees;");
         out.println("\tTranslate");
-        acg.printTranslate(node, out, acg.getNodeCount() / 2);
+        ConversionGraph.printTranslate(node, out, acg.getNodeCount() / 2);
         out.print(";");
     }
 
-	@Override
-	public void close(PrintStream out) {
-		acg.close(out);
-	}
+    @Override
+    public void close(PrintStream out) {
+        acg.close(out);
+    }
 
     /**
      * Obtain extended Newick representation of ACG.  Includes Nexus metadata
      * on hybrid leaf nodes describing the alignment sites affected by the
      * conversion event.
-     * 
+     *
      * @return Extended Newick string.
      */
     public String getExtendedNewick() {
@@ -89,23 +88,26 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
      * @return Extended Newick string.
      */
     public String getExtendedNewick(boolean includeSiteStats) {
-    	Node root = acg.getRoot();
-        return extendedNewickTraverse(root, includeSiteStats) + ";";
+        Node root = acg.getRoot();
+        BranchRateModel.Base branchRateModel = clockModelInput.get();
+        return extendedNewickTraverse(root, includeSiteStats, branchRateModel) + ";";
     }
-    
+
     private String extendedNewickTraverse(Node node,
-                                          boolean includeBlockStats) {
-    	ConversionList convs = acg.getConversions();
-    	HashMap<Conversion, List<Integer>> affectedBlocks = blockSet.getAffectedBlockIDs();
-    	
+                                          boolean includeBlockStats,
+                                          BranchRateModel.Base branchRateModel) {
+        ConversionList convs = acg.getConversions();
+        HashMap<Conversion, List<Integer>> affectedBlocks = blockSet.getAffectedBlockIDs();
+
         StringBuilder sb = new StringBuilder();
-        
+
+
         // Determine sequence of events along this node.
         class Event {
             boolean isArrival;
             double time;
             Conversion conv;
-            
+
             public Event(boolean isArrival, double time, Conversion conv) {
                 this.isArrival = isArrival;
                 this.time = time;
@@ -120,7 +122,7 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
                 events.add(new Event(true, conv.getHeight(), conv));
         }
 
-        
+
         // Sort events from oldest to youngest.
         events.sort((Event e1, Event e2) -> {
             if (e1.time > e2.time) return -1;
@@ -128,9 +130,9 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
         });
 
         // Process events.
-        
+
         int cursor = 0;
-        
+
         double lastTime;
         if (node.isRoot())
             lastTime = Double.POSITIVE_INFINITY;
@@ -157,14 +159,11 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
 //                        0, 1, 0, 1.);
 
                 if (includeBlockStats) {
-                	int affectedBlockCount = blockSet.countAffectedBlocks();
-        			double affectedBlockFraction = affectedBlockCount / (double) blockSet.getBlockCount();
-        			
-//        			affectedBlockFraction = 1.0;
-        			
+                    int affectedBlockCount = blockSet.countAffectedBlocks();
+                    double affectedBlockFraction = affectedBlockCount / (double) blockSet.getBlockCount();
                     meta += String.format(Locale.ENGLISH,
                             ", affectedBlocks=%s",
-                            formatList(blockSet.getAffectedBlockIDs(event.conv))
+                            formatList(blockSet.getAffectedBlockNames(event.conv))
 //                            ", affectedSites=%d, uselessSiteFraction=%g, affectedBlocks=%s",
 //                            affectedBlockCount,
 //                            1.0-affectedBlockFraction,
@@ -185,7 +184,7 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
 
                 sb.insert(cursor, "(,#" + event.conv.getID()
                         + meta
-                        + ":0.00001" // TODO Fix in IcyTree to avoid this.  
+                        + ":0.00001" // TODO Fix in IcyTree to avoid this.
                         + ")"
                         + parentMeta
                         + ":" + thisLength);
@@ -202,15 +201,15 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
                         + ":" + thisLength);
                 cursor += 1;
             }
-            
+
             lastTime = event.time;
         }
-        
+
         // Process this node and its children.
 
         if (!node.isLeaf()) {
-            String subtree1 = extendedNewickTraverse(node.getChild(0), includeBlockStats);
-            String subtree2 = extendedNewickTraverse(node.getChild(1), includeBlockStats);
+            String subtree1 = extendedNewickTraverse(node.getChild(0), includeBlockStats, branchRateModel);
+            String subtree2 = extendedNewickTraverse(node.getChild(1), includeBlockStats, branchRateModel);
             sb.insert(cursor, "(" + subtree1 + "," + subtree2 + ")");
             cursor += subtree1.length() + subtree2.length() + 3;
         }
@@ -220,9 +219,17 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
             thisLength = 0.0;
         else
             thisLength = lastTime - node.getHeight();
-        sb.insert(cursor, (node.getNr() + acg.taxaTranslationOffset)
-                + node.getNewickMetaData() + ":" + thisLength);
-        
+
+        String nodeMetaData = "";
+        if (node.lengthMetaDataString != null)
+            nodeMetaData += node.metaDataString;
+        if (branchRateModel != null)
+            nodeMetaData += "rate=" + branchRateModel.getRateForBranch(node);
+        if (nodeMetaData.length() > 0)
+            nodeMetaData = "[&" + nodeMetaData + ']';
+        sb.insert(cursor, (node.getNr() + Tree.taxaTranslationOffset)
+                + nodeMetaData + ":" + thisLength);
+
         return sb.toString();
     }
 
@@ -234,23 +241,23 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
 
     /*
      * TESTING INTERFACE
-     */    
+     */
     public ConversionGraph getACG() {
     	return acg;
     }
-    
-    public String formatList(List lst) {
-    	String s = "\"{";
-    	int i = 0;
-    	for (Object item : lst) {    		
-    		s += item;
-    		if (i < lst.size()-1)
-    			s += ",";
-    		i++;
-    	}
-    	return s + "}\"";
+
+    public String formatList(List<String> lst) {
+        String s = "\"{";
+        int i = 0;
+        for (Object item : lst) {
+            s += item;
+            if (i < lst.size()-1)
+                s += ",";
+            i++;
+        }
+        return s + "}\"";
     }
-    
+
     public ACGWithMetaDataLogger() {
         super();
     }
@@ -259,7 +266,7 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
         this();
         initByName("network", acg, "blockSet", blockSet);
     }
-    
+
     public ACGWithMetaDataLogger(ACGWithBlocks acgWithBlocks) {
         this(acgWithBlocks, acgWithBlocks.blockSet);
     }
