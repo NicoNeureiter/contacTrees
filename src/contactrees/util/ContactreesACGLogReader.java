@@ -86,7 +86,8 @@ public class ContactreesACGLogReader implements ACGLogReader {
             nextLine = nextLine.trim();
 
             if (nextLine.equals("Translate")) {
-                parseTranslationTable();
+                parseTranslationTable(recordPreamble);
+                continue;
             }
 
             if (nextLine.toLowerCase().startsWith("tree"))
@@ -97,7 +98,10 @@ public class ContactreesACGLogReader implements ACGLogReader {
         }
     }
 
-    private void parseTranslationTable() throws IOException {
+    private void parseTranslationTable(boolean recordPreamble) throws IOException {
+        if (recordPreamble)
+            preamble.add("Translate");
+
         while (true) {
             nextLine = reader.readLine();
 
@@ -105,6 +109,9 @@ public class ContactreesACGLogReader implements ACGLogReader {
                 throw new IOException("Reached end of file while parsing translation table.");
 
             nextLine = nextLine.trim();
+
+            if (recordPreamble)
+                preamble.add(nextLine);
 
             if (nextLine.endsWith(";"))
                 return;
