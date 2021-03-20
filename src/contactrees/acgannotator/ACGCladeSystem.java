@@ -17,41 +17,49 @@
 
 package contactrees.acgannotator;
 
-import contactrees.ACGWithBlocks;
-import contactrees.Block;
-import contactrees.BlockSet;
-import contactrees.Conversion;
-import contactrees.ConversionGraph;
-import contactrees.acgannotator.ACGCladeSystem.BitSetPair;
-import beast.app.treeannotator.CladeSystem;
-import beast.evolution.tree.Node;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultiset;
-import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
-import com.google.common.collect.Range;
+
+import beast.app.treeannotator.CladeSystem;
+import beast.evolution.tree.Node;
+import contactrees.ACGWithBlocks;
+import contactrees.BlockSet;
+import contactrees.Conversion;
+import contactrees.ConversionGraph;
 
 /**
  * Adds conversion summary tools to CladeSystem.
- * 
+ *
  * Nico Neureiter
  */
 public class ACGCladeSystem extends CladeSystem {
 
-    protected ArrayListMultimap<BitSetPair, ConversionWithBlocks> conversionLists = ArrayListMultimap.create();
+    protected Multimap<BitSetPair, ConversionWithBlocks> conversionLists = ArrayListMultimap.create();
+    protected Multiset<BitSetPair> conversionSupport = HashMultiset.create();
     protected List<Multiset<BitSetPair>> geneFlow = new ArrayList<>();
+    protected Multiset<BitSetPair> totalGeneFlow = HashMultiset.create();
     protected BitSet[] bitSets;
     protected int nBlocks = -1;
 
-    protected int acgIndex = 1;
+    protected ConversionGraph lastACG;
 
-    public ACGCladeSystem() { }
+    protected int acgIndex = 0;
+
+    public ACGCladeSystem() {
+        lastACG = null;
+    }
 
     public ACGCladeSystem(ConversionGraph acg) {
+        this();
         add(acg, true);
     }
 
@@ -59,6 +67,12 @@ public class ACGCladeSystem extends CladeSystem {
      * Assemble list of bitSets for this ACG.
      */
     public BitSet[] getBitSets(ConversionGraph acg) {
+
+        // Check if bitSet is already up-to-date
+        if (lastACG == acg)
+            return bitSets;
+
+        lastACG = acg;
 
         if (bitSets == null)
             bitSets = new BitSet[acg.getNodeCount()];
@@ -82,21 +96,30 @@ public class ACGCladeSystem extends CladeSystem {
         BlockSet blockSet = acg.blockSet;
         nBlocks = blockSet.getBlockCount();
         Multiset<BitSetPair> geneFlowSample = HashMultiset.create();
-                
+        Set<BitSetPair> convAddedToSupport = new HashSet<>();
+
         for (Conversion conv : acg.getConversions())  {
             conv.acgIndex = acgIndex;
-            BitSetPair bsPair = new BitSetPair(conv);
+            BitSetPair cladePair = new BitSetPair(conv);
 
-            conversionLists.get(bsPair).add(
+            conversionLists.get(cladePair).add(
                     new ConversionWithBlocks(conv, blockSet.getAffectedBlockIDs(conv))
             );
 
+            if (!convAddedToSupport.contains(cladePair)) {
+                conversionSupport.add(cladePair);
+                convAddedToSupport.add(cladePair);
+            }
+
             // Record gene flow
-            geneFlowSample.add(bsPair, blockSet.countAffectedBlocks(conv));
-//            if (!geneFlowSample.containsKey(bsPair.from))
-//                geneFlowSample.put(bsPair.from, new HashMap<>());
-//            long oldFlow = geneFlowSample.get(bsPair.from).getOrDefault(bsPair.to, 0L);
-//            geneFlowSample.get(bsPair.from).put(bsPair.to, oldFlow + blockSet.countAffectedBlocks(conv));
+            geneFlowSample.add(cladePair, blockSet.countAffectedBlocks(conv));
+            totalGeneFlow.add(cladePair, blockSet.countAffectedBlocks(conv));
+        }
+
+        int flowSum = 0;
+        for (Conversion conv : acg.getConversions())  {
+            BitSetPair cladePair = new BitSetPair(conv);
+//            System.out.println(cladePair.hashCode() + ":   " + geneFlowSample.count(cladePair) + " / " + blockSet.size());
         }
 
         geneFlow.add(geneFlowSample);
@@ -121,7 +144,7 @@ public class ACGCladeSystem extends CladeSystem {
         for (int i=0; i<nBlocks; i++) {
             convSummaryList.add(new ConversionSummary());
         }
-        
+
         // Return empty list if on conversions meet the criteria.
         if (!conversionLists.containsKey(cladePair))
             return convSummaryList;
@@ -139,25 +162,40 @@ public class ACGCladeSystem extends CladeSystem {
     }
 
     /**
+     * @param the pair of clades defining a conversion.
+     * @return number of ACGs containing conversions between the given pair of clades.
+     */
+    public int getConversionSupport(BitSetPair cladePair) {
+          return conversionSupport.count(cladePair);
+    }
+
+    /**
      * @return list of multisets specifying gene flow between clades in each sample.
      */
     public List<Multiset<BitSetPair>> getGeneFlowMap() {
         return geneFlow;
     }
-    
+
     /**
      * @return a multiset specifying the gene flow between clades.
      */
     public Multiset<BitSetPair> getGeneFlow() {
-        Multiset<BitSetPair> totalGeneFlow = HashMultiset.create();
-        for (Multiset<BitSetPair> geneFlowSample : geneFlow) {
-            for (BitSetPair cladePair : geneFlowSample) {
-                totalGeneFlow.add(cladePair, geneFlowSample.count(cladePair));
-            }
-        }
+//        Multiset<BitSetPair> totalGeneFlow = HashMultiset.create();
+//        for (Multiset<BitSetPair> geneFlowSample : geneFlow) {
+//            for (BitSetPair cladePair : geneFlowSample) {
+//                totalGeneFlow.add(cladePair, geneFlowSample.count(cladePair));
+//            }
+//        }
         return totalGeneFlow;
     }
-    
+
+    /**
+     * @return the gene flow between two clades.
+     */
+    public int getGeneFlow(BitSetPair cladePair) {
+        return totalGeneFlow.count(cladePair);
+    }
+
     public BitSetPair createCladePair(BitSet from, BitSet to) {
         return new BitSetPair(from, to);
     }
@@ -188,7 +226,7 @@ public class ACGCladeSystem extends CladeSystem {
     public List<BitSetPair> listCladePairs(ConversionGraph acg){
         getBitSets(acg);
         List <BitSetPair> cladePairs = new ArrayList<>();
-        
+
         for (BitSet from : bitSets) {
             for (BitSet to : bitSets) {
                 if (from == to) {
@@ -197,7 +235,7 @@ public class ACGCladeSystem extends CladeSystem {
                 cladePairs.add(createCladePair(from, to));
             }
         }
-        
+
         return cladePairs;
     }
 
@@ -247,11 +285,11 @@ public class ACGCladeSystem extends CladeSystem {
      * points in the summarized clonal frame.
      */
     public class ConversionSummary {
-        
+
         List<Double> heights = new ArrayList<>();
 
         public int nIncludedACGs = 0;
-        
+
         ConversionGraph acg;
 
         /**
@@ -285,11 +323,11 @@ public class ACGCladeSystem extends CladeSystem {
             return heights;
         }
     }
-    
+
     public class ConversionWithBlocks {
         Conversion conversion;
         List<Integer> blocks;
-        
+
         public ConversionWithBlocks(Conversion conversion, List<Integer> blocks) {
             this.conversion = conversion;
             this.blocks = blocks;

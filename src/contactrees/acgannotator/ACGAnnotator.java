@@ -1,5 +1,49 @@
 package contactrees.acgannotator;
 
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Font;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.swing.BoxLayout;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.WindowConstants;
+import javax.swing.border.EtchedBorder;
+
+import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
+
+import beast.core.util.Log;
+import beast.evolution.tree.Node;
+import beast.math.statistic.DiscreteStatistics;
 import contactrees.ACGWithBlocks;
 import contactrees.ACGWithMetaDataLogger;
 import contactrees.Block;
@@ -10,22 +54,6 @@ import contactrees.acgannotator.ACGCladeSystem.BitSetPair;
 import contactrees.acgannotator.ACGCladeSystem.ConversionSummary;
 import contactrees.util.ContactreesACGLogReader;
 import contactrees.util.Util;
-import beast.app.treeannotator.CladeSystem;
-import beast.app.util.Utils;
-import beast.core.util.Log;
-import beast.evolution.tree.Node;
-import beast.math.statistic.DiscreteStatistics;
-
-import javax.swing.*;
-import javax.swing.border.EtchedBorder;
-
-import com.google.common.collect.Multiset;
-
-import java.awt.*;
-import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.List;
 
 /**
  * A rewrite of TreeAnnotator targeted at summarizing ACG logs
@@ -41,9 +69,10 @@ public class ACGAnnotator {
         File inFile;
         File outFile = new File("summary.tree");
         double burninPercentage = 10.0;
-        double convSupportThresh = 50.0;
+        double convSupportThresh = -100;
         SummaryStrategy summaryStrategy = SummaryStrategy.MEAN;
         File geneFlowOutFile = new File("geneFlow.log");
+        File loanwordsOutFile = new File("loanwords.log");
         boolean recordGeneFlow = false;
 
         @Override
@@ -93,7 +122,8 @@ public class ACGAnnotator {
 
         ACGWithBlocks acgBest = null;
         double bestScore = Double.NEGATIVE_INFINITY;
-
+        int totalConvCount = 0;
+        int acgCount = 0;
         for (ACGWithBlocks acg : logReader ) {
             double score = cladeSystem.getLogCladeCredibility(acg.getRoot(), null);
 
@@ -101,7 +131,12 @@ public class ACGAnnotator {
                 acgBest = acg.copy();
                 bestScore = score;
             }
+
+            totalConvCount += acg.getConvCount();
+            acgCount += 1;
         }
+        System.out.println("meanConvCount: " + (totalConvCount / (float) acgCount));
+        int meanConvCount = Math.round(totalConvCount / (float) acgCount);
 
         if (acgBest == null)
             throw new IllegalStateException("Failed to find best tree topology.");
@@ -131,22 +166,31 @@ public class ACGAnnotator {
 
         annotateCF(cladeSystem, acgBest.getRoot(), options.summaryStrategy);
 
+        // ---------------------------------------------------------------
+        for (BitSetPair cladePair : cladeSystem.listCladePairs(acgBest)){
+            assert cladeSystem.getGeneFlow(cladePair) <= (logReader.getCorrectedACGCount() * acgBest.blockSet.size());
+        }
+        // ---------------------------------------------------------------
+
         System.out.println("\nAdding summary conversions...");
 
         // Add conversion summaries
 
+        double threshold = options.convSupportThresh /100.0;
+        if (threshold < 0) {
+            threshold = computeThreshold(cladeSystem, acgBest, logReader.getCorrectedACGCount(), meanConvCount);
+        }
         summarizeConversions(cladeSystem, acgBest, logReader.getCorrectedACGCount(),
-                options.convSupportThresh /100.0,
-                options.summaryStrategy);
+                             threshold, options.summaryStrategy);
 
 
         // Write output
 
         System.out.println("\nWriting output to " + options.outFile.getName()
         + "...");
-        
+
         ACGWithMetaDataLogger writer = new ACGWithMetaDataLogger(acgBest);
-        
+
         try (PrintStream ps = new PrintStream(options.outFile)) {
             ps.print(logReader.getPreamble());
             ps.println("tree STATE_0 = " + writer.getExtendedNewick());
@@ -167,6 +211,18 @@ public class ACGAnnotator {
 
             try (PrintStream ps = new PrintStream(options.geneFlowOutFile)) {
                 writeGeneFlowFile(cladeSystem, acgBest, ps);
+            }
+        }
+
+        // Write loan word output if desired
+
+        if (true) {  // TODO introduce options.recordLoanWordList
+            System.out.println("\nRecording loan word list in file "
+                    + options.loanwordsOutFile.getName()
+                    + "...");
+
+            try (PrintStream ps = new PrintStream(options.loanwordsOutFile)) {
+                writeLoanwordsFile(logReader, ps);
             }
         }
 
@@ -210,7 +266,7 @@ public class ACGAnnotator {
         ps.println("#");
 
         // TODO join columns with with String.join()
-        
+
         // Write header
         boolean isFirst = true;
         for (BitSetPair cladePair : cladeSystem.listCladePairs(acgBest)) {
@@ -218,7 +274,7 @@ public class ACGAnnotator {
                 isFirst = false;
             else
                 ps.print("\t");
-            
+
             printBitSetHeader(ps, cladePair.from);
             ps.print("_to_");
             printBitSetHeader(ps, cladePair.to);
@@ -243,6 +299,88 @@ public class ACGAnnotator {
             ps.println();
         }
 
+    }
+
+    class Loanword {
+        String language, word;
+        Loanword(String l, String w) {
+            language = l;
+            word = w;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (!(other instanceof Loanword)) return false;
+            Loanword otherLoanword = (Loanword) other;
+            return language.equals(otherLoanword.language) && word.equals(otherLoanword.word);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * language.hashCode() + word.hashCode();
+        }
+    }
+
+    /**
+     * Write list on which words are likely to be loanwords in each language.
+     */
+    protected void writeLoanwordsFile(ContactreesACGLogReader logReader,
+                                      PrintStream ps) {
+        Integer nSamples = logReader.getCorrectedACGCount();
+
+        String[] words = logReader.iterator().next().getBlockSet().getBlockNames();
+        for (int i=0; i<words.length; i++) words[i] = words[i].toLowerCase();
+        Arrays.sort(words);
+
+        List<String> languages = new ArrayList<String>(logReader.getTaxonNames());
+        Collections.sort(languages);
+
+        // Count the number of times each word appears as a loan in each language
+        Multiset<Loanword> loanwords = HashMultiset.create();
+        for (ACGWithBlocks acg : logReader) {
+            // To ensure that words are double counted: first collect loans in a hash-set
+            HashSet<Loanword> currentLoanwords = new HashSet<>();
+            for (Conversion conv : acg.getConversions()) {
+                for (Node leaf : Util.getLeaves(conv.getNode1())) {
+                    String language = logReader.getTaxonName(leaf.getID());
+                    for (String word : acg.blockSet.getAffectedBlockNames(conv)) {
+                        currentLoanwords.add(new Loanword(language, word.toLowerCase()));
+                    }
+                }
+            }
+
+            // Now count each unique loanword into the ´loanwords´ Multiset
+            for (Loanword loanword : currentLoanwords) {
+                loanwords.add(loanword);
+            }
+        }
+
+        // Header
+//        ps.print(",");
+//        for (String l : languages) {
+//            ps.print("," + l);
+//        }
+//        ps.print("\n");
+
+        ps.println("," + String.join(",", languages));
+
+        for (String w : words) {
+            ps.print(w);
+            for (String l : languages) {
+                double p = (double) loanwords.count(new Loanword(l, w)) / (nSamples);
+                ps.print("," + p);
+            }
+            ps.print("\n");
+        }
+//        for (Loanword loanword : loanwords.elementSet()) {
+//            double p = (double) loanwords.count(loanword) / (nSamples);
+//            if (p > 0.2) {
+//                ps.println(loanword.language + "\t" + loanword.word + "\t" + p);
+//            }
+//        }
+
+        ps.println();
     }
 
     /**
@@ -282,6 +420,27 @@ public class ACGAnnotator {
         });
     }
 
+    private double computeThreshold(ACGCladeSystem cladeSystem,
+                                    ACGWithBlocks acg,
+                                    int nACGs,
+                                    float meanConvCount) {
+        BitSet[] bitSets = cladeSystem.getBitSets(acg);
+        ArrayList<Double> convSupportList = new ArrayList<>();
+
+        for (int fromNr=0; fromNr<acg.getNodeCount(); fromNr++) {
+            for (int toNr=0; toNr<acg.getNodeCount(); toNr++) {
+                BitSetPair cladePair = cladeSystem.createCladePair(bitSets[fromNr], bitSets[toNr]);
+                convSupportList.add(
+                        cladeSystem.getConversionSupport(cladePair) / ((double) nACGs)
+                );
+            }
+        }
+
+        // Take support of 'k-largest' conversion as the threshold
+        Collections.sort(convSupportList, Collections.reverseOrder());
+        return convSupportList.get(Math.round(meanConvCount) - 1);
+    }
+
     /**
      * Add summarized conversions to given ACG.
      *
@@ -296,70 +455,82 @@ public class ACGAnnotator {
                                         double threshold,
                                         SummaryStrategy summaryStrategy) {
         BlockSet blockSet = acg.blockSet;
-        Multiset<BitSetPair> geneFlow = cladeSystem.getGeneFlow();
-        
         BitSet[] bitSets = cladeSystem.getBitSets(acg);
+        Multiset<BitSetPair> geneFlow = cladeSystem.getGeneFlow();
+        System.out.println("nConv: " + acg.getConvCount());
+        int cID = 0;
+
         for (int fromNr=0; fromNr<acg.getNodeCount(); fromNr++) {
             BitSet from = bitSets[fromNr];
             for (int toNr=0; toNr<acg.getNodeCount(); toNr++) {
                 BitSet to = bitSets[toNr];
                 BitSetPair cladePair = cladeSystem.createCladePair(from, to);
-                
-                // Check whether gene flow warrants inclusion in summary
-                if (geneFlow.count(cladePair) < threshold * nACGs * blockSet.size())
+
+                double posteriorSupport = cladeSystem.getConversionSupport(cladePair) / ((double) nACGs);
+//                // Check whether gene flow warrants inclusion in summary
+//                if (geneFlow.count(cladePair) < threshold * nACGs * blockSet.size())
+                if (posteriorSupport < threshold)
                     continue;
-                
+
                 // We include the conversion from ´fromNr´ to ´toNr´
                 Conversion conv = acg.addNewConversion();
                 conv.setNode1(acg.getNode(fromNr));
                 conv.setNode2(acg.getNode(toNr));
-        
+                conv.setID(cID++);
+
                 // Find height and affected blocks, based on the ´conversionSummaries´
                 List<ACGCladeSystem.ConversionSummary> conversionSummaries =
                         cladeSystem.getConversionSummaries(cladePair, nACGs, threshold);
 
-                List<Double> heightsArr = new ArrayList<>();
+                List<Double> heightList = new ArrayList<>();
                 List<Block> affectedBlocks = new ArrayList<>();
-//                int hIdx = 0;
+                List<Double> blockPosterior = new ArrayList<>();
                 for (int blockIdx=0; blockIdx<blockSet.size(); blockIdx++) {
-                    Block block = blockSet.get(blockIdx); 
+                    Block block = blockSet.get(blockIdx);
                     ConversionSummary convSummary = conversionSummaries.get(blockIdx);
-                    for (double h : convSummary.getHeights())
-                        heightsArr.add(h);
-//                        heights[hIdx++] = h;
-                    if (convSummary.summarizedConvCount() > threshold * nACGs)
-                        affectedBlocks.add(block);
-                }
-                
-                double[] heights = Util.list2array(heightsArr);
-                
-//                assert heights.length == geneFlow.count(cladePair);
-//                System.out.println(hIdx + " / " + geneFlow.count(cladePair));
 
+                    // Collect heights
+                    heightList.addAll(convSummary.getHeights());
+
+                    double pBlock = convSummary.summarizedConvCount() / ((double) nACGs);
+                    if (pBlock > threshold) {
+                        affectedBlocks.add(block);
+                        blockPosterior.add(pBlock);
+                    }
+                }
+
+                assert heightList.size() == geneFlow.count(cladePair);
+
+                double[] heights = Util.list2array(heightList);
                 double meanHeight = DiscreteStatistics.mean(heights);
                 double medianHeight = DiscreteStatistics.median(heights);
                 double minHeightHPD = DiscreteStatistics.quantile(0.025, heights);
                 double maxHeightHPD = DiscreteStatistics.quantile(0.975, heights);
-                
+
                 if (summaryStrategy == SummaryStrategy.MEAN) {
                     conv.setHeight(meanHeight);
                 } else {
                     conv.setHeight(medianHeight);
                 }
-                
-                System.out.println(meanHeight);
-                
-                // TODO change back to counting ACGs
-                double posteriorSupport = geneFlow.count(cladePair) / ((double) nACGs * blockSet.size());
-//              double posteriorSupport = convSummary.nIncludedACGs / (double) nACGs;
-                
+
+//                System.out.println(meanHeight);
+
                 conv.newickMetaDataBottom = "height_95%_HPD={" + minHeightHPD + "," + maxHeightHPD + "}";
                 conv.newickMetaDataMiddle = "posterior=" + posteriorSupport;
+                conv.newickMetaDataMiddle += " ,blockPosterior={" + Joiner.on(',').join(blockPosterior) + "}";
                 conv.newickMetaDataTop = "height_95%_HPD={" + minHeightHPD + "," + maxHeightHPD + "}";
 
+                // Update block-set to reflect conv
+//                for (Block block : blockSet) {
+                for (Block block : affectedBlocks) {
+                    blockSet.addBlockMove(conv, block);
+                }
+
+                System.out.println("Add conversion " + conv.getNode1().getNr() + " - " + conv.getNode2().getNr());
                 acg.addConversion(conv);
             }
         }
+        System.out.println("nConv: " + acg.getConvCount());
     }
 
     /**
