@@ -17,16 +17,12 @@ public class AddRemoveConversion extends ConversionCreationOperator {
         double logHGF = 0;
 
         if (Randomizer.nextBoolean()) {
-
             // Add
-
             logHGF += Math.log(1.0/(acg.getConvCount()+1));
             logHGF -= drawNewConversion();
 
         } else {
-
             // Remove
-
             if (acg.getConvCount()==0)
                 return Double.NEGATIVE_INFINITY;
 
@@ -39,7 +35,6 @@ public class AddRemoveConversion extends ConversionCreationOperator {
 
             // Remove conversion
             removeConversion(conv);
-
         }
 
         assert !acg.isInvalid() : "AddRemoveConv produced invalid state.";

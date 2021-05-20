@@ -44,6 +44,9 @@ public class MarginalTree extends Tree {
     protected boolean outdated;
     protected boolean manuallyUpdated = false;
     String lastBlockState;
+    protected boolean changed = true;
+
+    boolean customdebug = false;
 
     public void setManuallyUpdated() {
         manuallyUpdated = true;
@@ -78,130 +81,51 @@ public class MarginalTree extends Tree {
     @Override
     public boolean requiresRecalculation() {
         outdated = checkOutdated();
+        changed = outdated;
 
         if (outdated) {
             recalculate();
 
             if (manuallyUpdated) {
-//                manuallyUpdated = false;
+                manuallyUpdated = false;
                 return false;
             } else
                 return true;
 
 
         } else {
+            if (customdebug) {
+                String oldNewick = root.toNewick();
+                recalculate();
+                String newNewick = root.toNewick();
+                assert oldNewick == newNewick;
+            }
             return false;
         }
-
-//        recalculate();
-//        return true;
     }
 
     @Override
     public boolean somethingIsDirty() {
-        recalculate();
-        return true;
-//        // Would be dirty if either ACG or BlockSet is dirty
-//        return (acg.somethingIsDirty() || block.somethingIsDirty());
-
-
-//        if (manuallyUpdated) {
-//            manuallyUpdated = false;
-//            return false;
-//        } else {
-//            return checkOutdated();
-//        }
+        return this.changed;
     }
 
-
-//    public boolean checkOutdated() {
-//        boolean res = _checkOutdated();
-//        if (res)
-//            root.makeDirty(Tree.IS_FILTHY);
-//
-//        return res;
-//    }
-
-
     public boolean checkOutdated() {
-//        System.out.print(0);
-
-        if (acg.somethingIsDirty()) {
+        if (acg.somethingIsDirty())
             return true;
-        }
-
-//        System.out.print(1);
 
         if (block.isAheadOfMarginalTree())
             return true;
-//        else {
-//            assert lastBlockState.equals(block.toString());
-//        }
-
-//        System.out.print(2);
 
         if (branchRateModel.isDirtyCalculation())
             return true;
 
-//        System.out.print(3);
-//
-//        if (!outdated)
-//            System.out.println("+");
-
         return outdated;
-//        return true;
-
-//      // Check whether a clonal frame edge is dirty
-//      if (!outdated) {
-//          for (Node cfNode : acg.getNodesAsArray()) {
-//              if (cfNode.isDirty() > Tree.IS_CLEAN) {
-//                  outdated = true;
-//                  break;
-//              }
-//          }
-//      }
-//
-//      // Check whether a conversion is dirty
-//      if (!outdated) {
-//          // Check whether recalculation is necessary
-//          for (Node mNodeAsNode : getNodesAsArray()) {
-//              MarginalNode mNode = (MarginalNode) mNodeAsNode;
-//              if (mNode.isConversionNode()) {
-//                  try {
-//                      Conversion conv = mNode.getConversion();
-//                        if (conv.isDirty() > Tree.IS_CLEAN) {
-////                            System.out.println("A conversion is dirty");
-//                            outdated = true;
-//                            break;
-//                        }
-//                  } catch(RuntimeException e) {
-//                      outdated = true;
-//                      break;
-//                  }
-//              } else {
-//                  Node cfNode = mNode.getCFNode();
-//                  if (cfNode.isDirty() >= Tree.IS_FILTHY) {
-////                        System.out.println("ACG is dirty");
-//                      outdated = true;
-//                      break;
-//                  }
-//              }
-//          }
-//      }
-//
-//      // Check whether a block is dirty
-//      if (!outdated) {
-//          if (block.somethingIsDirty()) {
-////                System.out.println("Block is dirty");
-//              outdated = true;
-//          }
-//        }
     }
 
 
     public void recalculate() {
         startEditing(null);
-//        System.out.print("*");
+        if (customdebug) System.out.print("*");
 
         List<Event> cfEvents = acg.getCFEvents();
         Map<Node, MarginalNode> activeCFlineages = new HashMap<>();
@@ -418,9 +342,8 @@ public class MarginalTree extends Tree {
     public void restore() {
         postCache = null;
 
-//        outdated = true;
         manuallyUpdated = false;
-//        System.out.print("r");
+        if (customdebug) System.out.print("r");
         recalculate();
     }
 
@@ -497,6 +420,16 @@ public class MarginalTree extends Tree {
     @Override
     public String toString() {
         return root.toString();
+    }
+
+
+    /**
+     * Marginal trees are currently implemented as lean calculation
+     * nodes, hence the state can be inconsistent at intermediate stages.
+     */
+    @Override
+    public int getChecksum() {
+        return 0;
     }
 
 }

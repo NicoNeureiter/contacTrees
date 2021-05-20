@@ -200,7 +200,6 @@ public class CFEventList {
             event.lineages = k;
         }
 
-
         dirty = false;
     }
 

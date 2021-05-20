@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package contactrees.operators;
 
@@ -14,8 +14,8 @@ import contactrees.util.Util;
 
 
 /**
- * Operator that resamples whether a given block is affected by a given conversion. 
- * 
+ * Operator that resamples whether a given block is affected by a given conversion.
+ *
  * @author Nico Neureiter
  */
 public abstract class GibbsBlockMovesOperator extends ACGOperator {
@@ -24,7 +24,7 @@ public abstract class GibbsBlockMovesOperator extends ACGOperator {
             "pMove",
             "Probability of a block moving over a conversion edge.",
             Input.Validate.REQUIRED);
-    
+
 
     @Override
     public void initAndValidate() {
@@ -36,45 +36,45 @@ public abstract class GibbsBlockMovesOperator extends ACGOperator {
         Block block = marginalTree.block;
         return sampleBlockMove(block, conv, marginalTree, treeLH);
     }
-    
+
     public double sampleBlockMove(Block block, Conversion conv, MarginalTree marginalTree, TreeLikelihood treeLH) {
 //        System.out.println();
         double pMove = pMoveInput.get().getValue();
-        
-        
+
+
         // Get prior and likelihood for current block move
-        boolean moveOld = block.isAffected(conv); 
+        boolean moveOld = block.isAffected(conv);
         double priorOld = moveOld ? pMove : (1 - pMove);
 //        marginalTree.recalculate();
 //        double logLHOld = treeLH.calculateLogP();
         double logLHOld= treeLH.getCurrentLogP();
         double logPosteriorOld = Math.log(priorOld) + logLHOld;
-        
+
 //        System.out.println("|");
         treeLH.store();
-        
+
         // Compute prior and likelihood for flipped block move
         double priorNew = 1 - priorOld;
         flipBlockMove(block, conv);
         marginalTree.recalculate();
         double logLHNew = treeLH.calculateLogP();
         double logPosteriorNew = Math.log(priorNew) + logLHNew;
-        
+
         // Revert flip with probability $p_old / (p_old + p_new)$
         double logPRevert = logPosteriorOld - Util.logAddExp(logPosteriorOld, logPosteriorNew);
         boolean revert = (Math.log(Randomizer.nextDouble()) < logPRevert);
         if (revert) {
             flipBlockMove(block, conv);
+            marginalTree.restore();
             treeLH.restore();
-            marginalTree.setManuallyUpdated();
         } else {
-            marginalTree.setManuallyUpdated();
+//            marginalTree.setManuallyUpdated();
         }
-        
+
         return Double.POSITIVE_INFINITY;
     }
-        
-    
+
+
     static public void flipBlockMove(Block block, Conversion conv) {
         if (block.isAffected(conv)) {
             block.removeMove(conv);
@@ -82,7 +82,7 @@ public abstract class GibbsBlockMovesOperator extends ACGOperator {
             block.addMove(conv);
         }
     }
- 
-    
-    
+
+
+
 }

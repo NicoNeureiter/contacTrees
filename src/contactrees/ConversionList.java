@@ -65,7 +65,8 @@ public class ConversionList implements Iterable<Conversion> {
 		if (conv.id == 0)
 			conv.setID(getFreeKey());
 
-		assert !convs.containsKey(conv.id);
+		if (convs.containsKey(conv.id))
+		    throw new RuntimeException("Conversion " + conv.id + " is already in the ConversionList.");
 
 		convs.put(conv.id, conv);
 		_lastAdded = conv;

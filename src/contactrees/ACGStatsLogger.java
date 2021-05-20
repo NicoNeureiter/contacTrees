@@ -75,29 +75,15 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
         if (logGeneFlowInput.get()) {
             HashMultiset<String> geneFlows = HashMultiset.create();
             HashMultimap<Node, Integer> branchedOut = HashMultimap.create();
-
-            int totalGeneFlow = 0;
             for (Conversion conv : acg.getConversions().asSortedArray()) {
                 CladePair cladePair = new CladePair(conv);
                 for (int iBlock : blockSet.getAffectedBlockIDs(conv)) {
                     if (!branchedOut.containsEntry(cladePair.target, iBlock)) {
                         branchedOut.put(cladePair.target, iBlock);
                         geneFlows.add(cladePair.toString());
-                        totalGeneFlow += 1;
                     }
-
                 }
             }
-
-
-            for (CladePair cladePair : getCladePairs(acg)) {
-                long gf = geneFlows.count(cladePair.toString());
-                out.print(gf + "\t");
-//                if (gf > 0)
-//                    System.out.println(gf);
-//                totalGeneFlow += gf;
-            }
-//            System.out.println(" " + totalGeneFlow);
         }
     }
 
