@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.antlr.v4.runtime.CharStream;
@@ -671,6 +672,148 @@ public class ConversionGraph extends Tree {
     protected int parseConvID(String sConvID) {
     	return Integer.parseInt(sConvID.substring(1));
     }
+
+    /**
+     * Produces an extended Newick representation of this ACG.  This
+     * method is also used to serialize the state to a state file.
+     *
+     * @return an extended Newick representation of ACG.
+     */
+    @Override
+    public String toString() {
+        return getExtendedNewick();
+    }
+
+    /**
+     * Obtain extended Newick representation of ACG.  Optionally Nexus metadata
+     * on hybrid leaf nodes describing the alignment sites affected by the
+     * conversion event.
+     *
+     * @param computeAffectedSites if true, compute affected sites
+     * @return Extended Newick string.
+     */
+    public String getExtendedNewick() {
+        return extendedNewickTraverse(root) + ";";
+
+    }
+
+    private String extendedNewickTraverse(Node node) {
+        ConversionList convs = getConversions();
+
+        StringBuilder sb = new StringBuilder();
+
+
+        // Determine sequence of events along this node.
+        class Event {
+            boolean isArrival;
+            double time;
+            Conversion conv;
+
+            public Event(boolean isArrival, double time, Conversion conv) {
+                this.isArrival = isArrival;
+                this.time = time;
+                this.conv = conv;
+            }
+        }
+        List<Event> events = new ArrayList<>();
+        for (Conversion conv : convs) {
+            if (conv.node1 == node)
+                events.add(new Event(false, conv.getHeight(), conv));
+            if (conv.node2 == node)
+                events.add(new Event(true, conv.getHeight(), conv));
+        }
+
+
+        // Sort events from oldest to youngest.
+        events.sort((Event e1, Event e2) -> {
+            if (e1.time > e2.time) return -1;
+            else return 1;
+        });
+
+        // Process events.
+
+        int cursor = 0;
+
+        double lastTime;
+        if (node.isRoot())
+            lastTime = Double.POSITIVE_INFINITY;
+        else
+            lastTime = node.getParent().getHeight();
+
+        for (Event event : events) {
+
+            double thisLength;
+            if (Double.isInfinite(lastTime))
+                thisLength = 0.0;
+            else
+                thisLength = lastTime - event.time;
+
+            if (event.isArrival) {
+                String meta =  String.format(Locale.ENGLISH,
+                        "[&conv=%d",
+                        event.conv.getID()
+                );
+
+                if (event.conv.newickMetaDataMiddle != null)
+                    meta += ", " + event.conv.newickMetaDataMiddle;
+
+                meta += "]";
+
+                String parentMeta;
+                if (event.conv.newickMetaDataTop != null)
+                    parentMeta = "[&" + event.conv.newickMetaDataTop + "]";
+                else
+                    parentMeta = "";
+
+                sb.insert(cursor, "(,#" + event.conv.getID()
+                        + meta
+                        + ":0.00001" // TODO Fix in IcyTree to avoid this.
+                        + ")"
+                        + parentMeta
+                        + ":" + thisLength);
+                cursor += 1;
+            } else {
+                String meta;
+                if (event.conv.newickMetaDataBottom != null)
+                    meta = "[&" + event.conv.newickMetaDataBottom + "]";
+                else
+                    meta = "";
+
+                sb.insert(cursor, "()#" + event.conv.getID()
+                        + meta
+                        + ":" + thisLength);
+                cursor += 1;
+            }
+
+            lastTime = event.time;
+        }
+
+        // Process this node and its children.
+
+        if (!node.isLeaf()) {
+            String subtree1 = extendedNewickTraverse(node.getChild(0));
+            String subtree2 = extendedNewickTraverse(node.getChild(1));
+            sb.insert(cursor, "(" + subtree1 + "," + subtree2 + ")");
+            cursor += subtree1.length() + subtree2.length() + 3;
+        }
+
+        double thisLength;
+        if (Double.isInfinite(lastTime))
+            thisLength = 0.0;
+        else
+            thisLength = lastTime - node.getHeight();
+
+        String nodeMetaData = "";
+        if (node.lengthMetaDataString != null)
+            nodeMetaData += node.metaDataString;
+        if (nodeMetaData.length() > 0)
+            nodeMetaData = "[&" + nodeMetaData + ']';
+        sb.insert(cursor, (node.getNr() + Tree.taxaTranslationOffset)
+                + nodeMetaData + ":" + thisLength);
+
+        return sb.toString();
+    }
+
 
     /**
      * DEBUG CHECKS
