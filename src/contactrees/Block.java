@@ -195,7 +195,22 @@ public class Block extends StateNode {
 
     @Override
     public void fromXML(Node node) {
-        // TODO Auto-generated method stub
+        // Initialize arrays
+        convIDs = new ArrayList<Integer>();
+        convIDsStored = new ArrayList<>();
+
+        // Get the string representation of the `convIDs` list
+        String str = node.getTextContent();
+
+        // Remove the square brackets at the start and end.
+        assert str.startsWith("[");
+        assert str.endsWith("]");
+        str = str.substring(1, str.length() - 1);
+
+        // Parse the string list and put convIDs into the `convIDs` array.
+        for (String convID : str.split("\\s*,\\s*")) {
+            convIDs.add(Integer.parseInt(convID));
+        }
     }
 
     @Override
