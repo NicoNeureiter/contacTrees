@@ -1,7 +1,10 @@
 package contactrees.model;
 
+import org.w3c.dom.Node;
+
 import beast.core.Input;
 import beast.core.Input.Validate;
+import beast.core.StateNode;
 import beast.core.parameter.RealParameter;
 import contactrees.ConversionGraph;
 
@@ -158,6 +161,12 @@ public class ConversionRate extends RealParameter {
     public void restore() {}
 
     @Override
+    public void fromXML(final Node node) {}
+
+    @Override
+    public void assignFromFragile(final StateNode other) {}
+
+    @Override
     public ConversionRate copy() {
         try {
             return (ConversionRate) this.clone();
@@ -171,4 +180,5 @@ public class ConversionRate extends RealParameter {
     public String toString() {
         return Double.toString(getValue());
     }
+
 }

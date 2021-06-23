@@ -254,7 +254,7 @@ public class MarginalTree extends Tree {
         }
 
         outdated = false;
-        block.updatedMarginalTree();
+//        block.updatedMarginalTree();
 //        lastBlockState = block.toString();
     }
 
@@ -263,8 +263,9 @@ public class MarginalTree extends Tree {
         marginalNode.setHeight(node.getHeight());
         marginalNode.lastEventHeight = node.getHeight();
         marginalNode.setID(node.getID());
-        marginalNode.makeDirty(Tree.IS_FILTHY);
         marginalNode.timeLength = 0;
+
+        marginalNode.makeDirty(Tree.IS_FILTHY);
 
         return marginalNode;
     }
