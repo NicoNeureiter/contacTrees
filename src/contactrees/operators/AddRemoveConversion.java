@@ -50,7 +50,7 @@ public class AddRemoveConversion extends ConversionCreationOperator {
      */
     public double drawNewConversion() {
         Conversion newConversion = addNewConversion();
-        return attachEdge(newConversion) + drawAffectedBlocks(newConversion);
+        return attachEdge(newConversion) + drawBorrowings(newConversion);
     }
 
     /**
@@ -61,7 +61,7 @@ public class AddRemoveConversion extends ConversionCreationOperator {
      * @return log of proposal density
      */
     public double getConversionProb(Conversion conv) {
-        return getEdgeAttachmentProb(conv) + getAffectedBlocksProb(conv);
+        return getEdgeAttachmentProb(conv) + getBorrowingsProb(conv);
     }
 
 }

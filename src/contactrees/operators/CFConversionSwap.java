@@ -17,9 +17,9 @@ import contactrees.util.Util;
 @Description("CF/conversion swap operator.")
 public class CFConversionSwap extends CFOperator {
 
-    public Input<Boolean> resampleMovesInput = new Input<>(
-            "resampleMoves",
-            "Whether to sample new blocks to be moved over the conversion (set to ´true´) or simply invert the previos moves (set to ´false´)",
+    public Input<Boolean> resampleBorrowingsInput = new Input<>(
+            "resampleBorrowings",
+            "Whether to sample new blocks to be borrowed over the conversion (set to ´true´) or simply invert the previos borrowings (set to ´false´)",
             false);
 
     @Override
@@ -96,8 +96,8 @@ public class CFConversionSwap extends CFOperator {
                 c.setNode2(parent);
         }
 
-        if (resampleMovesInput.get()) {
-            logHGF += drawAffectedBlocksGibbs(conv, true);
+        if (resampleBorrowingsInput.get()) {
+            logHGF += drawBorrowingsGibbs(conv, true);
         } else {
             invertAffectedBlocks(conv);
         }

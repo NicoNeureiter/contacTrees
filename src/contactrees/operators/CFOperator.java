@@ -1,12 +1,12 @@
 package contactrees.operators;
 
-import contactrees.Conversion;
+import java.util.LinkedList;
+import java.util.List;
+
 import beast.core.Input;
 import beast.evolution.tree.Node;
 import beast.util.Randomizer;
-
-import java.util.LinkedList;
-import java.util.List;
+import contactrees.Conversion;
 
 /**
  * @author Nico Neureiter
@@ -15,7 +15,8 @@ public abstract class CFOperator extends ConversionCreationOperator {
 
     public Input<Boolean> gibbsSampleBlockMovesInput = new Input<Boolean>("gibbsSampleBlockMoves",
             "Sample block-moves via added conversions using Gibbs sampling ().",
-            Boolean.TRUE);
+            Boolean.FALSE);
+
 
     /**
      * Take conversions which connect to edge above srcNode at times greater than
@@ -36,7 +37,7 @@ public abstract class CFOperator extends ConversionCreationOperator {
         Node srcNodeP = srcNode.getParent();
         Node srcNodeS = getSibling(srcNode);
         double maxChildHeight = getMaxRootChildHeight();
-        
+
         // Conversions which degenerate to point back to their source node are removed
         List<Conversion> toRemove = new LinkedList<>();
 
@@ -49,51 +50,36 @@ public abstract class CFOperator extends ConversionCreationOperator {
             double upperBound = Math.min(node.getParent().getHeight(),
                     srcNodeP.getHeight());
 
-            for (Conversion conv : acg.getConversions()) {
-                if (conv.getHeight() > lowerBound && conv.getHeight() < upperBound) {
+            for (Conversion conv : acg.getConversions())
+                if (conv.getHeight() > lowerBound && conv.getHeight() < upperBound)
+                    logP += collapseConversion(conv, node, srcNode, toRemove);
 
-                    if (conv.getNode1() == srcNode)
-                        conv.setNode1(node);
-
-                    if (conv.getNode2() == srcNode)
-                        conv.setNode2(node);
-
-
-                    if (conv.getNode1() == conv.getNode2())
-                    	// Conversion degenerated to a loop -> remove and adjust logP later on
-                    	toRemove.add(conv);
-                    else {
-                        if ((conv.getNode1() == node) || (conv.getNode2() == node))
-                        	// No loop, but an edge could have been moved -> adjust logP
-                            logP += Math.log(0.5);                    	
-                    }               	
-                }
-            }
-            
             node = node.getParent();
         }
+
         // Remove degenerated conversions
         double L = 2.0 * (srcNode.getParent().getHeight() - destTime);
         double Nexp = L * conversionRateInput.get().getValue();
-        if (Nexp == 0.) { 
+        if (Nexp == 0.) {
         	assert toRemove.isEmpty();
         } else {
         	// We remove "toRemove.size()" edges
         	// In reverse move these are added according to prior:
 	        logP += -Nexp + toRemove.size() * Math.log(Nexp); // Factorial cancels
         }
-        
-        // individual conversion states
+
+        // Add probability for borrowings at each removed conversion
         for (Conversion conv : toRemove) {
-        	logP += Math.log(1.0/L);
-        	if (gibbsSampleBlockMovesInput.get())
-        	    logP += getAffectedBlocksProbGibbs(conv, true);
-        	else
-        	    logP += getAffectedBlocksProb(conv);
+            logP += Math.log(1.0/L);
+            if (gibbsSampleBlockMovesInput.get()) {
+                logP += getBorrowingsProbGibbs(conv, true);
+            } else {
+                logP += getBorrowingsProb(conv);
+            }
 
             removeConversion(conv);
         }
-        
+
         // Apply topology modifications.
         disconnectEdge(srcNode);
         connectEdge(srcNode, destNode, destTime);
@@ -129,25 +115,10 @@ public abstract class CFOperator extends ConversionCreationOperator {
         Node sibling = getSibling(srcNode);
 
         Node node = srcNode.getParent();
-        // TODO make more efficient by iterating over conversions per interval.
-        // TODO stop at destTime
         while (!node.isRoot()) {
-            for (Conversion conv : acg.getConversions()) {
-            	if (conv.getHeight() < destTime) {
-	                if (conv.getNode1() == node) {
-	                    if (Randomizer.nextBoolean())  // TODO Would it make sense to parameterize this 50/50 choice?
-	                        conv.setNode1(srcNode);
-	                    logP += Math.log(0.5);
-	                }
-	
-	                if (conv.getNode2() == node) {
-	                    if (Randomizer.nextBoolean())
-	                        conv.setNode2(srcNode);
-	                    logP += Math.log(0.5);
-	                }
-            	}
-            }
-
+            for (Conversion conv : acg.getConversions())
+                if (conv.getHeight() < destTime)
+                    logP += maybeMoveConversion(conv, node, srcNode);
             node = node.getParent();
         }
 
@@ -164,12 +135,12 @@ public abstract class CFOperator extends ConversionCreationOperator {
         double Nexp = L * conversionRateInput.get().getValue();
         int N = 0;
         if (Nexp > 0.) {
-	        // Choose number of new conversions according to Poisson distribution
-	        N = (int)Randomizer.nextPoisson(Nexp);
-	        logP += -Nexp + N*Math.log(Nexp); // Factorial cancels
+            // Choose number of new conversions according to Poisson distribution
+            N = (int)Randomizer.nextPoisson(Nexp);
+            logP += -Nexp + N*Math.log(Nexp); // Factorial cancels
         }
 
-        // Randomly place conversions between the new source and an ancestor of the old source. 
+        // Randomly place conversions between the new source and an ancestor of the old source.
         for (int i=0; i<N; i++) {
             Conversion conv = addNewConversion();
 
@@ -178,7 +149,7 @@ public abstract class CFOperator extends ConversionCreationOperator {
             logP += Math.log(1.0/L);
 
             conv.setHeight(convHeight);
-            		
+
             Node other = getAncestorAtHeight(sibling, convHeight);
             if (convDirection) {
             	conv.setNode1(srcNode);
@@ -187,24 +158,61 @@ public abstract class CFOperator extends ConversionCreationOperator {
                 conv.setNode1(other);
                 conv.setNode2(srcNode);
             }
-            
+
             if (gibbsSampleBlockMovesInput.get())
-                logP += drawAffectedBlocksGibbs(conv, true);
+                logP += drawBorrowingsGibbs(conv, true);
             else
-                logP += drawAffectedBlocks(conv);
+                logP += drawBorrowings(conv);
         }
-        
+
         return logP;
     }
-	
-	protected static Node getAncestorAtHeight(Node node, final double height) {
-		assert height > node.getHeight();
-		
-		while (node.getParent().getHeight() < height) {
-			node = node.getParent();
-		}
-		
-		return node;
-	}
-		
+
+    double collapseConversion(Conversion conv, Node node, Node srcNode, List<Conversion> toRemove) {
+        double logP = 0.0;
+
+        if (conv.getNode1() == srcNode)
+            conv.setNode1(node);
+
+        if (conv.getNode2() == srcNode)
+            conv.setNode2(node);
+
+
+        if (conv.getNode1() == conv.getNode2())
+            // Conversion degenerated to a loop -> remove and adjust logP later on
+            toRemove.add(conv);
+        else {
+            if ((conv.getNode1() == node) || (conv.getNode2() == node))
+                // No loop, but an edge could have been moved -> adjust logP
+                logP += Math.log(0.5);
+        }
+        return logP;
+    }
+
+    double maybeMoveConversion(Conversion conv, Node node, Node srcNode) {
+        double logP = 0.0;
+        if (conv.getNode1() == node) {
+            if (Randomizer.nextBoolean())
+                conv.setNode1(srcNode);
+            logP += Math.log(0.5);
+        }
+
+        if (conv.getNode2() == node) {
+            if (Randomizer.nextBoolean())
+                conv.setNode2(srcNode);
+            logP += Math.log(0.5);
+        }
+        return logP;
+    }
+
+    protected static Node getAncestorAtHeight(Node node, final double height) {
+        assert height > node.getHeight();
+
+        while (node.getParent().getHeight() < height) {
+            node = node.getParent();
+        }
+
+        return node;
+    }
+
 }

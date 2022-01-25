@@ -48,7 +48,7 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
         double height = conv.getHeight();
 
         // Compute back probability
-        logHGF += getAffectedBlocksProbGibbs(conv, true);
+        logHGF += getBorrowingsProbGibbs(conv, true);
 
         // Choose whether to move departure or arrival point
         boolean moveDeparture = Randomizer.nextBoolean();
@@ -90,7 +90,7 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
         assert !acg.isInvalid() : "ConvertedEdgeHopGibbs produced invalid state.";
 
         // Resample affected blocks
-        logHGF -= drawAffectedBlocksGibbs(conv, true);
+        logHGF -= drawBorrowingsGibbs(conv, true);
 
         if (nClosest > 0) {
             HashSet<Node> candidatesBack = Util.getClosestRelatives(newNode, height, nClosest+1);

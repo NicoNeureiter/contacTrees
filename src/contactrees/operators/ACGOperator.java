@@ -1,29 +1,9 @@
-/*
- * Copyright (C) 2013 Tim Vaughan <tgvaughan@gmail.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package contactrees.operators;
-
-import java.util.List;
 
 import javax.naming.directory.InvalidAttributesException;
 
 import beast.core.Input;
 import beast.core.Operator;
-import beast.core.StateNode;
 import beast.evolution.tree.Node;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
@@ -163,16 +143,4 @@ public abstract class ACGOperator extends Operator {
         return max;
     }
 
-
-    /**
-     * Include all block StateNodes in the list of affected state nodes.
-     * This does not work automatically, since blocks are only indirect
-     * inputs through the blockSet.
-     */
-    @Override
-    public List<StateNode> listStateNodes() {
-        final List<StateNode> list = super.listStateNodes();
-        list.add(acgInput.get());
-        return list;
-    }
 }

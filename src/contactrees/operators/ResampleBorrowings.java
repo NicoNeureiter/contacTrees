@@ -1,9 +1,7 @@
 /**
- * 
+ *
  */
 package contactrees.operators;
-
-import java.util.ArrayList;
 
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
@@ -11,15 +9,14 @@ import beast.util.Randomizer;
 import contactrees.Block;
 import contactrees.BlockSet;
 import contactrees.Conversion;
-import contactrees.util.Util;
 
 /**
- * An operator re-sampling a certain proportion of the Block moves over a 
+ * An operator re-sampling a certain proportion of the Block moves over a
  * randomly selected conversion edges (according to the prior).
- * 
- * @author Nico Neureiter <nico.neureiter@gmail.com>
+ *
+ * @author Nico Neureiter
  */
-public class ResampleConversionMoves extends ACGOperator {
+public class ResampleBorrowings extends ACGOperator {
 
 
     final public Input<BlockSet> blockSetInput = new Input<>(
@@ -31,11 +28,6 @@ public class ResampleConversionMoves extends ACGOperator {
             "pMove",
             "Probability for a block to follow a conversion edge.",
             Input.Validate.REQUIRED);
-    
-//    public Input<Double> resampleFractionInput = new Input<>(
-//            "resampleFraction",
-//            "The fraction of blocks which are randomly resampled to be affected by the conversion edge or not.",
-//            0.1); 
 
     protected BlockSet blockSet;
 
@@ -44,39 +36,39 @@ public class ResampleConversionMoves extends ACGOperator {
         super.initAndValidate();
         blockSet = blockSetInput.get();
     }
-    
+
     @Override
     public double proposal() {
         double logHGF = 0.0;
-        
+
         if (acg.getConvCount() == 0) {
             return Double.NEGATIVE_INFINITY;
         }
-        
+
         Conversion conv = acg.getConversions().getRandomConversion();
-        
-        logHGF += getAffectedBlocksProb(conv);
-        logHGF -= drawAffectedBlocks(conv);          
-        
+
+        logHGF += getBorrowingsProb(conv);
+        logHGF -= drawBorrowings(conv);
+
         return logHGF;
     }
 
     /**
-     * Choose set of blocks to be affected by this conversion.
+     * Choose set of borrowings for this conversion.
      *
      * @param conv Conversion object whose region is to be set.
      * @return log probability density of chosen attachment.
      */
-    public double drawAffectedBlocks(Conversion conv) {
+    public double drawBorrowings(Conversion conv) {
         double pMove = pMoveInput.get().getValue();
         double logP = 0;
-        
+
         if (pMove == 0.) {
             assert blockSet.getAffectedBlockIDs(conv).isEmpty();
             return 0;
         }
 
-        for (Block block : blockSet.getBlocks()) 
+        for (Block block : blockSet.getBlocks())
             if (block.isAffected(conv))
                 block.removeMove(conv);
 
@@ -93,23 +85,23 @@ public class ResampleConversionMoves extends ACGOperator {
     }
 
     /**
-     * Calculate probability of choosing region affected by the
+     * Calculate probability of choosing the borrowings at the
      * given conversion.
      *
-     * @param conv conversion region is associated with
+     * @param conv conversion borrowings are associated with
      * @return log probability density
      */
-    public double getAffectedBlocksProb(Conversion conv) {
+    public double getBorrowingsProb(Conversion conv) {
         double pMove = pMoveInput.get().getValue();
-        int affectedBlockCount = blockSet.getAffectedBlockIDs(conv).size();
-        int unaffectedBlockCount = blockSet.getBlockCount() - affectedBlockCount;
-        
+        int borrowedCount = blockSet.getAffectedBlockIDs(conv).size();
+        int nonborrowedCount = blockSet.getBlockCount() - borrowedCount;
+
         if (pMove == 0.) {
             assert blockSet.getAffectedBlockIDs(conv).isEmpty();
             return 0;
         }
-        
-        return affectedBlockCount*Math.log(pMove) + unaffectedBlockCount*Math.log(1-pMove);
+
+        return borrowedCount*Math.log(pMove) + nonborrowedCount*Math.log(1-pMove);
     }
 
 }

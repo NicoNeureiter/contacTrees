@@ -1,57 +1,45 @@
-/**
- * 
- */
 package contactrees.operators;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import beast.core.Description;
 import beast.core.Input;
-import beast.evolution.likelihood.TreeLikelihood;
 import contactrees.BlockSet;
 import contactrees.Conversion;
 import contactrees.MarginalTree;
 
 /**
- * 
- * 
+ * Gibbs operator to resample borrowings at a random conversion (contact edge).
  * @author Nico Neureiter
  */
-public class GibbsSampleMovesPerConversion extends GibbsBlockMovesOperator {
+@Description("Gibbs operator to resample borrowings at a random conversion (contact edge).")
+public class GibbsSampleMovesPerConversion extends BorrowingOperator {
 
-    final public Input<BlockSet> blockSetInput = new Input<>(
-            "blockSet",
-            "Block set containing all blocks affected by the the given network.",
-            Input.Validate.REQUIRED);
-
-    public Input<List<TreeLikelihood>> treeLHsInput = new Input<>(
-            "treeLikelihood",
-            "BEASTObject computing the tree likelihood.",
-            new ArrayList<TreeLikelihood>());
+    public Input<Boolean> mcmcmcInput = new Input<>(
+            "mcmcmc",
+            "Set this to `true` when using the operator in MCMCMC (otherwise the operator samples from the cold/unheated likelihood).",
+            Boolean.FALSE);
 
     protected BlockSet blockSet;
     protected List<MarginalTree> marginalTrees;
 
     @Override
-    public void initAndValidate() {
-        super.initAndValidate();
-        blockSet = blockSetInput.get();
-    }
-    
-    @Override
     public double proposal() {
+        double logHGF = 0;
+
         if (acg.getConvCount() == 0)
             return Double.NEGATIVE_INFINITY;
-        
+
         // Sample conversion to change
         Conversion conv = acg.getConversions().getRandomConversion();
-        
-        // Iterate over all blocks and resample the move over the chosen conversion
-        for (TreeLikelihood treeLH : treeLHsInput.get()) {
-            sampleBlockMove(conv, treeLH);
-        }
-        
-        return Double.POSITIVE_INFINITY;
+
+        // Iterate over all blocks and resample the borrowings at the chosen contact edge
+        logHGF -= drawBorrowingsGibbs(conv, true);
+
+        if (mcmcmcInput.get())
+            return logHGF;
+        else
+            return Double.POSITIVE_INFINITY;
     }
-    
+
 }

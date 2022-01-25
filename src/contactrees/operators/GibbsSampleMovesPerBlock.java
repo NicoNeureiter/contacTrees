@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package contactrees.operators;
 
@@ -10,21 +10,11 @@ import contactrees.Conversion;
 import contactrees.MarginalTree;
 
 /**
- * 
- * 
+ *
+ *
  * @author Nico Neureiter
  */
-public class GibbsSampleMovesPerBlock extends GibbsBlockMovesOperator {
-
-    final public Input<Block> blockInput = new Input<>(
-            "block",
-            "Block of sites which are either inherited or passed via a conversion edge.",
-            Input.Validate.REQUIRED);
-
-    public Input<MarginalTree> marginalTreeInput = new Input<>(
-            "marginalTree",
-            "MarginalTree defined by the moves of the given block.",
-            Input.Validate.REQUIRED);
+public class GibbsSampleMovesPerBlock extends BorrowingOperator {
 
     public Input<TreeLikelihood> treeLHInput = new Input<>(
             "treeLikelihood",
@@ -38,19 +28,17 @@ public class GibbsSampleMovesPerBlock extends GibbsBlockMovesOperator {
     @Override
     public void initAndValidate() {
         super.initAndValidate();
-        block= blockInput.get();
-        marginalTree = marginalTreeInput.get();
         treeLH = treeLHInput.get();
     }
-    
+
     @Override
     public double proposal() {
         for (Conversion conv : acg.getConversions()) {
-            sampleBlockMove(block, conv, marginalTree, treeLH);
+            sampleBlockMove(conv, treeLH, false);
         }
-        
+
         return Double.POSITIVE_INFINITY;
     }
-   
-    
+
+
 }

@@ -1,10 +1,8 @@
 package contactrees.operators;
 
 import beast.core.Description;
-import beast.evolution.likelihood.TreeLikelihood;
 import beast.util.Randomizer;
 import contactrees.Conversion;
-import contactrees.MarginalTree;
 
 /**
  * @author Nico Neureiter
@@ -14,13 +12,11 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
 
     public AddRemoveConversionGibbs() { }
 
+    boolean activateSanityChecks = false;
+
     @Override
     public double proposal() {
         double logHGF = 0;
-        for (TreeLikelihood tLH : treeLHsInput.get()) {
-            tLH.store();
-            ((MarginalTree) tLH.treeInput.get()).store();
-        }
 
         if (Randomizer.nextBoolean()) {
             // Add
@@ -45,11 +41,6 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
 
         assert !acg.isInvalid() : "AddRemoveConv produced invalid state.";
 
-        for (TreeLikelihood tLH : treeLHsInput.get()) {
-            tLH.restore();
-            ((MarginalTree) tLH.treeInput.get()).restore();
-        }
-
         return logHGF;
     }
 
@@ -63,11 +54,13 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
         Conversion newConversion = addNewConversion();
 
         double logP = attachEdge(newConversion);
-        logP += drawAffectedBlocksGibbs(newConversion, true);
 
-        // TODO Remove after testing is done (quite expensive)!!!
-//        double logP2 = getConversionProb(newConversion);
-//        assert Math.abs(logP - logP2) < 1E-7;
+        double logPBlocks = drawBorrowingsGibbs(newConversion, false);
+        if (activateSanityChecks) {
+            double err = Math.abs(logPBlocks - getBorrowingsProbGibbs(newConversion, true));
+            assert err < 1E-7;
+        }
+        logP += logPBlocks;
 
         return logP;
     }
@@ -82,7 +75,13 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
     public double getConversionProb(Conversion conv) {
         double logP = 0;
         logP = getEdgeAttachmentProb(conv);
-        logP += getAffectedBlocksProbGibbs(conv);
+
+        double logPBlocks = getBorrowingsProbGibbs(conv, false);
+        if (activateSanityChecks) {
+            double err = Math.abs(logPBlocks - getBorrowingsProbGibbs(conv, true));
+            assert err < 1E-7;
+        }
+        logP += logPBlocks;
 
         return logP;
     }
@@ -91,13 +90,8 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
      *  FOR TESTING: alternative proposal function with fixed conversion
      */
 
-    public double proposal(Conversion conv) {
+    public double _proposal(Conversion conv) {
         double logHGF = 0;
-
-        for (TreeLikelihood tLH : treeLHsInput.get()) {
-            tLH.store();
-            ((MarginalTree) tLH.treeInput.get()).store();
-        }
 
         if (Randomizer.nextBoolean()) {
             if (acg.getConvCount() > 0)
@@ -105,7 +99,7 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
 
             // Add
             logHGF += Math.log(1.0/(acg.getConvCount()+1));
-            logHGF -= drawNewConversion(conv);
+            logHGF -= _drawNewConversion(conv);
 
         } else {
             // Remove
@@ -123,17 +117,12 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
 
         assert !acg.isInvalid() : "AddRemoveConv produced invalid state.";
 
-        for (TreeLikelihood tLH : treeLHsInput.get()) {
-            tLH.restore();
-            ((MarginalTree) tLH.treeInput.get()).restore();
-        }
-
         return logHGF;
     }
 
-    public double drawNewConversion(Conversion newConversion) {
+    public double _drawNewConversion(Conversion newConversion) {
         acg.addConversion(newConversion);
-        return drawAffectedBlocksGibbs(newConversion);
+        return drawBorrowingsGibbs(newConversion, true);
     }
 
 }
