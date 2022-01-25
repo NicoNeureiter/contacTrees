@@ -161,7 +161,8 @@
 		</copy>
 
 		<copy todir="${Add_on_dir}/lib">
-			<fileset  file="${distcontactrees}/contactrees.addon.jar" />
+			<fileset file="${libcontactrees}/guava-23.0.jar" />
+			<fileset file="${distcontactrees}/contactrees.addon.jar" />
 		</copy>
 		<copy todir="${Add_on_dir}">
 			<fileset file="${distcontactrees}/contactrees.src.jar" />
