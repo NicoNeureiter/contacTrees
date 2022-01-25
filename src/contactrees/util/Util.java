@@ -26,9 +26,7 @@ public class Util {
 
 	static public ArrayList<Integer> deepCopyIntegers(Iterable<Integer> original){
 	    ArrayList<Integer> copy = new ArrayList<>();
-	    for (Integer x : original)
-	    	copy.add(new Integer(x));
-
+	    for (Integer x : original) copy.add(x);
 	    return copy;
 	}
 
@@ -266,5 +264,53 @@ public class Util {
         }
 
         return leaves;
+    }
+
+    static public Node mrca(Node a, Node b) {
+        while (a != b) {
+            if (a.getHeight() < b.getHeight())
+                a = a.getParent();
+            else
+                b = b.getParent();
+        }
+
+        return a;
+    }
+
+    static public double phylogeneticDistance(Node a, Node b) {
+        double nodeDistance = 0;
+        double patristicDistance = 0;
+
+        while (a != b) {
+            // Move the younger node to its parent
+            if (a.getHeight() < b.getHeight())
+                a = a.getParent();
+            else
+                b = b.getParent();
+
+            nodeDistance += 1;
+        }
+
+        return nodeDistance;
+    }
+
+    static public double phylogeneticDistancePatristic(Node a, Node b, double aHeight, double bHeight) {
+        double patristicDistance = 0;
+
+        while (a != b) {
+            // Move the younger node to its parent
+            if (aHeight < bHeight) {
+                a = a.getParent();
+                patristicDistance += a.getHeight() - aHeight;
+                aHeight = a.getHeight();
+            } else {
+                b = b.getParent();
+                patristicDistance += b.getHeight() - bHeight;
+                bHeight = b.getHeight();
+            }
+
+        }
+
+        return patristicDistance;
     }
 }
