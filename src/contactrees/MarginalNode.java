@@ -12,7 +12,7 @@ import beast.evolution.tree.Tree;
  *
  * @author Nico Neureiter
  */
-public class MarginalNodeSlow extends Node {
+public class MarginalNode extends Node {
 
     /**
      * The length of this branch in time, i.e. scaled by the branch-rate.
@@ -36,24 +36,24 @@ public class MarginalNodeSlow extends Node {
 
     private ConversionGraph acg;
 
-    public MarginalNodeSlow() {
+    public MarginalNode() {
         super();
         makeDirty(Tree.IS_FILTHY);
     }
 
-    public MarginalNodeSlow(ConversionGraph acg) {
+    public MarginalNode(ConversionGraph acg) {
         super();
         this.acg = acg;
         makeDirty(Tree.IS_FILTHY);
     }
 
-    public MarginalNodeSlow(ConversionGraph acg, int nr, double height) {
+    public MarginalNode(ConversionGraph acg, int nr, double height) {
         this(acg);
         setNr(nr);
         this.height = height;
     }
 
-    public MarginalNodeSlow(ConversionGraph acg, int nr, double height, MarginalNodeSlow child1, MarginalNodeSlow child2) {
+    public MarginalNode(ConversionGraph acg, int nr, double height, MarginalNode child1, MarginalNode child2) {
         this(acg, nr, height);
 
         children.add(child1);
@@ -62,7 +62,7 @@ public class MarginalNodeSlow extends Node {
         child2.parent = this;
     }
 
-    protected void setTree(MarginalTreeSlow tree) {
+    protected void setTree(MarginalTree tree) {
         m_tree = tree;
     }
 
@@ -76,19 +76,17 @@ public class MarginalNodeSlow extends Node {
         this.parent = parent;
     }
 
-    public void update(double height, MarginalNodeSlow child1, MarginalNodeSlow child2) {
+    public void update(double height, MarginalNode child1, MarginalNode child2) {
         this.height = height;
         children.set(0, child1);
         children.set(1, child2);
         child1.parent = this;
         child2.parent = this;
-        makeDirty(Tree.IS_FILTHY);
     }
 
     @Override
     public void setHeight(final double height) {
         this.height = height;
-        makeDirty(Tree.IS_DIRTY);
     }
 
     /**
@@ -96,7 +94,7 @@ public class MarginalNodeSlow extends Node {
      */
     @Override
     public Node copy() {
-        final MarginalNodeSlow node = new MarginalNodeSlow();
+        final MarginalNode node = new MarginalNode();
         node.height = height;
         node.labelNr = labelNr;
         node.metaDataString = metaDataString;
@@ -113,6 +111,19 @@ public class MarginalNodeSlow extends Node {
         node.acg = acg;
 
         return node;
+    }
+
+    public boolean equalsNode(Node node) {
+        assert node.getID() == getID();
+        if (node.getHeight() != height) return false;
+//        if (node.getLength() != getLength()) return false;
+        if (!node.isLeaf()) {
+            if (node.getLeft().getNr() != getLeft().getNr()) return false;
+            if (node.getRight().getNr() != getRight().getNr()) return false;
+        }
+//        if (!node.getChildren().toString().equals(getChildren().toString())) return false;
+//        System.out.println("           " + node + "    |    " + this);
+        return true;
     }
 
 }

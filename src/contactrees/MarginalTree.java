@@ -1,9 +1,7 @@
 package contactrees;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import beast.core.Input;
 import beast.core.StateNode;
@@ -22,7 +20,7 @@ import contactrees.CFEventList.Event;
  * @author Nico Neureiter
  */
 
-public class MarginalTreeSlow extends Tree {
+public class MarginalTree extends Tree {
 
     public Input<ConversionGraph> networkInput = new Input<>(
             "network",
@@ -35,18 +33,26 @@ public class MarginalTreeSlow extends Tree {
     public Input<BranchRateModel.Base> branchRateModelInput = new Input<>(
             "branchRateModel",
             "A model describing the rates on the branches of the clonal frame tree.");
+    public Input<ArrayList<String>> frozenTaxaInput = new Input<>(
+            "frozenTaxa",
+            "Taxa for which the last branch should have a fixed branch rate of 0.",
+            new ArrayList<>());
 
     public ConversionGraph acg;
     public Block block;
     protected BranchRateModel.Base branchRateModel;
-    private boolean hasBranchRates;
+    protected boolean hasBranchRates;
+    protected ArrayList<String> frozenTaxa;
 
     protected boolean outdated;
     protected boolean manuallyUpdated = false;
-    String lastBlockState;
+    protected String lastBlockState;
     protected boolean changed = true;
+    protected boolean[] isFree;
+    protected int nextNonLeafNr;
+    ArrayList<MarginalNode> activeCFlineages = new ArrayList<>();
 
-    boolean customdebug = false;
+    protected boolean customdebug = false;
 
     public void setManuallyUpdated() {
         manuallyUpdated = true;
@@ -57,6 +63,7 @@ public class MarginalTreeSlow extends Tree {
 
         acg = networkInput.get();
         block = blockInput.get();
+        frozenTaxa = frozenTaxaInput.get();
 
         if (branchRateModelInput.get() != null) {
             branchRateModel = branchRateModelInput.get();
@@ -72,10 +79,13 @@ public class MarginalTreeSlow extends Tree {
         setID(beastID);
 
         super.initAndValidate();
-        recalculate();
+        activeCFlineages = new ArrayList<>();
+        for (Node node : acg.getNodesAsArray()) activeCFlineages.add(null);
 
+        recalculate();
         outdated = true;
         manuallyUpdated = false;
+        setEverythingDirty(true);
     }
 
     @Override
@@ -123,16 +133,28 @@ public class MarginalTreeSlow extends Tree {
     }
 
 
+    public int getNextFreeIndex() {
+        // Skip all indices that have been used
+        while (!isFree[nextNonLeafNr])
+            nextNonLeafNr += 1;
+
+        // Once we return the index, it will be marked as used up
+        isFree[nextNonLeafNr] = false;
+
+        // Return the index
+        return nextNonLeafNr;
+    }
+
     public void recalculate() {
+//        System.out.println("RECALCULATE " + getID());
         startEditing(null);
         if (customdebug) System.out.print("*");
 
         List<Event> cfEvents = acg.getCFEvents();
-        Map<Node, MarginalNodeSlow> activeCFlineages = new HashMap<>();
-        ArrayList<Conversion> convs = getBlockConversions();
-        for (Conversion c : convs) {
-            assert c != null;
-        }
+        activeCFlineages.replaceAll((oldNode) -> {
+            return null;
+        });
+        List<Conversion> convs = getBlockConversions();
         convs.sort((c1, c2) -> {
             if (c1.height < c2.height)
                 return -1;
@@ -145,61 +167,52 @@ public class MarginalTreeSlow extends Tree {
 
         int iConv = 0;
         int nLeafs = acg.getLeafNodeCount();
-        int nextNonLeafNr = nLeafs;
+
+        nextNonLeafNr = nLeafs;
 
         for (int iEvent = 0; iEvent < cfEvents.size(); iEvent++) {
             Event event = cfEvents.get(iEvent);
             Node node = event.getNode();
 
-            int nActive = activeCFlineages.size();
-
             // Process the current CF-event
             switch (event.getType()) {
                 case SAMPLE:
-                    MarginalNodeSlow marginalLeaf = registerLeafNode(node);
-                    activeCFlineages.put(node, marginalLeaf);
-
-                    assert activeCFlineages.size() == nActive + 1;
+                    MarginalNode marginalLeaf = registerLeafNode(node);
+                    activeCFlineages.set(node.getNr(), marginalLeaf);
                     break;
 
                 case COALESCENCE:
                     Node left = node.getChild(0);
                     Node right = node.getChild(1);
 
-                    if (activeCFlineages.containsKey(left) && activeCFlineages.containsKey(right)) {
+                    if (activeCFlineages.get(left.getNr()) != null && activeCFlineages.get(right.getNr()) != null) {
                         // Create a new marginal node at the coalescence event
-                        MarginalNodeSlow marginalNodeSlow = registerNode(node, activeCFlineages, nextNonLeafNr++);
+                        MarginalNode marginalNode = registerNode(node, activeCFlineages, nextNonLeafNr++);
 
                         // Remove the old and add the new marginal node to the active lineages.
-                        activeCFlineages.remove(left);
-                        activeCFlineages.remove(right);
-                        activeCFlineages.put(node, marginalNodeSlow);
-
-                        assert activeCFlineages.size() == nActive - 1;
-
+                        activeCFlineages.set(left.getNr(), null);
+                        activeCFlineages.set(right.getNr(), null);
+                        activeCFlineages.set(node.getNr(), marginalNode);
                     } else {
                         // Only one side is active -> no coalescence in marginal tree (i.e. no marginal node)
 
-                        if (activeCFlineages.containsKey(left)) {
-                            MarginalNodeSlow marginalLeft = activeCFlineages.get(left);
+                        if (activeCFlineages.get(left.getNr()) != null) {
+                            MarginalNode marginalLeft = activeCFlineages.get(left.getNr());
                             updateTimeLength(node.getHeight(), left, marginalLeft);
 
-                            activeCFlineages.remove(left);
-                            activeCFlineages.put(node, marginalLeft);
+                            activeCFlineages.set(left.getNr(), null);
+                            activeCFlineages.set(node.getNr(), marginalLeft);
                             break;
                         }
 
-                        if (activeCFlineages.containsKey(right)) {
-                            MarginalNodeSlow marginalRight = activeCFlineages.get(right);
+                        if (activeCFlineages.get(right.getNr()) != null) {
+                            MarginalNode marginalRight = activeCFlineages.get(right.getNr());
                             updateTimeLength(node.getHeight(), right, marginalRight);
 
-                            activeCFlineages.remove(right);
-                            activeCFlineages.put(node, marginalRight);
+                            activeCFlineages.set(right.getNr(), null);
+                            activeCFlineages.set(node.getNr(), marginalRight);
                             break;
                         }
-
-                        assert activeCFlineages.size() == nActive;
-
                     }
                     break;
             }
@@ -208,45 +221,38 @@ public class MarginalTreeSlow extends Tree {
             while (iConv < convs.size() &&
                     (event.node.isRoot() || convs.get(iConv).height < cfEvents.get(iEvent + 1).getHeight())) {
 
-                nActive = activeCFlineages.size();
-
                 Conversion conv = convs.get(iConv++);
                 Node node1 = conv.getNode1();
                 Node node2 = conv.getNode2();
 
-                if (activeCFlineages.containsKey(node1) && activeCFlineages.containsKey(node2)) {
+                if ((activeCFlineages.get(node1.getNr()) != null) && (activeCFlineages.get(node2.getNr()) != null)) {
                     // Both lineages at the conversion are active --> coalescence in the marginal tree
 
-                    // Create a MarginalNodeSlow at the point of the conversion and add it as a new lineage
-                    MarginalNodeSlow convNode = registerNode(conv, activeCFlineages, nextNonLeafNr++);
+                    // Create a MarginalNode at the point of the conversion and add it as a new lineage
+                    MarginalNode convNode = registerNode(conv, activeCFlineages, nextNonLeafNr++);
 
                     // Remove child lineages and add new one
-                    activeCFlineages.remove(node1);
-                    activeCFlineages.remove(node2);
-                    activeCFlineages.put(node2, convNode);
-
-                    assert activeCFlineages.size() == nActive - 1;
-
+                    activeCFlineages.set(node1.getNr(), null);
+                    activeCFlineages.set(node2.getNr(), null);
+                    activeCFlineages.set(node2.getNr(), convNode);
                 } else {
                     // node1 or node2 already moved away (overshadowed by another conversion)
 
-                    if (activeCFlineages.containsKey(node1)) {
+                    if (activeCFlineages.get(node1.getNr()) != null) {
                         // node1 passes conversion, but node2 branched away --> CF lineage of node2 is continued by node1
-                        MarginalNodeSlow margNode1 = activeCFlineages.get(node1);
+                        MarginalNode margNode1 = activeCFlineages.get(node1.getNr());
                         updateTimeLength(conv.getHeight(), node1, margNode1);
 
-                        activeCFlineages.remove(node1);
-                        activeCFlineages.put(node2, margNode1);
+                        activeCFlineages.set(node1.getNr(), null);
+                        activeCFlineages.set(node2.getNr(), margNode1);
                     }
                     // else: node1 already branched away --> conversion has no effect
-
-                    assert activeCFlineages.size() == nActive;
                 }
             }
         }
 
         // A single active CF lineage (the root) should remain:;
-        MarginalNodeSlow newRoot = activeCFlineages.get(acg.getRoot());
+        MarginalNode newRoot = activeCFlineages.get(acg.getRoot().getNr());
         setRootOnly(newRoot);
 
         if (hasBranchRates) {
@@ -256,54 +262,92 @@ public class MarginalTreeSlow extends Tree {
         outdated = false;
 //        block.updatedMarginalTree();
 //        lastBlockState = block.toString();
+
     }
 
-    public MarginalNodeSlow registerLeafNode(Node node) {
-        MarginalNodeSlow marginalNode = (MarginalNodeSlow) m_nodes[node.getNr()];
-        marginalNode.setHeight(node.getHeight());
+    public MarginalNode registerLeafNode(Node node) {
+        MarginalNode marginalNode = (MarginalNode) m_nodes[node.getNr()];
+//        if (marginalNode.getHeight() != node.getHeight()) marginalNode.makeDirty(Tree.IS_FILTHY);
+//        else if (marginalNode.getLength() != node.getLength()) marginalNode.makeDirty(Tree.IS_FILTHY);
+        if ((!marginalNode.equalsNode(node))) {
+            marginalNode.setHeight(node.getHeight());
+            marginalNode.makeDirty(Tree.IS_FILTHY);
+        }
         marginalNode.lastEventHeight = node.getHeight();
         marginalNode.setID(node.getID());
         marginalNode.timeLength = 0;
 
-        marginalNode.makeDirty(Tree.IS_FILTHY);
-
         return marginalNode;
     }
 
-    public MarginalNodeSlow registerNode(Node node, Map<Node, MarginalNodeSlow> activeCFlineages, int nodeNr) {
+    public MarginalNode registerNode(Node node, ArrayList<MarginalNode> activeCFlineages, int nodeNr) {
         Node left = node.getChild(0);
         Node right = node.getChild(1);
         double height = node.getHeight();
-        MarginalNodeSlow marginalLeft = activeCFlineages.get(left);
-        MarginalNodeSlow marginalRight = activeCFlineages.get(right);
+        MarginalNode newLeft = activeCFlineages.get(left.getNr());
+        MarginalNode newRight = activeCFlineages.get(right.getNr());
 
-        MarginalNodeSlow marginalNode = (MarginalNodeSlow) m_nodes[nodeNr];
-        marginalNode.update(height, marginalLeft, marginalRight);
+        // Take the old marginal node from the given index
+        MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
+        Node oldLeft = marginalNode.getLeft();
+        Node oldRight = marginalNode.getRight();
+
+        // Mark the node as filthy if one of the children changed
+        if (oldLeft.getNr() != newLeft.getNr())
+            marginalNode.makeDirty(Tree.IS_FILTHY);
+
+        if (oldRight.getNr() != newRight.getNr())
+            marginalNode.makeDirty(Tree.IS_FILTHY);
+
+        // Mark the node and children as dirty if the height changed
+        if (marginalNode.getHeight() != node.getHeight()) {
+            marginalNode.makeDirty(Tree.IS_FILTHY);
+            List<Node> children = marginalNode.getChildren();
+            if (children.size() > 0) children.get(0).makeDirty(Tree.IS_FILTHY);
+            if (children.size() > 1) children.get(1).makeDirty(Tree.IS_FILTHY);
+        }
+
+        // Update the marginal node and meta information
+        marginalNode.update(height, newLeft, newRight);
         marginalNode.timeLength = 0;
         marginalNode.lastEventHeight = height;
-        marginalNode.makeDirty(Tree.IS_FILTHY);
 
         // Update time-length of both children
         if (hasBranchRates) {
-            updateTimeLength(height, left, marginalLeft);
-            updateTimeLength(height, right, marginalRight);
+            updateTimeLength(height, left, newLeft);
+            updateTimeLength(height, right, newRight);
         }
 
         return marginalNode;
     }
 
-    public MarginalNodeSlow registerNode(Conversion conv, Map<Node, MarginalNodeSlow> activeCFlineages, int nodeNr) {
+    public MarginalNode registerNode(Conversion conv, ArrayList<MarginalNode> activeCFlineages, int nodeNr) {
         Node left = conv.getNode1();
         Node right = conv.getNode2();
         double height = conv.getHeight();
-        MarginalNodeSlow marginalLeft = activeCFlineages.get(left);
-        MarginalNodeSlow marginalRight = activeCFlineages.get(right);
+        MarginalNode marginalLeft = activeCFlineages.get(left.getNr());
+        MarginalNode marginalRight = activeCFlineages.get(right.getNr());
 
-        MarginalNodeSlow marginalNode = (MarginalNodeSlow) m_nodes[nodeNr];
+        // Take the old marginal node from the given index
+        MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
+
+        // Mark the node as filthy if one of the children changed
+        if (marginalNode.getLeft().getNr() != marginalLeft.getNr())
+            marginalNode.makeDirty(Tree.IS_FILTHY);
+        if (marginalNode.getRight().getNr() != marginalRight.getNr())
+            marginalNode.makeDirty(Tree.IS_FILTHY);
+
+        // Mark the node and children as dirty if the height changed
+        if (marginalNode.getHeight() != conv.getHeight()) {
+            marginalNode.makeDirty(Tree.IS_FILTHY);
+            List<Node> children = marginalNode.getChildren();
+            if (children.size() > 0) children.get(0).makeDirty(Tree.IS_FILTHY);
+            if (children.size() > 1) children.get(1).makeDirty(Tree.IS_FILTHY);
+        }
+
         marginalNode.update(height, marginalLeft, marginalRight);
         marginalNode.timeLength = 0;
         marginalNode.lastEventHeight = height;
-        marginalNode.makeDirty(Tree.IS_FILTHY);
 
         // Update time-length of both children
         if (hasBranchRates) {
@@ -311,10 +355,12 @@ public class MarginalTreeSlow extends Tree {
             updateTimeLength(height, right, marginalRight);
         }
 
+//        marginalNode.makeDirty(Tree.IS_FILTHY);
+
         return marginalNode;
     }
 
-    void updateTimeLength(double parentHeight, Node child, MarginalNodeSlow marginalChild) {
+    void updateTimeLength(double parentHeight, Node child, MarginalNode marginalChild) {
         marginalChild.timeLength += (parentHeight - marginalChild.lastEventHeight) * branchRateModel.getRateForBranch(child);
         marginalChild.lastEventHeight = parentHeight;
     }
@@ -327,13 +373,30 @@ public class MarginalTreeSlow extends Tree {
      * @param root
      * @param rootHeight
      */
-    void rollOutTime(MarginalNodeSlow root, double rootHeight) {
+    void rollOutTime(MarginalNode root, double rootHeight) {
         root.setHeight(rootHeight);
 
-        for (Node childAsNode : root.getChildren()) {
-            MarginalNodeSlow child = (MarginalNodeSlow) childAsNode;
-            rollOutTime(child, rootHeight - child.timeLength);
+        List<Node> children = root.getChildren();
+        if (children.size() > 0) {
+            MarginalNode leftChild = (MarginalNode) children.get(0);
+            rollOutTime(leftChild, rootHeight - leftChild.timeLength);
         }
+        if (children.size() > 1) {
+            MarginalNode rightChild = (MarginalNode) children.get(1);
+            rollOutTime(rightChild, rootHeight - rightChild.timeLength);
+        }
+
+////        for (Node childAsNode : root.getChildren()) {
+//        for (int i=0; i< root.getChildren().size(); i++) {
+//            MarginalNode child = (MarginalNode) root.getChildren().get(i);
+//            rollOutTime(child, rootHeight - child.timeLength);
+//        }
+    }
+
+    @Override
+    protected void accept() {
+        super.accept();
+        setEverythingDirty(false);
     }
 
     @Override
@@ -346,43 +409,47 @@ public class MarginalTreeSlow extends Tree {
         manuallyUpdated = false;
         if (customdebug) System.out.print("r");
         recalculate();
+//        setEverythingDirty(false);
     }
 
     protected void initArraysSlim() {
         // initialise tree-as-array representation + its stored variant
-        m_nodes = new MarginalNodeSlow[nodeCount];
-        listMarginalNodes((MarginalNodeSlow) root, m_nodes);
+        m_nodes = new MarginalNode[nodeCount];
+        listMarginalNodes((MarginalNode) root, m_nodes);
         postCache = null;
     }
 
     /**
      * convert tree to array representation *
      */
-    void listMarginalNodes(final MarginalNodeSlow node, final Node[] nodes) {
+    void listMarginalNodes(final MarginalNode node, final Node[] nodes) {
         nodes[node.getNr()] = node;
         node.setTree(this);
 
         for (final Node child : node.getChildren()) {
-            listMarginalNodes((MarginalNodeSlow) child, nodes);
+            listMarginalNodes((MarginalNode) child, nodes);
         }
     }
+
+    ArrayList<Conversion> _blockConvs = new ArrayList<>();
 
     /**
      * Obtain the list of conversions which affect this block, i.e. the ones defining this marginal tree.
      *
      * @return List of relevant conversions.
      */
-    public ArrayList<Conversion> getBlockConversions() {
-        ArrayList<Conversion> blockConvs = new ArrayList<>();
+    public List<Conversion> getBlockConversions() {
+        _blockConvs.clear();
         ConversionList convList = acg.getConversions();
+        List<Integer> cIDs = block.getConversionIDs();
 
-        for (int cID : block.getConversionIDs()) {
-            Conversion c = convList.get(cID);
+        for (int i=0; i < cIDs.size(); i++) {
+            Conversion c = convList.get(cIDs.get(i));
             assert c != null;
-            blockConvs.add(c);
+            _blockConvs.add(c);
         }
 
-        return blockConvs;
+        return _blockConvs;
     }
 
     /**
@@ -392,14 +459,14 @@ public class MarginalTreeSlow extends Tree {
     public void assignFrom(final StateNode other) {
         final Tree tree = (Tree) other;
 
-        final MarginalNodeSlow[] nodes = new MarginalNodeSlow[tree.getNodeCount()];
+        final MarginalNode[] nodes = new MarginalNode[tree.getNodeCount()];
         for (int i = 0; i < tree.getNodeCount(); i++) {
             nodes[i] = newNode();
         }
 
         setID(tree.getID());
 
-        root = (MarginalNodeSlow) nodes[tree.getRoot().getNr()];
+        root = (MarginalNode) nodes[tree.getRoot().getNr()];
         root.assignFrom(nodes, tree.getRoot());
         root.setParent(null);
 
@@ -411,8 +478,8 @@ public class MarginalTreeSlow extends Tree {
     }
 
     @Override
-    protected MarginalNodeSlow newNode() {
-        return new MarginalNodeSlow();
+    protected MarginalNode newNode() {
+        return new MarginalNode();
     }
 
     /**
