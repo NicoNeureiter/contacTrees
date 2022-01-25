@@ -5,8 +5,10 @@ package contactrees;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Set;
 
 import javax.naming.directory.InvalidAttributesException;
@@ -21,56 +23,77 @@ import contactrees.util.Util;
  */
 public class ConversionList implements Iterable<Conversion> {
 
-	HashMap<Integer, Conversion> convs;
-	ConversionGraph acg;
-	Conversion _lastAdded;
+    HashMap<Integer, Conversion> convs;
+    ConversionGraph acg;
+    Conversion _lastAdded;
+    Deque<Conversion> trashCan;
+    static int MAX_TRASH_CAN_SIZE = 100;
 
-	public ConversionList(ConversionGraph acg) {
-		this.convs = new HashMap<>();
-		this.acg = acg;
-	}
+    public ConversionList(ConversionGraph acg) {
+        this.convs = new HashMap<>();
+        this.acg = acg;
+        this.trashCan = new LinkedList<>();
+    }
 
-	/**
-	 * Find a free hash-code/conversion ID.
-	 * @return The chosen conversion ID.
-	 */
-	private int getFreeKey() {
-		int key = Randomizer.nextInt(10000);
-		while (convs.containsKey(key)) {
-			key = Randomizer.nextInt(Integer.MAX_VALUE);
-		}
-		return key;
-	}
+    /**
+     * Find a free hash-code/conversion ID.
+     * @return The chosen conversion ID.
+     */
+    private Integer getFreeKey() {
+        int key = Randomizer.nextInt(10000);
+        while (convs.containsKey(key)) {
+            key = Randomizer.nextInt(Integer.MAX_VALUE);
+        }
+        return key;
+    }
 
-	/**
-	 * Create a new conversion, put it in the list and return it.
-	 * @return The new conversion.
-	 */
-	public Conversion addNewConversion() {
-		startEditing();
+    /**
+     * Create a new conversion, put it in the list and return it.
+     * @return The new conversion.
+     */
+    public Conversion addNewConversion() {
+        startEditing();
 
-		Conversion conv = new Conversion(getFreeKey());
-		add(conv);
+        Conversion conv = getNewOrRecycledConversion(getFreeKey());
+        add(conv);
 
-		return conv;
-	}
+        return conv;
+    }
 
-	/**
-	 * Add a conversion to the list and set the hash code as the conversion ID.
-	 * @param Conversion to be added.
-	 */
-	public void add(Conversion conv) {
-		startEditing();
+    /**
+     * If there are old conversions in the trash-can, take one of
+     * them, clear any previous information and return it. Otherwise
+     * create a new conversion.
+     * @param key The conversion ID for the new/recycled conversion.
+     * @return conv The new/recycled conversion.
+     */
+    public Conversion getNewOrRecycledConversion(Integer key) {
+        if (trashCan.isEmpty())
+            return new Conversion(key);
+        else {
+            Conversion conv = trashCan.pop();
+            conv.clear();
+            conv.setID(key);
+            return conv;
+        }
+    }
 
-		if (conv.id == 0)
-			conv.setID(getFreeKey());
+    /**
+     * Add a conversion to the list and set the hash code as the conversion ID.
+     * @param Conversion to be added.
+     */
+    public void add(Conversion conv) {
+        startEditing();
 
-		if (convs.containsKey(conv.id))
-		    throw new RuntimeException("Conversion " + conv.id + " is already in the ConversionList.");
+        if (conv.id == 0)
+            conv.setID(getFreeKey());
 
-		convs.put(conv.id, conv);
-		_lastAdded = conv;
-	}
+        if (convs.containsKey(conv.id))
+            throw new RuntimeException("Conversion " + conv.id + " is already in the ConversionList.");
+
+        convs.put(conv.id, conv);
+        _lastAdded = conv;
+    }
 
 
     /**
@@ -83,7 +106,8 @@ public class ConversionList implements Iterable<Conversion> {
         startEditing();
 
         // Copy the original conversion
-        Conversion newConv= conv.getCopy();
+        Conversion newConv= getNewOrRecycledConversion(conv.id);
+        conv.copyTo(newConv);
 
         // Assign a new ID and add the copied conversion to the list
         newConv.setID(getFreeKey());
@@ -97,7 +121,7 @@ public class ConversionList implements Iterable<Conversion> {
 	 * @param key
 	 * @return The requested conversion
 	 */
-	public Conversion get(int key) {
+	public Conversion get(Integer key) {
 		return convs.get(key);
 	}
 
@@ -105,8 +129,10 @@ public class ConversionList implements Iterable<Conversion> {
 	 * Remove the conversion at the given key from the list.
 	 * @param The key of the conversion to be removed.
 	 */
-	public void remove(int key) {
+	public void remove(Integer key) {
 		startEditing();
+		if (trashCan.size() < MAX_TRASH_CAN_SIZE)
+		    trashCan.add(convs.get(key));
 		convs.remove(key);
 	}
 
@@ -127,7 +153,7 @@ public class ConversionList implements Iterable<Conversion> {
 	}
 
 	/**
-	 * Obtain Iterator object to itarate over the conversions in the list.
+	 * Obtain Iterator object to iterate over the conversions in the list.
 	 */
 	@Override
 	public Iterator<Conversion> iterator() {
@@ -155,6 +181,11 @@ public class ConversionList implements Iterable<Conversion> {
 	 */
 	public void clear() {
 		startEditing();
+		for (Conversion conv : convs.values()) {
+		    if (trashCan.size() >= MAX_TRASH_CAN_SIZE)
+		        break;
+		    trashCan.add(conv);
+		}
 		convs.clear();
 	}
 
@@ -163,24 +194,27 @@ public class ConversionList implements Iterable<Conversion> {
 	 * @return Number of conversions.
 	 */
 	public int getConvCount() {
-		return convs.size();
-	}
+	    return convs.size();
+    }
 
-	/**
-	 * Copy all conversions into a new conversion list (with same IDs).
-	 * Note: The conversion attributes are not copied (e.g. they reference the same Node objects).
-	 * @return Copied conversion list.
-	 */
-	public ConversionList copy() {
+    /**
+     * Copy all conversions into a new conversion list (with same IDs).
+     * Note: The conversion attributes are not copied (e.g. they reference the same Node objects).
+     * @return Copied conversion list.
+     */
+    public ConversionList copy() {
         ConversionList convListCopy = new ConversionList(acg);
+        copyTo(convListCopy);
+        return convListCopy;
+    }
 
+    public void copyTo(ConversionList other) {
         for (Conversion conv : convs.values()) {
-        	Conversion convCopy = conv.getCopy();
-            convListCopy.convs.put(convCopy.getID(), convCopy);
+            Conversion convCopy = getNewOrRecycledConversion(conv.getID());
+            conv.copyTo(convCopy);
+            other.convs.put(convCopy.getID(), convCopy);
         }
-
-		return convListCopy;
-	}
+    }
 
 	/**
 	 * Choose a random conversion from the list (uniformly).

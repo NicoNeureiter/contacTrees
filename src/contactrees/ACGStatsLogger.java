@@ -6,9 +6,6 @@ package contactrees;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.HashMultiset;
-
 import beast.core.BEASTObject;
 import beast.core.Input;
 import beast.core.Loggable;
@@ -30,10 +27,10 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
 			"blockSet",
 			"The moves each local tree takes along the conversion graph.",
 			Input.Validate.REQUIRED);
-	public Input<Boolean> logGeneFlowInput = new Input<>(
-	        "logGeneFlow",
-	        "Include logs about the gene flow (percentage of blocks borrowed) between different clades of the tree.",
-	        false);
+//	public Input<Boolean> logGeneFlowInput = new Input<>(
+//	        "logGeneFlow",
+//	        "Include logs about the gene flow (percentage of blocks borrowed) between different clades of the tree.",
+//	        false);
 
 	protected ConversionGraph acg;
 	protected BlockSet blockSet;
@@ -50,9 +47,9 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
         for (String column : columnNames)
             out.print(column + "\t");
 
-        if (logGeneFlowInput.get())
-            for (CladePair cladePair : getCladePairs(acg))
-                out.print(cladePair.toString() + "\t");
+//        if (logGeneFlowInput.get())
+//            for (CladePair cladePair : getCladePairs(acg))
+//                out.print(cladePair.toString() + "\t");
 
     }
 
@@ -72,19 +69,19 @@ public class ACGStatsLogger extends BEASTObject implements Loggable {
 
         out.print(height + "\t" + treeLength + "\t" + pairedTreeLength + "\t" + nConv + "\t" + meanConvHeight + "\t" + moveCount + "\t" + movesPerConv + "\t");
 
-        if (logGeneFlowInput.get()) {
-            HashMultiset<String> geneFlows = HashMultiset.create();
-            HashMultimap<Node, Integer> branchedOut = HashMultimap.create();
-            for (Conversion conv : acg.getConversions().asSortedArray()) {
-                CladePair cladePair = new CladePair(conv);
-                for (int iBlock : blockSet.getAffectedBlockIDs(conv)) {
-                    if (!branchedOut.containsEntry(cladePair.target, iBlock)) {
-                        branchedOut.put(cladePair.target, iBlock);
-                        geneFlows.add(cladePair.toString());
-                    }
-                }
-            }
-        }
+//        if (logGeneFlowInput.get()) {
+//            HashMultiset<String> geneFlows = HashMultiset.create();
+//            HashMultimap<Node, Integer> branchedOut = HashMultimap.create();
+//            for (Conversion conv : acg.getConversions().asSortedArray()) {
+//                CladePair cladePair = new CladePair(conv);
+//                for (int iBlock : blockSet.getAffectedBlockIDs(conv)) {
+//                    if (!branchedOut.containsEntry(cladePair.target, iBlock)) {
+//                        branchedOut.put(cladePair.target, iBlock);
+//                        geneFlows.add(cladePair.toString());
+//                    }
+//                }
+//            }
+//        }
     }
 
 	protected double meanConvHeight(ConversionGraph acg) {

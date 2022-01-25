@@ -245,7 +245,7 @@ public class CFEventList {
      * Method for testing dirty logic: Assert that no changes
      * happened when the cfEventList is marked as not dirty.
      */
-    protected boolean is_consistent() {
+    protected boolean isConsistent() {
         for (Event e : events) {
             int nodeNr = e.node.getNr();
             Node acgNode = acg.getNode(nodeNr);

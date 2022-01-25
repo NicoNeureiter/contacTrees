@@ -12,7 +12,9 @@ import beast.evolution.tree.Node;
 
 public class Conversion implements Comparable<Conversion> {
 
-	// TODO Remove "acg" from Conversion?
+	/**
+	 * Reference to the containing conversion graph.
+	 */
 	protected ConversionGraph acg;
 
     /**
@@ -42,7 +44,7 @@ public class Conversion implements Comparable<Conversion> {
      */
     public int acgIndex;
 
-    public Conversion(int id) {
+    public Conversion(Integer id) {
     	this.id = id;
     }
 
@@ -55,12 +57,22 @@ public class Conversion implements Comparable<Conversion> {
 //     * @param affectedSites
      * @param acg
      */
-    public Conversion(Node node1, Node node2, double height, ConversionGraph acg, int id) {
+    public Conversion(Node node1, Node node2, double height, ConversionGraph acg, Integer id) {
         this.node1 = node1;
         this.node2 = node2;
         this.height = height;
         this.acg = acg;
         this.id = id;
+    }
+
+    public void clear() {
+        node1 = null;
+        node2 = null;
+        height = 0;
+        acg = null;
+        newickMetaDataBottom = null;
+        newickMetaDataMiddle = null;
+        newickMetaDataTop = null;
     }
 
     /**
@@ -95,7 +107,7 @@ public class Conversion implements Comparable<Conversion> {
      *
      * @return ID
      */
-    public int getID() {
+    public Integer getID() {
     	return id;
     }
 
@@ -134,7 +146,7 @@ public class Conversion implements Comparable<Conversion> {
      *
      * @param ID
      */
-    public void setID(int id) {
+    public void setID(Integer id) {
     	startEditing();
     	this.id = id;
     }
@@ -181,8 +193,7 @@ public class Conversion implements Comparable<Conversion> {
      * Mark ARG statenode as dirty if available.
      */
     public void startEditing() {
-        // TODO: hasStartedEditing = true <<<<<<<<<<<<<<<<
-        // ...
+        // TODO: hasStartedEditing = true
         if (acg != null)
             acg.startEditing(null);
     }
@@ -195,6 +206,12 @@ public class Conversion implements Comparable<Conversion> {
      */
     public Conversion getCopy() {
         Conversion copy = new Conversion(id);
+        copyTo(copy);
+        return copy;
+    }
+
+    public void copyTo(Conversion copy) {
+         copy.setID(id);
 
         copy.node1 = node1;
         copy.node2 = node2;
@@ -204,8 +221,6 @@ public class Conversion implements Comparable<Conversion> {
         copy.newickMetaDataBottom = newickMetaDataBottom;
         copy.newickMetaDataMiddle = newickMetaDataMiddle;
         copy.newickMetaDataTop = newickMetaDataTop;
-
-        return copy;
     }
 
     @Override
@@ -266,7 +281,7 @@ public class Conversion implements Comparable<Conversion> {
 
     @Override
     public int compareTo(Conversion other) {
-        return Double.valueOf(this.getHeight()).compareTo(other.getHeight());
+        return Double.compare(this.getHeight(), other.getHeight());
     }
 
 }

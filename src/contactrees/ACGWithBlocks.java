@@ -274,8 +274,8 @@ public class ACGWithBlocks extends ConversionGraph  {
     }
 
     @Override
-    protected int parseConvID(String sConvID) {
-    	return Integer.parseInt(sConvID.substring(1));
+    protected Integer parseConvID(String sConvID) {
+    	return Integer.valueOf(sConvID.substring(1));
     }
 
     public static ACGWithBlocks newFromNewick(ArrayList<Block> blocks) {

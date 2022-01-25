@@ -52,11 +52,9 @@ public class Block extends StateNode {
      */
     public void removeMove(Conversion conv) {
         startEditing(null);
-        Integer cid = conv.getID();
-
-        convIDs.removeAll(Arrays.asList(cid));
-
-        assert !convIDs.contains(cid);
+        Integer cID = conv.getID();
+        convIDs.remove(cID);
+        assert !convIDs.contains(cID);
     }
 
     /**
@@ -73,7 +71,6 @@ public class Block extends StateNode {
      * @return "true" iff the block moved over the conversion.
      */
     public boolean isAffected(Conversion conv) {
-        // TODO resolve overshadowed conversions somewhere
         return convIDs.contains(conv.getID());
     }
 
@@ -144,7 +141,10 @@ public class Block extends StateNode {
 
     @Override
     protected void store() {
-        convIDsStored = Util.deepCopyIntegers(convIDs);
+        convIDsStored.clear();
+        for (int i=0; i<convIDs.size(); i++) {
+            convIDsStored.add(convIDs.get(i));
+        }
     }
 
     @Override
@@ -208,8 +208,10 @@ public class Block extends StateNode {
         str = str.substring(1, str.length() - 1);
 
         // Parse the string list and put convIDs into the `convIDs` array.
-        for (String convID : str.split("\\s*,\\s*")) {
-            convIDs.add(Integer.parseInt(convID));
+        if (str.length() > 0) {
+            for (String convID : str.split("\\s*,\\s*")) {
+                convIDs.add(Integer.parseInt(convID));
+            }
         }
     }
 

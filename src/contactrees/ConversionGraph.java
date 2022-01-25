@@ -199,44 +199,45 @@ public class ConversionGraph extends Tree {
         return length;
     }
 
+    HashSet<Node> _lineagesAtHeight = new HashSet<>();
     /**
      * Obtain the set of lineages active at the specified height.
      * @param height
      * @return Set of active lineages
      */
     public HashSet<Node> getLineagesAtHeight(double height) {
-    	HashSet<Node> lineages = new HashSet<>();
+        _lineagesAtHeight.clear();
 
         List<CFEventList.Event> events = getCFEvents();
 
         for (int i=0; i<events.size(); i++) {
-        	CFEventList.Event event = events.get(i);
-        	if (i < events.size()-1)
-        		assert event.t <= events.get(i+1).t;
-        	if (i < events.size()-1)
-        		assert event.getNode().getHeight() <= events.get(i+1).getNode().getHeight();
+            CFEventList.Event event = events.get(i);
+            if (i < events.size()-1)
+                assert event.t <= events.get(i+1).t;
+            if (i < events.size()-1)
+                assert event.getNode().getHeight() <= events.get(i+1).getNode().getHeight();
 
-        	Node node = event.getNode();
-        	assert event.t == node.getHeight();
+            Node node = event.getNode();
+            assert event.t == node.getHeight();
 
-        	if (event.getHeight() > height) {
-        		// We found the interval of "height"
-        		break;
-        	}
+            if (event.getHeight() > height) {
+                // We found the interval of "height"
+                break;
+            }
 
-        	// Add new node (for COALESCENCE and SAMPLE events)
-        	lineages.add(node);
-        	// Remove children on COALESCENCE events
-        	if (event.getType() == CFEventList.EventType.COALESCENCE) {
-        		for (Node child : node.getChildren()) {
-            		lineages.remove(child);
-        		}
-        	} else {
-        		assert node.isLeaf();
-        	}
+            // Add new node (for COALESCENCE and SAMPLE events)
+            _lineagesAtHeight.add(node);
+            // Remove children on COALESCENCE events
+            if (event.getType() == CFEventList.EventType.COALESCENCE) {
+                for (Node child : node.getChildren()) {
+                    _lineagesAtHeight.remove(child);
+                }
+            } else {
+                assert node.isLeaf();
+            }
         }
 
-        return lineages;
+        return _lineagesAtHeight;
     }
 
     public int countLineagesAtHeight(double height) {
@@ -373,7 +374,9 @@ public class ConversionGraph extends Tree {
         super.store();
 
         // Copy the conversion list
-        storedConvs = convs.copy();
+//        storedConvs = convs.copy();
+        storedConvs.clear();
+        convs.copyTo(storedConvs);
 
         // Change copied node references from m_nodes to m_storedNodes
         for (Conversion conv : storedConvs) {
@@ -457,6 +460,8 @@ public class ConversionGraph extends Tree {
         ExtendedNewickParser parser = new ExtendedNewickParser(tokens);
         ParseTree parseTree = parser.tree();
 
+        convs.clear();
+        storedConvs.clear();
         Map<String, Conversion> convIDMap = new HashMap<>();
         Node root = new ExtendedNewickBaseVisitor<Node>() {
 
@@ -669,7 +674,7 @@ public class ConversionGraph extends Tree {
     	initArrays();
     }
 
-    protected int parseConvID(String sConvID) {
+    protected Integer parseConvID(String sConvID) {
     	return Integer.parseInt(sConvID.substring(1));
     }
 
@@ -818,25 +823,24 @@ public class ConversionGraph extends Tree {
     /**
      * DEBUG CHECKS
      */
+    Integer[] _hashValues = new Integer[3];
 
     @Override
     public int getChecksum() {
-        Integer[] hashValues = new Integer[3];
-
         // If the ACG is the same, the following properties need to match:
 
-        // Number of conversions should be the same
-        hashValues[0] = getConvCount();
+        // 1. Number of conversions should be the same
+        _hashValues[0] = getConvCount();
 
-        // The root height should be the same (could be moved to Tree.getChecksum())
-        hashValues[1] = Double.hashCode(getRoot().getHeight());
+        // 2. The root height should be the same (could be moved to Tree.getChecksum())
+        _hashValues[1] = Double.hashCode(getRoot().getHeight());
 
-        // The mean conversion height should be the same
-//        hashValues[2] = Double.hashCode(getMeanConvHeight());
+        // 3. The mean conversion height should be the same
+//        _hashValues[2] = Double.hashCode(getMeanConvHeight());
         // (hashing the exact Double value can lead to false alarms due to rounding errors)
-        hashValues[2] = (int) (100000 * getMeanConvHeight());
+        _hashValues[2] = (int) (100000 * getMeanConvHeight());
 
-        return Arrays.deepHashCode(hashValues);
+        return Arrays.deepHashCode(_hashValues);
     }
 
     public double getMeanConvHeight() {
