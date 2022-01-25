@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Tim Vaughan <tgvaughan@gmail.com> 
+ * Copyright (C) 2014 Tim Vaughan <tgvaughan@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,15 +17,16 @@
 
 package contactrees.operators;
 
-import contactrees.Conversion;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.util.Randomizer;
-
-import java.util.ArrayList;
-import java.util.List;
+import contactrees.Conversion;
 
 /**
  * @author Nico Neureiter
@@ -40,26 +41,34 @@ public class ACGScaler extends ACGOperator {
     public Input<List<RealParameter>> parametersInverseInput = new Input<>(
             "parameterInverse", "Parameter to scale inversely with ARG.",
             new ArrayList<>());
-    
-    public Input<Double> scaleParamInput = new Input<>("scaleFactor",
+
+    public Input<Double> scaleFactorInput = new Input<>("scaleFactor",
             "Scale factor tuning parameter.  Must be < 1.",
             Input.Validate.REQUIRED);
-    
+
     public Input<Boolean> rootOnlyInput = new Input<>(
             "rootOnly", "Scale root node and connections which attach directly "
                     + "below and above the root only.",
             false);
-    
-    private double scaleParam;
+
+    final public Input<Boolean> optimiseInput = new Input<>("optimise", "flag to indicate that the scale factor is automatically changed in order to achieve a good acceptance rate (default true)", true);
+    final public Input<Double> scaleUpperLimit = new Input<>("upper", "Upper Limit of scale factor", 1.0 - 1e-5);
+    final public Input<Double> scaleLowerLimit = new Input<>("lower", "Lower limit of scale factor", 1e-5);
+
+    private double scaleFactor;
     private boolean rootOnly;
-    
+    private double upper, lower;
+
     @Override
     public void initAndValidate() {
         super.initAndValidate();
-        scaleParam = scaleParamInput.get();
+
         rootOnly = rootOnlyInput.get();
+        scaleFactor = scaleFactorInput.get();
+        upper = scaleUpperLimit.get();
+        lower = scaleLowerLimit.get();
     }
-    
+
     @Override
     public double proposal() {
 
@@ -68,8 +77,8 @@ public class ACGScaler extends ACGOperator {
         int count = 0;
 
         // Choose scaling factor:
-        double f = Randomizer.uniform(scaleParam, 1.0/scaleParam);
-        
+        double f = Randomizer.uniform(scaleFactor, 1.0/scaleFactor);
+
         // Scale clonal frame:
         if (rootOnly) {
             acg.getRoot().setHeight(acg.getRoot().getHeight()*f);
@@ -79,22 +88,22 @@ public class ACGScaler extends ACGOperator {
                 node.setHeight(node.getHeight()*f);
                 count += 1;
             }
-        }       
-        
+        }
+
         // Scale conversion edges:
         for (Conversion conv : acg.getConversions()) {
         	Node node1 = conv.getNode1();
         	Node node2 = conv.getNode2();
-        	
-        	boolean isRootChild = node1.getParent().isRoot(); 
-        	
+
+        	boolean isRootChild = node1.getParent().isRoot();
+
         	if (rootOnly) {
         		if (node2.getParent().isRoot() != isRootChild) {
         			// One node gets rescaled, the other does not -> Illegal move
         			return Double.NEGATIVE_INFINITY;
         		}
         	}
-        	
+
             if (!rootOnly || isRootChild) {
                 conv.setHeight(conv.getHeight() * f);
                 count += 1;
@@ -106,7 +115,7 @@ public class ACGScaler extends ACGOperator {
                 return Double.NEGATIVE_INFINITY;
             }
         }
-        
+
         // Check for illegal node heights:
         if (rootOnly) {
             for (Node node : acg.getRoot().getChildren()) {
@@ -114,16 +123,16 @@ public class ACGScaler extends ACGOperator {
                     return Double.NEGATIVE_INFINITY;
             }
         } else {
-        	// For non-ultrametric trees the fixed leave height could lead negative edges: 
+        	// For non-ultrametric trees the fixed leave height could lead negative edges:
             for (Node node : acg.getExternalNodes()) {
                 if (node.getHeight()>node.getParent().getHeight()) {
                     return Double.NEGATIVE_INFINITY;
                 }
             }
         }
-        
+
         // Scale parameters
-        
+
         for (RealParameter param : parametersInput.get()) {
             try {
                 param.startEditing(null);
@@ -133,10 +142,10 @@ public class ACGScaler extends ACGOperator {
                 // bounds.  Needs to change!
                 return Double.NEGATIVE_INFINITY;
             }
-            
+
             count += param.getDimension();
         }
-        
+
         for (RealParameter paramInv : parametersInverseInput.get()) {
             try {
                 paramInv.startEditing(null);
@@ -146,14 +155,57 @@ public class ACGScaler extends ACGOperator {
                 // bounds.  Needs to change!
                 return Double.NEGATIVE_INFINITY;
             }
-            
+
             count -= paramInv.getDimension();
         }
 
         assert !acg.isInvalid() : "ACGScaler produced invalid state.";
-        
+
         // Return log of Hastings ratio:
         return (count-2)*Math.log(f);
     }
-    
+
+
+    /**
+     * automatic parameter tuning *
+     */
+    @Override
+    public void optimize(final double logAlpha) {
+        if (optimiseInput.get()) {
+            double delta = calcDelta(logAlpha);
+            delta += Math.log(1.0 / scaleFactor - 1.0);
+            setCoercableParameterValue(1.0 / (Math.exp(delta) + 1.0));
+        }
+    }
+
+    @Override
+    public double getCoercableParameterValue() {
+        return scaleFactor;
+    }
+
+    @Override
+    public void setCoercableParameterValue(final double value) {
+        scaleFactor = Math.max(Math.min(value, upper), lower);
+    }
+
+    @Override
+    public String getPerformanceSuggestion() {
+        final double prob = m_nNrAccepted / (m_nNrAccepted + m_nNrRejected + 0.0);
+        final double targetProb = getTargetAcceptanceProbability();
+
+        double ratio = prob / targetProb;
+        if (ratio > 2.0) ratio = 2.0;
+        if (ratio < 0.5) ratio = 0.5;
+
+        // new scale factor
+        final double sf = Math.pow(scaleFactor, ratio);
+
+        final DecimalFormat formatter = new DecimalFormat("#.###");
+        if (prob < 0.10) {
+            return "Try setting scaleFactor to about " + formatter.format(sf);
+        } else if (prob > 0.40) {
+            return "Try setting scaleFactor to about " + formatter.format(sf);
+        } else return "";
+    }
+
 }
