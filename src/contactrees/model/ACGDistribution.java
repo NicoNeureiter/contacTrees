@@ -42,8 +42,12 @@ public class ACGDistribution extends Distribution {
 
     final public Input<RealParameter> conversionRateInput = new Input<>(
             "conversionRate",
-            "The rate at which a pair of lineages will get in contact and form a conversion.",
-            Input.Validate.REQUIRED);
+            "The rate at which a pair of lineages will get in contact and form a conversion.");
+
+    final public Input<RealParameter> expectedConversionsInput = new Input<>(
+            "expectedConversions",
+            "The expected number of conversions in the whole tree.",
+            Input.Validate.XOR, conversionRateInput);
 
     final public Input<Integer> lowerCCBoundInput = new Input<>("lowerConvCountBound",
             "Lower bound on conversion count.", 0);
@@ -59,24 +63,41 @@ public class ACGDistribution extends Distribution {
     ConversionGraph acg;
     TreeDistribution cfModel;
 
+    PriorityQueue<Conversion> convQueue;
+
     @Override
     public void initAndValidate() {
         super.initAndValidate();
         acg = networkInput.get();
         cfModel = cfModelInput.get();
+        convQueue = new PriorityQueue<>();
     }
 
     protected double getExpectedConversions() {
-        double convRate = conversionRateInput.get().getValue();
-        if (linearContactGrowthInput.get()) {
-            return convRate * acg.getClonalFrameLength();
+        if (expectedConversionsInput.get() != null){
+            return expectedConversionsInput.get().getValue();
         } else {
-            return convRate * acg.getClonalFramePairedLength();
+            double convRate = conversionRateInput.get().getValue();
+            if (linearContactGrowthInput.get()) {
+                return convRate * acg.getClonalFrameLength();
+            } else {
+                return convRate * acg.getClonalFramePairedLength();
+            }
         }
     }
 
     protected double getConversionRate() {
-        return conversionRateInput.get().getValue();
+        if (conversionRateInput.get() != null){
+            return conversionRateInput.get().getValue();
+        } else {
+            double eConv = expectedConversionsInput.get().getValue();
+            if (linearContactGrowthInput.get()) {
+                return eConv / acg.getClonalFrameLength();
+            } else {
+                return eConv / acg.getClonalFramePairedLength();
+            }
+
+        }
     }
 
     @Override
@@ -84,15 +105,25 @@ public class ACGDistribution extends Distribution {
         logP = cfModel.calculateLogP();
         double convRate = getConversionRate();
 
+        // Handle some corner cases
+        assert convRate >= 0.0;
+        if (convRate == 0.0) {
+            if (acg.getConvCount() == 0)
+                logP += 0.0;
+            else
+                logP += Double.NEGATIVE_INFINITY;
+            return logP;
+        }
+
         // Check whether conversion count exceeds bounds.
-        if (acg.getConvCount()<lowerCCBoundInput.get()
-                || acg.getConvCount()>upperCCBoundInput.get()) {
+        if (acg.getConvCount() < lowerCCBoundInput.get()
+                || acg.getConvCount() > upperCCBoundInput.get()) {
             logP = Double.NEGATIVE_INFINITY;
             return logP;
         }
 
-        PriorityQueue<Conversion> convs = new PriorityQueue<>();
-        convs.addAll(acg.getConversions().getConversions());
+        convQueue.clear();
+        convQueue.addAll(acg.getConversions().getConversions());
 
         // Poisson prior on the number of conversions per event interval (between sampling/coalescent events)
         double localConvRate = convRate;
@@ -102,35 +133,23 @@ public class ACGDistribution extends Distribution {
             CFEventList.Event eEnd = events.get(i+1);
             double dt = eEnd.getHeight() - eStart.getHeight();
             int k = eStart.getLineageCount();
+            if (k == 1) continue;
+
             double waitingtime = dt * k * (k-1);
 
             if (linearContactGrowthInput.get())
                 localConvRate = convRate / (k-1);
 
             // Add probability for waiting time in the current interval
-            logP -= convRate * waitingtime;
+            logP -= localConvRate * waitingtime;
 
             // Add event probabilities for the contact edges in this interval
-            while ((convs.peek() != null) && (convs.peek().getHeight() < eEnd.getHeight())) {
+            while ((convQueue.peek() != null) && (convQueue.peek().getHeight() < eEnd.getHeight())) {
                 logP += Math.log(localConvRate);
-                convs.poll();
+                convQueue.poll();
             }
         }
-        assert convs.isEmpty();
-
-        assert convRate >= 0.0;
-        if (convRate == 0) {
-            if (acg.getConvCount() == 0) {
-                logP = 0.0;
-            } else {
-                logP = Double.NEGATIVE_INFINITY;
-            }
-            return logP;
-        }
-
-//        // Probability density of each conversion placement
-//        for (Conversion conv : acg.getConversions())
-//            logP += calculateConversionLogP(conv);
+        assert convQueue.isEmpty();  // We iterated through all conversions end removed them from `convs`
 
         // Correct for probability mass outside the specified bounds on number of conversions.
         if (lowerCCBoundInput.get()>0 || upperCCBoundInput.get()<Integer.MAX_VALUE) {
@@ -149,13 +168,6 @@ public class ACGDistribution extends Distribution {
         return logP;
     }
 
-//    public double calculateConversionLogP(Conversion conv) {
-//        ConversionGraph acg = networkInput.get();
-//
-//        // For now, a uniform distribution over time and pairs of lineages
-//        return -Math.log(acg.getClonalFramePairedLength());
-//    }
-
     @Override
     protected boolean requiresRecalculation() {
         // For now we use the safe version (always recalculate)
@@ -168,15 +180,17 @@ public class ACGDistribution extends Distribution {
     public List<String> getArguments() {
         List<String> arguments = new ArrayList<>();
         arguments.add(networkInput.get().getID());
-
         return arguments;
     }
 
     @Override
     public List<String> getConditions() {
         List<String> conditions = new ArrayList<>();
-        conditions.add(conversionRateInput.get().getID());
-
+        if (conversionRateInput.get() != null){
+            conditions.add(conversionRateInput.get().getID());
+        } else {
+            conditions.add(expectedConversionsInput.get().getID());
+        }
         return conditions;
     }
 
@@ -222,6 +236,7 @@ public class ACGDistribution extends Distribution {
      * @return the log probability density of the attachment points
      */
     public double attachEdge(Conversion conv) {
+        double logQ = 0.0;
         CFEventList cfEventList = acg.getCFEventList();
         List<Event> cfEvents = cfEventList.getCFEvents();
 
@@ -229,25 +244,32 @@ public class ACGDistribution extends Distribution {
         double[] intervalVolumes = cfEventList.getIntervalVolumes(!linearContactGrowthInput.get());
         int iEvent = Util.sampleCategorical(intervalVolumes);
         Event event = cfEvents.get(iEvent);
+        double pInterval = intervalVolumes[iEvent] / Util.sum(intervalVolumes);
+        logQ += Math.log(pInterval);
 
         // Choose height within interval
         double height = Randomizer.uniform(event.getHeight(), cfEvents.get(iEvent+1).getHeight());
+        logQ -= Math.log(cfEvents.get(iEvent+1).getHeight() - event.getHeight());
+        Set<Node> activeLineages = acg.getLineagesAtHeight(height);
+        if (activeLineages.size() <= 1)
+            return Double.POSITIVE_INFINITY;
         conv.setHeight(height);
 
         // Choose source lineage (given the height)
-        Set<Node> activeLineages = acg.getLineagesAtHeight(height);
         Node node1 = Util.sampleFrom(activeLineages);
+        logQ -= Math.log(activeLineages.size());
         conv.setNode1(node1);
         assert node1.getHeight() < height;
 
         // Choose destination lineage (given the height and node1)
         activeLineages.remove(node1);
         Node node2 = Util.sampleFrom(activeLineages);
+        logQ -= Math.log(activeLineages.size());
         conv.setNode2(node2);
 
         assert conv.isValid();
 
-        return getEdgeAttachmentProb(conv);
+        return logQ;
     }
 
     /**
@@ -257,10 +279,54 @@ public class ACGDistribution extends Distribution {
      * @return the log probability density of the attachment points
      */
     public double getEdgeAttachmentProb(Conversion conv) {
-        if (linearContactGrowthInput.get())
-            return -Math.log(acg.getClonalFrameLength());
-        else
+        if (linearContactGrowthInput.get()) {
+            double logQ = 0.0;
+            double height = conv.getHeight();
+            List<CFEventList.Event> events = acg.getCFEvents();
+
+            // Prob. of event interval
+            double totalVolume = 0.0;
+            double intervalVolume = 0.0;
+            double intervalLength = 0.0;
+            int hits = 0;
+            for (int i = 0; i<events.size()-1; i++) {
+                CFEventList.Event eStart = events.get(i);
+                CFEventList.Event eEnd = events.get(i+1);
+                double dt = eEnd.getHeight() - eStart.getHeight();
+                int k = eStart.getLineageCount();
+                if (k == 1) continue;
+                if (eStart.getHeight() <= height && height < eEnd.getHeight()) {
+                    // Probability of choosing this interval (normalization over intervals is done further down)
+                    intervalVolume = k * dt;
+                    // Probability density of height within interval
+                    intervalLength = dt;
+                    // Just to make sure we find one and only one active interval
+                    hits++;
+                }
+                totalVolume += (k * dt);
+            }
+            assert hits == 1;
+
+            double pInterval = intervalVolume / totalVolume;
+            logQ += Math.log(pInterval);
+
+            // Prob. of height within interval
+            logQ -= Math.log(intervalLength);
+
+            Set<Node> activeLineages = acg.getLineagesAtHeight(height);
+            if (activeLineages.size() <= 1)
+                return Double.POSITIVE_INFINITY;
+
+            // Prob. of source lineage (given the height)
+            int k = activeLineages.size();
+            logQ -= Math.log(k);
+            // Prob. of destination lineage (given the height and node1)
+            logQ -= Math.log(k - 1);
+
+            return logQ;
+        } else {
             return -Math.log(acg.getClonalFramePairedLength());
+        }
     }
 
 }
