@@ -1,4 +1,4 @@
-<package name="contactrees" version="0.0.1">
+<package name="contactrees" version="0.0.1" projectURL="https://github.com/NicoNeureiter/contacTrees">
     <depends on="beast2" atleast="2.6.0" atmost="2.6.9"/>
     <depends on="feast" atleast="7.5.3"/>
     <depends on="BEASTLabs" atleast="1.9.0"/>

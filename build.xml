@@ -11,10 +11,11 @@
 	<property name="buildcontactrees" location="../contactrees/build" />
 	<property name="libcontactrees" location="../contactrees/lib" />
 	<property name="release_dir" value="release" />
-	<property name="distcontactrees" location="${buildcontactrees}/dist" />
+	<property name="distcontactrees" location="../contactrees/dist" />
 	<property name="beast2path" location="../beast2" />
 	<property name="srcBeast2" location="${beast2path}/src" />
 	<property name="beast2classpath" location="${beast2path}/build" />
+	<property name="feastclasspath" location="../feast/build" />
 	<property name="Add_on_dir" value="${release_dir}/add-on" />
 	<property name="version" value="0.0.1" />
 
@@ -25,15 +26,17 @@
 	<property name="report" value="${buildcontactrees}/junitreport"/>
 
 	<path id="classpath">
-        <pathelement path="${buildcontactrees}"/>
-		<fileset dir="${libcontactrees}" includes="junit-4.8.2.jar"/>
+		<pathelement path="${buildcontactrees}"/>
+		<fileset dir="${libcontactrees}" includes="guava-23.0.jar"/>
+		<fileset dir="${beast2path}/lib" includes="junit-4.8.2.jar"/>
 		<fileset dir="${beast2path}/lib" includes="jam.jar"/>
 		<fileset dir="${beast2path}/lib" includes="beagle.jar"/>
 		<fileset dir="${beast2path}/lib" includes="fest.jar"/>
 		<fileset dir="${beast2path}/lib" includes="colt.jar"/>
 		<fileset dir="${beast2path}/lib" includes="antlr-runtime-4.7.jar"/>
 		<fileset dir="${beast2path}/lib" includes="commons-math3-3.1.1.jar"/>
-        <pathelement path="${beast2classpath}"/>
+		<pathelement path="${beast2classpath}"/>
+		<pathelement path="${feastclasspath}"/>
 	</path>
 
 	<!-- start -->
@@ -42,27 +45,27 @@
 	</target>
 
 	<target name="cleancontactrees">
-    	<delete dir="${buildcontactrees}" />
+		<delete dir="${buildcontactrees}" />
 	</target>
 
 	<!-- clean previous build, and then compile Java source code, and Juint test -->
-	<target name="build_all_contactrees" depends="cleancontactrees,compile-allcontactrees"
+	<target name="build_all_contactrees" depends="cleancontactrees,compile-all-contactrees"
         description="Clean and Build all run-time stuff">
 	</target>
 
 	<!-- clean previous build, compile Java source code, and Junit test, and make the beast.jar and beauti.jar -->
-	<target name="build_jar_all_contactrees" depends="cleancontactrees,compile-allcontactrees,dist_all_contactrees"
+	<target name="build_jar_all_contactrees" depends="cleancontactrees,compile-all-contactrees,dist_all_contactrees"
         description="Clean and Build all run-time stuff">
 	</target>
 
 
 	<!-- No JUnit Test, clean previous build, compile Java source code, and make the contactrees.jar and beauti.jar -->
-	<target name="build_jar_all_contactrees_NoJUnitTest" depends="cleancontactrees,compile-allcontactrees,dist_all_contactrees"
+	<target name="build_jar_all_contactrees_NoJUnitTest" depends="cleancontactrees,compile-all-contactrees,dist_all_contactrees"
         description="Clean and Build all run-time stuff">
 	</target>
 
 	<!-- compile Java source code -->
-	<target name="compile-allcontactrees" depends="initcontactrees">
+	<target name="compile-all-contactrees" depends="initcontactrees,compile-all">
 
 	    <!-- Capture the path as a delimited property using the refid attribute -->
 	    <property name="myclasspath" refid="classpath"/>
@@ -76,9 +79,11 @@
 		       fork="true"
 		       memoryinitialsize="256m"
 		       memorymaximumsize="1024m"
-			   source="1.8"
+		       includeantruntime="false"
+		       source="1.8"
 		       target="1.8">
-			<include name="${srccontactrees}/**/**" />
+                        <include name="beast/**/**" />
+			<include name="contactrees/**/**" />
 			<!-- compile JUnit test classes -->
 			<include name="test/beast/**" />
 		</javac>
@@ -88,7 +93,7 @@
 
 
 	<!-- make the contactrees.hjar -->
-	<target name="dist_all_contactrees" depends="compile-allcontactrees" description="create contactrees jar">
+	<target name="dist_all_contactrees" depends="compile-all-contactrees" description="create contactrees jar">
 		<!-- Create the distribution directory -->
 		<mkdir dir="${distcontactrees}" />
 
@@ -113,21 +118,20 @@
 			<zipgroupfileset dir="${beast2path}/lib" includes="colt.jar" />
 			<zipgroupfileset dir="${beast2path}/lib" includes="commons-math3-3.1.1.jar" />
 			<zipgroupfileset dir="${beast2path}/lib" includes="antlr-runtime-4.7.jar"/>
+			<zipgroupfileset dir="${libcontactrees}" includes="guava-23.0.jar"/>
 		</jar>
 
 		<jar jarfile="${distcontactrees}/contactrees.src.jar">
 			<fileset dir="${srccontactrees}">
 				<include name="**/*.java" />
-				<include name="test/**/*.java" />
-				<include name="beast/**/*.png" />
-				<include name="beast/**/*.xsl" />
+				<include name="**/*.png" />
 			</fileset>
-        </jar>
+			</jar>
 		<jar jarfile="${distcontactrees}/contactrees.addon.jar">
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
 			</manifest>
-			<fileset dir="bin">
+			<fileset dir="${buildcontactrees}">
 				<include name="**/*.class" />
 				<include name="**/*.properties" />
 			</fileset>
@@ -143,7 +147,7 @@
 
 	<target name="addon"
 	        depends="build_jar_all_contactrees_NoJUnitTest"
-	        description="release BEAST 2 add-on version of contactrees">
+	        description="release BEAST 2 add-on version of contacTrees">
 
 		<delete dir="${Add_on_dir}" />
 		<!-- Create the release directory -->
@@ -166,9 +170,6 @@
 		</copy>
 		<copy todir="${Add_on_dir}">
 			<fileset file="${distcontactrees}/contactrees.src.jar" />
-		</copy>
-		<copy todir="${Add_on_dir}/templates">
-			<fileset file="templates/Weibull.xml" />
 		</copy>
 		<jar jarfile="${distcontactrees}/contactrees.addon.v${version}.zip">
 			<fileset dir="${Add_on_dir}">
