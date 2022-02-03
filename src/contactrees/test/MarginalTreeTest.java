@@ -1,24 +1,25 @@
 package contactrees.test;
 
-import contactrees.*;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.Test;
+
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Alignment;
 import beast.evolution.branchratemodel.UCRelaxedClockModel;
 import beast.evolution.likelihood.TreeLikelihood;
 import beast.evolution.sitemodel.SiteModel;
 import beast.evolution.substitutionmodel.JukesCantor;
-import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
-import beast.math.distributions.LogNormalDistributionModel;
 import beast.math.distributions.Uniform;
-import beast.util.ClusterTree;
 import beast.util.TreeParser;
-import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.List;
+import contactrees.Block;
+import contactrees.Conversion;
+import contactrees.MarginalNode;
+import contactrees.MarginalTree;
 
 /**
  * Unit test for marginal tree traversal.
@@ -26,7 +27,7 @@ import java.util.List;
  * @author Nico Neureiter
  */
 public class MarginalTreeTest extends ContactreesTest {
-    
+
     public MarginalTreeTest() {
     }
 
@@ -53,22 +54,22 @@ public class MarginalTreeTest extends ContactreesTest {
         blocks.get(3).addMove(conv1);
         blocks.get(3).addMove(conv2);
 
-        for (int b=0; b<N_BLOCKS; b++) {         
+        for (int b=0; b<N_BLOCKS; b++) {
             MarginalTree marginalTree = new MarginalTree();
             marginalTree.initByName("network", acg, "block", blocks.get(b), "nodetype", MarginalNode.class.getName());
 
             String newickStr = correctNewickStrings[b];
             Tree correctTree = new TreeParser(newickStr, false, true, false, 1);
             assertTrue(treesEquivalent(marginalTree, correctTree, 1e-15));
-            
+
             equalLikelihood(correctTree, marginalTree);
         }
     }
 
     @Test
     public void testNonOverlapping_2() throws Exception {
-        
-        
+
+
         // Test all marginals against truth
         // (I have eyeballed each of these trees and claim that they are correct.)
         String[] correctNewickStrings = {
@@ -83,22 +84,22 @@ public class MarginalTreeTest extends ContactreesTest {
         };
 
         List<Block> blocks = blockSet2.getBlocks();
-        
+
         blocks.get(1).addMove(conv2_1);
-        
+
         blocks.get(2).addMove(conv2_2);
-        
+
         blocks.get(3).addMove(conv2_3);
 
         blocks.get(4).addMove(conv2_1);
         blocks.get(4).addMove(conv2_2);
-        
+
         blocks.get(5).addMove(conv2_1);
         blocks.get(5).addMove(conv2_3);
-        
+
         blocks.get(6).addMove(conv2_2);
         blocks.get(6).addMove(conv2_3);
-        
+
         blocks.get(7).addMove(conv2_1);
         blocks.get(7).addMove(conv2_2);
         blocks.get(7).addMove(conv2_3);
@@ -110,7 +111,7 @@ public class MarginalTreeTest extends ContactreesTest {
 
             String newickStr = correctNewickStrings[b];
             Tree correctTree = new TreeParser(newickStr, false, true, false, 1);
-            
+
             assertTrue(treesEquivalent(marginalTree, correctTree, 1e-15));
             equalLikelihood(correctTree, marginalTree);
         }
@@ -118,8 +119,8 @@ public class MarginalTreeTest extends ContactreesTest {
 
     @Test
     public void testNonOverlapping_3() throws Exception {
-        
-        
+
+
         // Test all marginals against truth
         // (I have eyeballed each of these trees and claim that they are correct.)
         String[] correctNewickStrings = {
@@ -137,10 +138,10 @@ public class MarginalTreeTest extends ContactreesTest {
         List<List<Conversion>> convsByBlock = new ArrayList<>();
 
         convsByBlock.add(new ArrayList<>());
-        
+
         convsByBlock.add(new ArrayList<>());
         convsByBlock.get(1).add(conv2_1);
-        
+
         convsByBlock.add(new ArrayList<>());
         convsByBlock.get(2).add(conv2_2);
 
@@ -167,23 +168,23 @@ public class MarginalTreeTest extends ContactreesTest {
         for (int b=0; b<N_BLOCKS; b++) {
             System.out.println(b);
             Block block = blocks.get(b);
-            
+
             MarginalTree marginalTree = new MarginalTree();
             marginalTree.initByName("network", acg2, "block", blocks.get(b), "nodetype", MarginalNode.class.getName());
-            
+
             // Add conversions to block
             for (Conversion conv : convsByBlock.get(b))
                 block.addMove(conv);
-            
+
             // Update marginal tree
             marginalTree.requiresRecalculation();
-            
+
             //System.out.println(marginalTree + ";");
             String newickStr = correctNewickStrings[b];
             System.out.println(marginalTree.toString());
             System.out.println(newickStr);
             Tree correctTree = new TreeParser(newickStr, false, true, false, 1);
-            
+
             assertTrue(treesEquivalent(marginalTree, correctTree, 1e-15));
             equalLikelihood(correctTree, marginalTree);
         }
@@ -198,7 +199,7 @@ public class MarginalTreeTest extends ContactreesTest {
                 "distr", new Uniform(),
                 "tree", acg
                 );
-        
+
         // Test all marginals against truth
         // (I have eyeballed each of these trees and claim that they are correct.)
         String[] correctNewickStrings = {
@@ -219,25 +220,25 @@ public class MarginalTreeTest extends ContactreesTest {
         blocks.get(3).addMove(conv1);
         blocks.get(3).addMove(conv2);
 
-        for (int b=0; b<N_BLOCKS; b++) {         
+        for (int b=0; b<N_BLOCKS; b++) {
             MarginalTree marginalTree = new MarginalTree();
             marginalTree.initByName(
-                    "network", acg, 
+                    "network", acg,
                     "block", blocks.get(b),
                     "nodetype", MarginalNode.class.getName(),
                     "branchRateModel", clock);
 
             String newickStr = correctNewickStrings[b];
             Tree correctTree = new TreeParser(newickStr, false, true, false, 1);
-            
+
             assertTrue(treesEquivalentShifted(marginalTree, correctTree, 1e-15));
             equalLikelihood(correctTree, marginalTree);
         }
     }
-    
+
     public boolean equalLikelihood(Tree correctTree, MarginalTree derivedTree) {
         Alignment alignment = getAlignment(correctTree.getLeafNodeCount());
-                
+
         // Site model:
         JukesCantor jc = new JukesCantor();
         jc.initByName();
@@ -262,12 +263,12 @@ public class MarginalTreeTest extends ContactreesTest {
 
         double logPtrue = correctLikelihood.calculateLogP();
         double logP = derivedLikelihood.calculateLogP();
-        
+
         double diff = Math.abs(logPtrue - logP);
 
         assertTrue(diff < 0.001);
-        
+
         return true;
     }
-    
+
 }

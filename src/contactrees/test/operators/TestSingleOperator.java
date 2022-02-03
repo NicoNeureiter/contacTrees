@@ -6,11 +6,19 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.TreeSet;
 
+import org.apache.commons.math3.distribution.KolmogorovSmirnovDistribution;
+import org.apache.commons.math3.distribution.RealDistribution;
+import org.apache.commons.math3.distribution.UniformRealDistribution;
+import org.apache.commons.math3.exception.MathInternalError;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
-import org.apache.commons.math3.stat.inference.KolmogorovSmirnovTest;
+import org.apache.commons.math3.util.MathArrays;
 
 import beast.app.BeastMCMC;
 import beast.util.Randomizer;
@@ -102,11 +110,6 @@ public abstract class TestSingleOperator {
         printStats(movesPerConv, movesPerConvTarget, "movesPerConv");
 	}
 
-	protected static double ksTest(double[] samples1, double[] samples2) {
-		KolmogorovSmirnovTest ksTest = new KolmogorovSmirnovTest();
-		return ksTest.kolmogorovSmirnovTest(samples1, samples2);
-	}
-
 	protected void collectStatistics(int i, List<ACGWithBlocks> samples, double[] heightsArray, double[] convCountArray,
 									 double[] moveCountsArray, double[] meanConvHeightsArray, double[] obsConvRate, double[] movesPerConv) {
 		ACGWithBlocks sample = samples.get(i);
@@ -123,7 +126,7 @@ public abstract class TestSingleOperator {
 	    xMCMC = filterNaNs(xMCMC);
 	    xSimu = filterNaNs(xSimu);
 
-	    double ksStatistic = ksTest(xSimu, xMCMC);
+	    double ksStatistic = kolmogorovSmirnovTest(xSimu, xMCMC);
 
 		System.out.println();
 		System.out.println(String.format("KS-test %s: %.4f", statName, ksStatistic));
@@ -253,4 +256,154 @@ public abstract class TestSingleOperator {
 
 		return reader;
 	}
+
+
+	/*
+	 * From `commons-math 3.6`
+	 */
+
+    public double kolmogorovSmirnovTest(double[] x, double[] y) {
+        int LARGE_SAMPLE_PRODUCT = 10000;
+        final long lengthProduct = (long) x.length * y.length;
+        double[] xa = null;
+        double[] ya = null;
+        if (lengthProduct < LARGE_SAMPLE_PRODUCT && hasTies(x,y)) {
+            xa = MathArrays.copyOf(x);
+            ya = MathArrays.copyOf(y);
+            fixTies(xa, ya);
+        } else {
+            xa = x;
+            ya = y;
+        }
+        KolmogorovSmirnovDistribution ksDistr = new KolmogorovSmirnovDistribution(x.length);
+        return ksDistr.cdf(kolmogorovSmirnovStatistic(x, y));
+    }
+
+    public double kolmogorovSmirnovStatistic(double[] x, double[] y) {
+        return integralKolmogorovSmirnovStatistic(x, y)/((double)(x.length * (long)y.length));
+    }
+
+    private long integralKolmogorovSmirnovStatistic(double[] x, double[] y) {
+        // Copy and sort the sample arrays
+        final double[] sx = MathArrays.copyOf(x);
+        final double[] sy = MathArrays.copyOf(y);
+        Arrays.sort(sx);
+        Arrays.sort(sy);
+        final int n = sx.length;
+        final int m = sy.length;
+
+        int rankX = 0;
+        int rankY = 0;
+        long curD = 0l;
+
+        // Find the max difference between cdf_x and cdf_y
+        long supD = 0l;
+        do {
+            double z = Double.compare(sx[rankX], sy[rankY]) <= 0 ? sx[rankX] : sy[rankY];
+            while(rankX < n && Double.compare(sx[rankX], z) == 0) {
+                rankX += 1;
+                curD += m;
+            }
+            while(rankY < m && Double.compare(sy[rankY], z) == 0) {
+                rankY += 1;
+                curD -= n;
+            }
+            if (curD > supD) {
+                supD = curD;
+            }
+            else if (-curD > supD) {
+                supD = -curD;
+            }
+        } while(rankX < n && rankY < m);
+        return supD;
+    }
+
+    private static boolean hasTies(double[] x, double[] y) {
+        final HashSet<Double> values = new HashSet<Double>();
+            for (int i = 0; i < x.length; i++) {
+                if (!values.add(x[i])) {
+                    return true;
+                }
+            }
+            for (int i = 0; i < y.length; i++) {
+                if (!values.add(y[i])) {
+                    return true;
+                }
+            }
+        return false;
+    }
+
+    private static void fixTies(double[] x, double[] y) {
+       final double[] values = unique(concatenate(x,y));
+       if (values.length == x.length + y.length) {
+           return;
+       }
+       // Find the smallest difference between values, or 1 if all values are the same
+       double minDelta = 1;
+       double prev = values[0];
+       double delta = 1;
+       for (int i = 1; i < values.length; i++) {
+          delta = prev - values[i];
+          if (delta < minDelta) {
+              minDelta = delta;
+          }
+          prev = values[i];
+       }
+       minDelta /= 2;
+       // Add jitter using a fixed seed (so same arguments always give same results),
+       // low-initialization-overhead generator
+       final RealDistribution dist =
+               new UniformRealDistribution(-minDelta, minDelta);
+       // It is theoretically possible that jitter does not break ties, so repeat
+       // until all ties are gone.  Bound the loop and throw MIE if bound is exceeded.
+       int ct = 0;
+       boolean ties = true;
+       do {
+           jitter(x, dist);
+           jitter(y, dist);
+           ties = hasTies(x, y);
+           ct++;
+       } while (ties && ct < 1000);
+       if (ties) {
+           throw new MathInternalError(); // Should never happen
+       }
+    }
+
+    private static void jitter(double[] data, RealDistribution dist) {
+        for (int i = 0; i < data.length; i++) {
+            data[i] += dist.sample();
+        }
+    }
+
+   public static double[] concatenate(double[] ...x) {
+       int combinedLength = 0;
+       for (double[] a : x) {
+           combinedLength += a.length;
+       }
+       int offset = 0;
+       int curLength = 0;
+       final double[] combined = new double[combinedLength];
+       for (int i = 0; i < x.length; i++) {
+           curLength = x[i].length;
+           System.arraycopy(x[i], 0, combined, offset, curLength);
+           offset += curLength;
+       }
+       return combined;
+   }
+
+   public static double[] unique(double[] data) {
+       TreeSet<Double> values = new TreeSet<Double>();
+       for (int i = 0; i < data.length; i++) {
+           values.add(data[i]);
+       }
+       final int count = values.size();
+       final double[] out = new double[count];
+       Iterator<Double> iterator = values.iterator();
+       int i = 0;
+       while (iterator.hasNext()) {
+           out[count - ++i] = iterator.next();
+       }
+       return out;
+   }
+
 }
