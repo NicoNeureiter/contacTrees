@@ -1,5 +1,5 @@
 <packages>
-    <package name="contactrees" 
+    <package name="contacTrees" 
              version="1.0.0"
              description="Phylogenetic model with horizontal transfer for linguistics"
              projectURL="https://github.com/NicoNeureiter/contacTrees" 
