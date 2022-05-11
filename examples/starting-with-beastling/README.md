@@ -51,20 +51,22 @@ Where a standard phylogenetic analysis works with a single tree, contacTrees ass
 
 ### Model parameters
 
-The contacTrees model has a few additional parameters compared to a binary tree phylogenetic inference. These need to also be added as state nodes. Here I use the parameterization where instead of a conversion rate, the expected number of conversion edges in the whole tree is specified. (It then needs to distribute the rate on the entire tree, so it needs to know about the conversion graph.)
+The contacTrees model has a few additional parameters compared to a binary tree phylogenetic inference. These need to also be added as state nodes.
+
+The first of these parameters is the conversion rate, which governs the number of conversion edges (i.e. discrete language contact events) in the tree. Here I use the parameterization where instead of a conversion rate, the expected number of conversion edges in the whole tree is specified. To do this, contacTrees needs to adjust the conversionRate to give the expected number of edges, so it needs to know the exact shape of the network (or at least the backbone tree).
 
     <parameter id="expectedConversions" name="stateNode" estimate="false" value="0.25"/>
     <stateNode id="conversionRate" spec="contactrees.model.ConversionRate" expectedConversions="@expectedConversions" linearContactGrowth="true" network="@Tree.t:beastlingTree"/>
 
-...
-
-    <parameter id="pMove" name="stateNode" estimate="true" value="0.1" lower="0.0" upper="0.4"/>
-
-...
+Each concept forms a “block” that is either completely inherited along a conversion edge or not at all. The state needs to track for each block which path it takes, so each Block is practically a vector of binary borrow/inherit choices, with logic attached to it that deals with the adding and removing of edges.
 
       <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
         <stateNode spec="contactrees.Block" id="$(concept)"/>
       </plate>
+
+The “borrowing probability” (or, more generally, the probability `pMove` of a block moving over a conversion edge, instead of being inherited) is another model parameter, which we infer to be between 0 and 0.4 – the theoretical maximum is 0.5, because the only thing that internally distinguishes borrowing from inheritance is that borrowing is the minority path, while inheritance is the majority path.
+
+    <parameter id="pMove" name="stateNode" estimate="true" value="0.1" lower="0.0" upper="0.4"/>
 
 ### Priors
 
