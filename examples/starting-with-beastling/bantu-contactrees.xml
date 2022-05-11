@@ -464,7 +464,7 @@ analysis using BEASTling and the above configuration may not be valid.
   <branchRateModel id="StrictClockModel.c:default" spec="beast.evolution.branchratemodel.StrictClockModel" clock.rate="@clockRate.c:default" />
   <run id="mcmc" spec="MCMC" chainLength="10000000" numInitializationAttempts="1000">
     <state id="state" storeEvery="5000">
-      <tree id="Tree.t:beastlingTree" name="stateNode">
+      <tree id="Tree.t:beastlingTree" name="stateNode" spec="contactrees.ConversionGraph">
         <taxonset idref="taxa" />
       </tree>
       <parameter id="birthRate.t:beastlingTree" name="stateNode">1.0</parameter>
@@ -474,6 +474,14 @@ analysis using BEASTling and the above configuration may not be valid.
       </plate>
       <parameter id="featureClockRateGammaShape:bantu-vocabulary" lower="1.1" upper="100.0" name="stateNode">5.0</parameter>
       <parameter id="featureClockRateGammaScale:bantu-vocabulary" name="stateNode">0.2</parameter>
+
+      <parameter id="expectedConversions" name="stateNode" estimate="false" value="0.25"/>
+      <stateNode id="conversionRate" spec="contactrees.model.ConversionRate" expectedConversions="@expectedConversions" linearContactGrowth="true" network="@Tree.t:beastlingTree"/>
+      <parameter id="pMove" name="stateNode" estimate="true" value="0.1" lower="0.0" upper="0.4"/>
+
+      <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
+        <stateNode spec="contactrees.Block" id="$(concept)"/>
+      </plate>
     </state>
     <init estimate="false" id="startingTree" initial="@Tree.t:beastlingTree" taxonset="@taxa" spec="beast.evolution.tree.RandomTree">
       <populationModel spec="ConstantPopulation">
@@ -482,7 +490,11 @@ analysis using BEASTling and the above configuration may not be valid.
     </init>
     <distribution id="posterior" spec="util.CompoundDistribution">
       <distribution id="prior" spec="util.CompoundDistribution">
-        <distribution id="YuleModel.t:beastlingTree" tree="@Tree.t:beastlingTree" spec="beast.evolution.speciation.YuleModel" birthDiffRate="@birthRate.t:beastlingTree" />
+
+        <distribution id="ACGTreePrior" spec="contactrees.model.ACGDistribution" network="@Tree.t:beastlingTree" conversionRate="@conversionRate" linearContactGrowth="true" upperConvCountBound="50">
+          <distribution name="cfModel" id="YuleModel.t:beastlingTree" tree="@Tree.t:beastlingTree" spec="beast.evolution.speciation.YuleModel" birthDiffRate="@birthRate.t:beastlingTree" />
+        </distribution>
+
         <prior id="YuleBirthRatePrior.t:beastlingTree" name="distribution" x="@birthRate.t:beastlingTree">
           <Uniform id="Uniform.0" name="distr" upper="Infinity" />
         </prior>
@@ -500,9 +512,19 @@ analysis using BEASTling and the above configuration may not be valid.
         <prior id="featureClockRateGammaScalePrior.s:bantu-vocabulary" name="distribution" x="@featureClockRateGammaScale:bantu-vocabulary">
           <Exponential id="featureClockRateGammaShapePriorExponential.s:bantu-vocabulary" mean="0.23" name="distr" />
         </prior>
+
+        <distribution id="ConvMovePrior" spec="contactrees.model.ConversionMovePrior" network="@Tree.t:beastlingTree" pMove="@pMove">
+          <blockSet spec="contactrees.BlockSet" id="allBlocks" network="@Tree.t:beastlingTree">
+            <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
+              <block idref="$(concept)"/>
+            </plate>
+          </blockSet>
+        </distribution>
+
       </distribution>
       <distribution id="likelihood" spec="util.CompoundDistribution">
-        <distribution id="featureLikelihood:bantu-vocabulary:animal" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:animal" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.animal" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@animal" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:animal" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:animal" proportionInvariant="0">
             <substModel id="binaryCTMC.s:bantu-vocabulary" spec="GeneralSubstitutionModel">
               <parameter id="rates.s:bantu-vocabulary" dimension="2" estimate="false" name="rates">1.0 1.0</parameter>
@@ -513,595 +535,694 @@ analysis using BEASTling and the above configuration may not be valid.
             <userDataType id="BinaryDatatype" spec="beast.evolution.datatype.Binary" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:arm" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:arm" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.arm" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@arm" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:arm" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:arm" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:arm" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="34-61" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:ashes" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:ashes" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.ashes" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@ashes" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:ashes" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:ashes" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:ashes" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="62-123" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:bark" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:bark" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.bark" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@bark" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:bark" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:bark" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:bark" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="124-196" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:bed" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:bed" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.bed" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@bed" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:bed" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:bed" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:bed" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="197-245" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:belly" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:belly" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.belly" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@belly" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:belly" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:belly" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:belly" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="246-297" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:big" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:big" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.big" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@big" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:big" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:big" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:big" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="298-367" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:bird" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:bird" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.bird" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@bird" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:bird" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:bird" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:bird" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="368-392" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:bite" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:bite" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.bite" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@bite" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:bite" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:bite" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:bite" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="393-438" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:blood" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:blood" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.blood" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@blood" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:blood" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:blood" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:blood" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="439-487" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:bone" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:bone" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.bone" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@bone" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:bone" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:bone" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:bone" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="488-520" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:breast" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:breast" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.breast" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@breast" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:breast" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:breast" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:breast" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="521-545" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:burn" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:burn" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.burn" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@burn" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:burn" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:burn" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:burn" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="546-601" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:child" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:child" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.child" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@child" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:child" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:child" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:child" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="602-614" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:cloud" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:cloud" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.cloud" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@cloud" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:cloud" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:cloud" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:cloud" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="615-691" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:come" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:come" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.come" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@come" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:come" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:come" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:come" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="692-746" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:count" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:count" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.count" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@count" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:count" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:count" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:count" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="747-778" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:dew" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:dew" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.dew" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@dew" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:dew" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:dew" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:dew" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="779-842" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:die" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:die" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.die" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@die" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:die" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:die" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:die" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="843-859" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:dog" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:dog" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.dog" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@dog" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:dog" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:dog" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:dog" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="860-889" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:drink" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:drink" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.drink" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@drink" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:drink" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:drink" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:drink" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="890-914" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:ear" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:ear" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.ear" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@ear" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:ear" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:ear" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:ear" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="915-936" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:eat" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:eat" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.eat" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@eat" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:eat" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:eat" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:eat" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="937-945" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:egg" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:egg" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.egg" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@egg" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:egg" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:egg" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:egg" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="946-987" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:elephant" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:elephant" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.elephant" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@elephant" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:elephant" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:elephant" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:elephant" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="988-1000" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:eye" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:eye" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.eye" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@eye" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:eye" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:eye" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:eye" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1001-1013" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:face" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:face" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.face" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@face" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:face" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:face" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:face" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1014-1047" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:fall" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:fall" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.fall" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@fall" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:fall" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:fall" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:fall" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1048-1079" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:fat_oil" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:fat_oil" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.fat_oil" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@fat_oil" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:fat_oil" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:fat_oil" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:fat_oil" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1080-1107" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:feather" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:feather" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.feather" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@feather" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:feather" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:feather" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:feather" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1108-1177" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:fingernail" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:fingernail" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.fingernail" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@fingernail" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:fingernail" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:fingernail" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:fingernail" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1178-1243" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:fire" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:fire" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.fire" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@fire" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:fire" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:fire" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:fire" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1244-1284" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:fire-wood" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:fire-wood" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.fire-wood" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@fire-wood" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:fire-wood" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:fire-wood" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:fire-wood" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1285-1322" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:fish" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:fish" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.fish" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@fish" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:fish" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:fish" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:fish" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1323-1364" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:five" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:five" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.five" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@five" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:five" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:five" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:five" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1365-1374" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:fly" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:fly" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.fly" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@fly" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:fly" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:fly" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:fly" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1375-1437" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:four" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:four" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.four" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@four" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:four" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:four" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:four" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1438-1446" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:give" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:give" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.give" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@give" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:give" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:give" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:give" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1447-1492" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:goat" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:goat" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.goat" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@goat" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:goat" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:goat" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:goat" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1493-1516" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:ground_soil" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:ground_soil" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.ground_soil" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@ground_soil" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:ground_soil" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:ground_soil" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:ground_soil" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1517-1566" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:hair" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:hair" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.hair" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@hair" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:hair" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:hair" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:hair" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1567-1622" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:head" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:head" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.head" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@head" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:head" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:head" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:head" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1623-1640" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:hear" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:hear" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.hear" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@hear" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:hear" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:hear" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:hear" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1641-1682" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:heart" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:heart" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.heart" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@heart" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:heart" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:heart" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:heart" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1683-1716" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:horn" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:horn" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.horn" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@horn" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:horn" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:horn" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:horn" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1717-1761" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:house" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:house" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.house" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@house" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:house" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:house" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:house" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1762-1792" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:hunger" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:hunger" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.hunger" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@hunger" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:hunger" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:hunger" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:hunger" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1793-1809" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:intestine" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:intestine" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.intestine" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@intestine" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:intestine" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:intestine" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:intestine" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1810-1839" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:iron" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:iron" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.iron" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@iron" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:iron" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:iron" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:iron" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1840-1894" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:kill" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:kill" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.kill" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@kill" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:kill" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:kill" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:kill" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1895-1938" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:knee" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:knee" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.knee" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@knee" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:knee" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:knee" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:knee" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="1939-2002" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:knife" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:knife" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.knife" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@knife" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:knife" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:knife" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:knife" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2003-2065" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:know" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:know" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.know" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@know" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:know" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:know" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:know" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2066-2111" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:leaf" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:leaf" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.leaf" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@leaf" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:leaf" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:leaf" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:leaf" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2112-2173" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:leg" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:leg" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.leg" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@leg" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:leg" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:leg" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:leg" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2174-2214" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:liver" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:liver" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.liver" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@liver" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:liver" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:liver" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:liver" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2215-2283" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:louse" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:louse" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.louse" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@louse" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:louse" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:louse" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:louse" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2284-2333" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:man" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:man" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.man" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@man" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:man" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:man" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:man" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2334-2384" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:moon" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:moon" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.moon" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@moon" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:moon" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:moon" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:moon" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2385-2408" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:mouth" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:mouth" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.mouth" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@mouth" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:mouth" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:mouth" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:mouth" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2409-2429" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:name" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:name" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.name" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@name" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:name" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:name" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:name" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2430-2449" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:navel" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:navel" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.navel" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@navel" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:navel" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:navel" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:navel" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2450-2492" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:neck" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:neck" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.neck" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@neck" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:neck" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:neck" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:neck" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2493-2528" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:night" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:night" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.night" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@night" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:night" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:night" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:night" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2529-2567" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:nose" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:nose" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.nose" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@nose" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:nose" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:nose" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:nose" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2568-2609" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:one" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:one" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.one" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@one" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:one" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:one" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:one" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2610-2648" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:person" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:person" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.person" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@person" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:person" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:person" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:person" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2649-2663" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:rain" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:rain" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.rain" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@rain" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:rain" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:rain" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:rain" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2664-2688" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:road" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:road" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+<tree id="marginalTree.road" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@road" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:road" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:road" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:road" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2689-2735" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:root" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:root" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+<tree id="marginalTree.root" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@root" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:root" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:root" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:root" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2736-2795" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:salt" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:salt" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+<tree id="marginalTree.salt" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@salt" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:salt" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:salt" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:salt" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2796-2834" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:sand" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:sand" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+<tree id="marginalTree.sand" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@sand" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:sand" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:sand" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:sand" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2835-2880" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:see" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:see" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+<tree id="marginalTree.see" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@see" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:see" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:see" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:see" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2881-2918" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:send" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:send" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+<tree id="marginalTree.send" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@send" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:send" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:send" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:send" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2919-2943" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:shame" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:shame" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+<tree id="marginalTree.shame" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@shame" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:shame" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:shame" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:shame" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2944-2965" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:sing" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:sing" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.sing" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@sing" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:sing" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:sing" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:sing" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="2966-3011" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:skin" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:skin" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.skin" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@skin" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:skin" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:skin" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:skin" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3012-3075" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:sky" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:sky" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.sky" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@sky" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:sky" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:sky" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:sky" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3076-3129" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:sleep" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:sleep" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.sleep" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@sleep" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:sleep" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:sleep" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:sleep" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3130-3171" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:smoke" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:smoke" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.smoke" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@smoke" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:smoke" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:smoke" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:smoke" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3172-3213" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:snake" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:snake" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.snake" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@snake" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:snake" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:snake" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:snake" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3214-3249" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:spear" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:spear" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.spear" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@spear" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:spear" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:spear" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:spear" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3250-3277" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:steal" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:steal" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.steal" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@steal" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:steal" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:steal" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:steal" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3278-3305" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:stone" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:stone" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.stone" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@stone" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:stone" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:stone" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:stone" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3306-3347" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:sun" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:sun" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.sun" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@sun" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:sun" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:sun" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:sun" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3348-3413" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:tail" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:tail" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.tail" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@tail" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:tail" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:tail" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:tail" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3414-3456" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:ten" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:ten" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.ten" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@ten" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:ten" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:ten" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:ten" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3457-3476" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:three" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:three" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.three" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@three" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:three" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:three" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:three" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3477-3484" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:tongue" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:tongue" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.tongue" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@tongue" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:tongue" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:tongue" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:tongue" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3485-3505" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:tooth" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:tooth" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.tooth" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@tooth" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:tooth" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:tooth" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:tooth" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3506-3512" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:tree" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:tree" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.tree" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@tree" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:tree" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:tree" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:tree" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3513-3553" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:two" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:two" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.two" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@two" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:two" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:two" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:two" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3554-3572" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:urine" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:urine" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.urine" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@urine" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:urine" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:urine" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:urine" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3573-3604" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:village" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:village" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.village" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@village" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:village" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:village" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:village" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3605-3672" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:vomit" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:vomit" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.vomit" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@vomit" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:vomit" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:vomit" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:vomit" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3673-3704" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:walk" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:walk" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.walk" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@walk" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:walk" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:walk" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:walk" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3705-3758" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:war" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:war" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.war" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@war" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:war" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:war" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:war" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3759-3807" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:water" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:water" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.water" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@water" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:water" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:water" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:water" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3808-3846" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:wind" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:wind" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+          <tree id="marginalTree.wind" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@wind" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:wind" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:wind" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:wind" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3847-3895" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
           </data>
         </distribution>
-        <distribution id="featureLikelihood:bantu-vocabulary:woman" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" tree="@Tree.t:beastlingTree">
+        <distribution id="featureLikelihood:bantu-vocabulary:woman" spec="TreeLikelihood" useAmbiguities="true" branchRateModel="@StrictClockModel.c:default" >
+<tree id="marginalTree.woman" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@woman" branchRateModel="@StrictClockModel.c:default" />
           <siteModel id="SiteModel.bantu-vocabulary:woman" spec="SiteModel" mutationRate="@featureClockRate:bantu-vocabulary:woman" proportionInvariant="0" substModel="@binaryCTMC.s:bantu-vocabulary" />
           <data id="feature_data_bantu-vocabulary:woman" spec="FilteredAlignment" data="@data_bantu-vocabulary" filter="3896-3953" ascertained="true" excludefrom="0" excludeto="1">
             <userDataType idref="BinaryDatatype" />
@@ -1131,6 +1252,39 @@ analysis using BEASTling and the above configuration may not be valid.
       </plate>
       <weightvector id="featureClockRateWeightParameter:default" spec="parameter.IntegerParameter" dimension="100" estimate="false">32 27 61 72 48 51 69 24 45 48 32 24 55 12 76 54 31 63 16 29 24 21 8 41 12 12 33 31 27 69 65 40 37 41 9 62 8 45 23 49 55 17 41 33 44 30 16 29 54 43 63 62 45 61 40 68 49 50 23 20 19 42 35 38 41 38 14 24 46 59 38 45 37 24 21 45 63 53 41 41 35 27 27 41 65 42 19 7 20 6 40 18 31 67 31 53 48 38 48 57</weightvector>
     </operator>
+
+    <operator id="AddRemoveConversion.t" spec="contactrees.operators.AddRemoveConversionGibbs" weight="50.0" acg="@Tree.t:beastlingTree" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" networkPrior="@ACGTreePrior">
+      <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
+        <treeLikelihood idref="featureLikelihood:bantu-vocabulary:$(concept)"/>
+      </plate>
+    </operator>
+
+    <operator id="GibbsSampleMovesPerConversion.t" spec="contactrees.operators.GibbsSampleMovesPerConversion" weight="10.0" acg="@Tree.t:beastlingTree" pMove="@pMove" blockSet="@allBlocks" mcmcmc="true">
+        <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
+          <treeLikelihood idref="featureLikelihood:bantu-vocabulary:$(concept)"/>
+        </plate>
+    </operator>
+
+    <operator id="ConvertedEdgeSlide.t" spec="contactrees.operators.ConvertedEdgeSlide" acg="@Tree.t:beastlingTree" apertureSize="0.2" weight="15.0"/>
+    <operator id="ConvertedEdgeFlip.t" spec="contactrees.operators.ConvertedEdgeFlip" acg="@Tree.t:beastlingTree" weight="1.0"/>
+    <operator id="ConversionSplit.t" spec="contactrees.operators.ConversionSplit" acg="@Tree.t:beastlingTree" weight="1.0"
+            blockSet="@allBlocks" conversionRate="@conversionRate" networkPrior="@ACGTreePrior" flip="false" pMove="@pMove"/>
+    <operator id="ConvertedEdgeHop.source" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:beastlingTree" sourceOnly="true" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" networkPrior="@ACGTreePrior" weight="2.0">
+        <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
+          <treeLikelihood idref="featureLikelihood:bantu-vocabulary:$(concept)"/>
+        </plate>
+    </operator>
+    <operator id="ConvertedEdgeHop.source.narrow" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:beastlingTree" sourceOnly="true" nClosestRelatives="3" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" networkPrior="@ACGTreePrior" weight="6.0">
+        <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
+          <treeLikelihood idref="featureLikelihood:bantu-vocabulary:$(concept)"/>
+        </plate>
+    </operator>
+    <operator id="ConvertedEdgeHop.narrow" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:beastlingTree" blockSet="@allBlocks" nClosestRelatives="3" pMove="@pMove" conversionRate="@conversionRate" networkPrior="@ACGTreePrior" weight="2.0">
+        <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
+          <treeLikelihood idref="featureLikelihood:bantu-vocabulary:$(concept)"/>
+        </plate>
+    </operator>
+
     <logger id="screenlog" logEvery="1000">
       <log arg="@posterior" id="ESS.0" spec="util.ESS" />
       <log idref="prior" />
