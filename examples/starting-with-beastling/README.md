@@ -58,7 +58,7 @@ The first of these parameters is the conversion rate, which governs the number o
     <parameter id="expectedConversions" name="stateNode" estimate="false" value="0.25"/>
     <stateNode id="conversionRate" spec="contactrees.model.ConversionRate" expectedConversions="@expectedConversions" linearContactGrowth="true" network="@Tree.t:beastlingTree"/>
 
-Each concept forms a “block” that is either completely inherited along a conversion edge or not at all. The state needs to track for each block which path it takes, so each Block is practically a vector of binary borrow/inherit choices, with logic attached to it that deals with the adding and removing of edges.
+Each concept forms a “block” that is either completely inherited along a conversion edge or not at all. The state needs to track for each block which path it takes, so each Block is practically a vector of binary borrow/inherit choices, with logic attached to it that deals with the adding and removing of edges. I construct the blocks based on a `plate` of concepts (which is generated elsewhere by BEASTling because of the rate variation, I only need to copy it), which I will re-use below. (I could avoid the repeated lists of concepts using some XML entity magic, but that would distract from the content of this tutorial.)
 
       <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
         <stateNode spec="contactrees.Block" id="$(concept)"/>
@@ -81,7 +81,7 @@ I have
         </distribution>
 
 
-The model tracks for each concept (“block”) which conversion edges are used or not used. I construct this based on a `plate` of concepts (which is generated elsewhere by BEASTling because of the rate variation).
+The each “block” may or may not move along each conversion edge. In total, the proportion of blocks that move should follow the probability `pMove`, so the following prior implements essentially a binomial distribution over all blocks and conversion edges.
 
       <distribution id="ConvMovePrior" spec="ConversionMovePrior" network="@Tree.t:beastlingTree" pMove="@pMove">
         <blockSet spec="contactrees.BlockSet" id="allBlocks" network="@Tree.t:beastlingTree">
