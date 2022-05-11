@@ -135,4 +135,6 @@ The operators for adding, removing, and changing conversion edges need to be add
         </plate>
     </operator>
     
+### Logging
 
+...
