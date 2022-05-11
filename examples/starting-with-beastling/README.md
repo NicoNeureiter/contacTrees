@@ -99,8 +99,10 @@ Each individual concept likelihood remains a tree likelihood. Hovever, the the s
     
 needs to contain the corresponding marginal tree for the specific block
 
-    <tree id="marginalTree.two" spec="MarginalTree" network="@Tree.t:beastlingTree" block="@two" branchRateModel="@clock.medium"/>
+    <tree id="marginalTree.CONCEPT" spec="contactrees.MarginalTree" network="@Tree.t:beastlingTree" block="@CONCEPT" branchRateModel="@StrictClockModel.c:default" />
     
+(This can be solved with regular-expression-capable search-and-replace and is a bit cumbersome otherwise.)
+
 ### Operators
 
 The operators for adding, removing, and changing conversion edges need to be added.
