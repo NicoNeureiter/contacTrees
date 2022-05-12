@@ -1,0 +1,425 @@
+ID,Name,Glottocode,Glottolog_Name,ISO639P3code,Macroarea,Latitude,Longitude,Family,Source
+a11londo,A11_Londo,orok1266,Oroko,bdu,Africa,4.89504,9.15209,Atlantic-Congo,45733
+a121mbonge,A121_Mbonge,orok1266,Oroko,bdu,Africa,4.89504,9.15209,Atlantic-Congo,124722
+a122bakundu,A122_Bakundu,orok1266,Oroko,bdu,Africa,4.89504,9.15209,Atlantic-Congo,ALGABA122Bakundu
+a141lefo,A141_Lefo,bafa1247,Bafaw-Balong,bwt,Africa,4.53307,9.522,Atlantic-Congo,124592
+a151nkongho,A151_Nkongho,nkon1247,Nkongho,nkc,Africa,5.33848,9.80096,Atlantic-Congo,124592
+a15ambuu,A15A_Mbuu,mboc1235,Mbo (Cameroon),mbo,Africa,5.13981,9.92766,Atlantic-Congo,124592
+a15bmiengenwmanenguba,A15B_Mienge_NW_Manenguba,bass1260,Bassossi,bsi,Africa,5.23655,9.52275,Atlantic-Congo,124592
+a15cakossi,A15C_Akossi,akoo1248,Akoose,bss,Africa,4.9243,9.65522,Atlantic-Congo,124592
+a15celungcentralmanenguba,A15C_Elung_Central_Manenguba,akoo1248,Akoose,bss,Africa,4.9243,9.65522,Atlantic-Congo,124592
+a15cmkaa,A15C_Mkaa,baka1273,Bakaka,bqz,Africa,4.79991,9.80402,Atlantic-Congo,124592
+a15manenguba,A15_Manenguba,bass1260,Bassossi,bsi,Africa,5.23655,9.52275,Atlantic-Congo,124592
+a22bakweri,A22_Bakweri,mokp1239,Mokpwe,bri,Africa,4.24178,9.23887,Atlantic-Congo,CBOLDA22Bakweri
+a24duala,A24_Duala,dual1243,Duala,dua,Africa,4.10208,9.61877,Atlantic-Congo,153918
+a27malimba,A27_Malimba,mali1280,Malimba,mzd,Africa,3.67696,9.67186,Atlantic-Congo,84020
+a31bubi,A31_Bubi,bube1242,Bube,bvb,Africa,3.53638,8.68929,Atlantic-Congo,54475
+a32cbatanga,A32C_Batanga,bata1285,Batanga,bnm,Africa,1.397041,9.51011,Atlantic-Congo,29588
+a33ayasa,A33a_Yasa,yasa1242,Yasa,yko,Africa,2.06043,10.678,Atlantic-Congo,319422
+a34benga,A34_Benga,beng1282,Benga,bng,Africa,1.075766,9.600739,Atlantic-Congo,ALGABA34Benga
+a41barombikang,A41_Barombi-Kang,baro1252,Barombi,bbi,Africa,4.64584,9.25261,Atlantic-Congo,84020
+a42abo,A42_Abo,bank1256,Bankon,abb,Africa,4.3702,9.6403,Atlantic-Congo,84020
+a43abasaa,A43a_Basaa,basa1284,Basa (Cameroon),bas,Africa,3.80765,10.4213,Atlantic-Congo,ALGABA43aBasaa
+a44tunen,A44_Tunen,tune1261,Tunen,tvu,Africa,4.75,10.67,Atlantic-Congo,99410
+a45nyokon,A45_Nyokon,nyok1243,Nyokon,nvo,Africa,4.75,10.5,Atlantic-Congo,33090
+a462yambeta,A462_Yambeta,yamb1252,Yambeta,yat,Africa,4.83615,10.9369,Atlantic-Congo,33090
+a46nomaande,A46_Nomaande,noma1260,Nomaande,lem,Africa,4.5893,10.9157,Atlantic-Congo,Taylor2003
+a51bafiamaja,A51_Bafia_maja,bafi1243,Bafia,ksf,Africa,4.72603,11.0982,Atlantic-Congo,29588
+a53bafiarikpa,A53_Bafia_rikpa,bafi1243,Bafia,ksf,Africa,4.72603,11.0982,Atlantic-Congo,142993
+a54tibea,A54_Tibea,tibe1274,Tibea,ngy,Africa,5.30535,11.3103,Atlantic-Congo,42526
+a601tuki,A601_Tuki,tuki1240,Tuki,bag,Africa,4.64348,11.5353,Atlantic-Congo,74679
+a61ngoroasom,A61_Ngoro-Asom,tuki1240,Tuki,bag,Africa,4.64348,11.5353,Atlantic-Congo,42526
+a61ngorobisoo,A61_Ngoro-Bisoo,tuki1240,Tuki,bag,Africa,4.64348,11.5353,Atlantic-Congo,42526
+a61ngorolunda,A61_Ngoro-lunda,tuki1240,Tuki,bag,Africa,4.64348,11.5353,Atlantic-Congo,42526
+a621nubaca,A621_Nubaca,nuba1241,Nubaca,baf,Africa,4.35696,11.029,Atlantic-Congo,42526
+a622nugunu,A622_Nugunu,nugu1242,Nugunu (Cameroon),yas,Africa,4.63103,11.1837,Atlantic-Congo,RobinsonNugunu
+a62anuasue,A62A_Nuasue,yang1293,Yangben,yav,Africa,4.41971,11.0277,Atlantic-Congo,33021
+a62anukalonge,A62A_Nukalonge,yang1293,Yangben,yav,Africa,4.41971,11.0277,Atlantic-Congo,PaulianKalong
+a62bmmala,A62B_Mmala,mmaa1238,Mmaala,mmu,Africa,4.52188,11.0599,Atlantic-Congo,116661
+a62clibie,A62C_Libie,elip1238,Elip,ekm,Africa,4.45694,11.193,Atlantic-Congo,116661
+a63mangisa,A63_Mangisa,eton1253,Eton (Cameroon),eto,Africa,4.21045,11.3935,Atlantic-Congo,SILMangisa
+a71eton,A71_Eton,eton1253,Eton (Cameroon),eto,Africa,4.21045,11.3935,Atlantic-Congo,26083
+a72aewondo,A72a_Ewondo,ewon1239,Ewondo,ewo,Africa,4.21141,11.93646,Atlantic-Congo,153533
+a74abulu,A74a_Bulu,bulu1251,Bulu (Cameroon),bum,Africa,3.16141,11.6365,Atlantic-Congo,45568
+a75afangbitam,A75a_Fang_Bitam,fang1246,Fang (Equatorial Guinea),fan,Africa,1.723965,11.61454,Atlantic-Congo,ALGABA75aFangBitam
+a75afangmedouneu,A75a_Fang_Medouneu,fang1246,Fang (Equatorial Guinea),fan,Africa,1.723965,11.61454,Atlantic-Congo,ALGABA75aFangMedouneu
+a75afangminvoul,A75a_Fang_Minvoul,fang1246,Fang (Equatorial Guinea),fan,Africa,1.723965,11.61454,Atlantic-Congo,ALGABA75aFangMinvoul
+a803shiwa,A803_Shiwa,shiw1234,Shiwa,,Africa,-0.091645,11.947061,Atlantic-Congo,ALGABA803Shiwa
+a81kwasio,A81_Kwasio,kwas1243,Kwasio,nmg,Africa,2.39354,10.0812,Atlantic-Congo,ALGABA81Kwasio
+a832bekol,A832_Bekol,kolc1235,Kol (Cameroon),biw,Africa,3.65994,12.8574,Atlantic-Congo,132350
+a83mekaa,A83_Mekaa,maka1304,Makaa,mcp,Africa,4.15471,13.0789,Atlantic-Congo,ALGABA83Mekaa
+a841badwe,A841_Badwe,koon1245,Koonzime,ozm,Africa,3.25933,13.54152,Atlantic-Congo,Beavon2000
+a84njem,A84_Njem,njye1238,Njyem,njy,Africa,2.30483,14.1175,Atlantic-Congo,Beavon1996
+a85bbekwilmakokou,A85b_Bekwil_Makokou,bekw1242,Bekwil,bkw,Africa,1.71801,14.6527,Atlantic-Congo,ALGABA85bBekwilMakokou
+a85bbekwilmv,A85b_Bekwil_Mv,bekw1242,Bekwil,bkw,Africa,1.71801,14.6527,Atlantic-Congo,ALGABA85bBekwilMv
+a86cmpiemo,A86c_Mpiemo,mpie1238,Mpiemo,mcx,Africa,3.45776,15.5246,Atlantic-Congo,CBOLDA86cMpiemo
+a87bomwali,A87_Bomwali,pomo1271,Pomo,pmm,Africa,1.83,16.17,Atlantic-Congo,29588
+a91kwakum,A91_Kwakum,kwak1266,Kwakum,kwu,Africa,4.34393,13.6446,Atlantic-Congo,Belliard2007
+a93kako,A93_Kako,kako1242,Kako,kkj,Africa,3.79989,15.6282,Atlantic-Congo,42305
+aghemgrassfields,Aghem_Grassfields,aghe1239,Aghem,agq,Africa,6.38956,10.0807,Atlantic-Congo,ALGABAghemGrassfields
+b11ampongwe,B11a_Mpongwe,myen1241,Myene,mye,Africa,-1.48741,9.50247,Atlantic-Congo,ALGABB11aMpongwe
+b11borungu,B11b_Orungu,myen1241,Myene,mye,Africa,-1.48741,9.50247,Atlantic-Congo,ALGABB11bOrungu
+b11cgalwa,B11c_Galwa,myen1241,Myene,mye,Africa,-1.48741,9.50247,Atlantic-Congo,ALGABB11cGalwa
+b11ddyumba,B11d_Dyumba,myen1241,Myene,mye,Africa,-1.48741,9.50247,Atlantic-Congo,ALGABB11dDyumba
+b11fenenga,B11F_Enenga,myen1241,Myene,mye,Africa,-1.48741,9.50247,Atlantic-Congo,ALGABB11FEnenga
+b201ndasa,B201_Ndasa,ndas1238,Ndasa,nda,Africa,-2.449015,13.369465,Atlantic-Congo,ALGABB201Ndasa
+b202sigu,B202_Sigu,sigh1238,Sighu,sxe,Africa,-0.95605,13.1214,Atlantic-Congo,317977
+b203samaye,B203_Samaye,osam1235,Osamayi,syx,Africa,-0.012,13.61,Atlantic-Congo,163461
+b204ndambomoli,B204_Ndambomo_Li,ndam1254,Ndambomo,nxo,Africa,-0.82,12.77,Atlantic-Congo,ALGABB204NdambomoLi
+b204ndambomomassoukou,B204_Ndambomo_Massoukou,ndam1254,Ndambomo,nxo,Africa,-0.82,12.77,Atlantic-Congo,ALGABB204NdambomoMassoukou
+b204ndambomombadi,B204_Ndambomo_Mbadi,ndam1254,Ndambomo,nxo,Africa,-0.82,12.77,Atlantic-Congo,ALGABB204NdambomoMbadi
+b21seki,B21_Seki,seki1238,Seki,syi,Africa,1.52302,9.79206,Atlantic-Congo,ALGABB21Seki
+b22akele,B22a_Kele,kele1257,Kélé,keb,Africa,-0.78854,10.3836,Atlantic-Congo,ALGABB22aKele
+b22bkoya,B22b_Koya,ngom1270,Ngom,nra,Africa,0.882925,14.1345,Atlantic-Congo,ALGABB22bKoya
+b22bngom,B22b_Ngom,ngom1270,Ngom,nra,Africa,0.882925,14.1345,Atlantic-Congo,ALGABB22bNgom
+b22emwesa,B22E_Mwesa,mwes1234,Mwesa,,Africa,0.086134,13.30037,Atlantic-Congo,ALGABB22EMwesa
+b23mbangwe,B23_Mbangwe,mban1268,Mbangwe,zmn,Africa,-2.28729,13.5956,Atlantic-Congo,ALGABB23Mbangwe
+b24wumbvu,B24_Wumbvu,wumb1242,Wumbvu,wum,Africa,-2.39234,12.264,Atlantic-Congo,ALGABB24Wumbvu
+b251shake,B251_Shake,sake1247,Sake,sak,Africa,0.25188,11.787,Atlantic-Congo,ALGABB251Shake
+b252mahongwe,B252_Mahongwe,maho1248,Mahongwe,mhb,Africa,0.64356,14.0472,Atlantic-Congo,ALGABB252Mahongwe
+b25kota,B25_Kota,kota1274,Kota (Gabon),koq,Africa,1.016,13.97,Atlantic-Congo,ALGABB25Kota
+b301viya,B301_Viya,eviy1235,Viya,gev,Africa,-1.22,10.58,Atlantic-Congo,ALGABB301Viya
+b302himba,B302_Himba,simb1254,Simba,sbw,Africa,-1.28107,11.1783,Atlantic-Congo,ALGABB302Himba
+b304pinzi,B304_Pinzi,pinj1243,Pinji,pic,Africa,-1.90305,11.223,Atlantic-Congo,ALGABB304Pinzi
+b305vove,B305_Vove,bubi1250,Bubi,buw,Africa,-1.16762,12.32251,Atlantic-Congo,ALGABB305Vove
+b31tsogo,B31_Tsogo,tsog1243,Tsogo,tsv,Africa,-1.55469,11.1359,Atlantic-Congo,ALGABB31Tsogo
+b32kande,B32_Kande,kand1300,Kande,kbs,Africa,-0.00776,11.7076,Atlantic-Congo,ALGABB32Kande
+b404ngubi,B404_Ngubi,ngub1239,Ngubi,,Africa,-3.433411,10.768112,Atlantic-Congo,ALGABB404Ngubi
+b41shira,B41_Shira,sira1266,Sira,swj,Africa,-1.78084,10.4635,Atlantic-Congo,ALGABB41Shira
+b42sangumb,B42_Sangu_Mb,sang1333,Sangu (Gabon),snq,Africa,-1.52694,11.9098,Atlantic-Congo,ALGABSanguMb
+b42sangumi,B42_Sangu_Mi,sang1333,Sangu (Gabon),snq,Africa,-1.52694,11.9098,Atlantic-Congo,ALGABSanguMi
+b43punu,B43_Punu,punu1239,Punu,puu,Africa,-2.67362,11.6714,Atlantic-Congo,ALGABB43Punu
+b44lumbu,B44_Lumbu,lumb1249,Lumbu,lup,Africa,-3.37917,11.124,Atlantic-Congo,ALGABB44Lumbu
+b501wanzie,B501_Wanzi_E,wand1266,Wandji,wdd,Africa,-1.51945,12.8951,Atlantic-Congo,ALGABB501WanziE
+b501wanzimo,B501_Wanzi_Mo,wand1266,Wandji,wdd,Africa,-1.51945,12.8951,Atlantic-Congo,ALGABB501WanziMo
+b503vili,B503_Vili,vili1239,Vili of Ngounie,,Africa,-2.752859,10.305563,Atlantic-Congo,ALGABB503Vili
+b51duma,B51_Duma,duma1253,Duma,dma,Africa,-0.91927,13.0046,Atlantic-Congo,ALGABB51Duma
+b51dumala,B51_Duma_La,duma1253,Duma,dma,Africa,-0.91927,13.0046,Atlantic-Congo,ALGABB51DumaLa
+b52nzebi,B52_Nzebi,njeb1242,Njebi,nzb,Africa,-2.18115,12.7063,Atlantic-Congo,ALGABB52Nzebi
+b53tsaangipoungi,B53_Tsaangi_Poungi,tsaa1242,Tsaangi,tsa,Africa,-2.29245,12.7581,Atlantic-Congo,ALGABB53TsaangiPoungi
+b601lempini,B601_Lempini,omba1241,Ombamba,mbm,Africa,-2.75341,13.617,Atlantic-Congo,ALGABB601Lempini
+b602kaninginord,B602_Kaningi_Nord,kani1279,Kaningi,kzo,Africa,-1.71316,13.6111,Atlantic-Congo,ALGABB602KaningiNord
+b602kaningisud,B602_Kaningi_Sud,kani1279,Kaningi,kzo,Africa,-1.71316,13.6111,Atlantic-Congo,ALGABB602KaningiSud
+b62mbaama,B62_Mbaama,omba1241,Ombamba,mbm,Africa,-2.75341,13.617,Atlantic-Congo,ALGABB62Mbaama
+b63ndumu,B63_Ndumu,ndum1239,Ndumu,nmd,Africa,-1.67033,13.7279,Atlantic-Congo,ALGABB63Ndumu
+b701atsitsege,B701_Atsitsege,tchi1245,Tchitchege,tck,Africa,-2.03393,13.6001,Atlantic-Congo,ALGABB701Atsitsege
+b71aibtekeibalicongo,B71aIb_Teke_Ibali_Congo,ibal1241,Ibali Teke,tek,Africa,-4.20697,15.3893,Atlantic-Congo,ALGABB71aIbTekeIbaliCongo
+b71aletekeleconi,B71aLe_Teke_Leconi,teke1275,Teke-Tege,teg,Africa,-1.61688,14.8664,Atlantic-Congo,ALGABB71aLeTekeLeconi
+b71atekedj,B71a_Teke_Dj,teke1275,Teke-Tege,teg,Africa,-1.61688,14.8664,Atlantic-Congo,ALGABB71aTekeDj
+b71atekeos,B71a_Teke_Os,teke1275,Teke-Tege,teg,Africa,-1.61688,14.8664,Atlantic-Congo,ALGABB71aTekeOs
+b77bfumu,B77b_Fumu,teke1274,Teke-Fuumu,ifm,Africa,-3.59003,15.5061,Atlantic-Congo,29588
+b78wuumu,B78_Wuumu,teke1274,Teke-Fuumu,ifm,Africa,-3.59003,15.5061,Atlantic-Congo,29588
+b81tiene,B81_Tiene,tien1242,Tiene,tii,Africa,-2.84694,16.4765,Atlantic-Congo,133621
+b82buma,B82_Buma,boma1246,Boma,boh,Africa,2.5,15.6,Atlantic-Congo,BurssensB82Buma
+b84mbunda,B84_Mbunda,mpuo1241,Mpuono,zmp,Africa,-5.21134,19.4269,Atlantic-Congo,BurssensB84Mbunda
+b85dnsongo,B85d_Nsongo,song1299,Songo,soo,Africa,-4.55057,18.4978,Atlantic-Congo,29588
+b85emput,B85e_Mput,yans1239,Yansi,yns,Africa,-3.8231,18.2341,Atlantic-Congo,BurssensB85eMput
+b85yanzi,B85_Yanzi,yans1239,Yansi,yns,Africa,-3.8231,18.2341,Atlantic-Congo,BurssensB85Yanzi
+b861ngul,B861_Ngul,ngul1247,Ngul,nlo,Africa,-4.09816,19.5129,Atlantic-Congo,BurssensB861Ngul
+b862lwel,B862_Lwel,lwel1234,Lwel,,Africa,-4.38475,20.6314,Atlantic-Congo,29588
+b863pindi,B863_Pindi,song1299,Songo,soo,Africa,-4.55057,18.4978,Atlantic-Congo,BurssensB863Pindi
+b864ngong,B864_Ngong,ngon1267,Ngongo (Democratic Republic of Congo),noq,Africa,-5.5,18.2,Atlantic-Congo,29588
+b865nzadi,B865_Nzadi,nzad1234,Nzadi,,Africa,-4.102208,20.194462,Atlantic-Congo,HymanNzadi
+b86dinga,B86_Dinga,ding1239,Ding,diz,Africa,-4.44304,19.3881,Atlantic-Congo,BurssensB86Dinga
+b86dzing,B86_Dzing,ding1239,Ding,diz,Africa,-4.44304,19.3881,Atlantic-Congo,29588
+bamungrassfields,Bamun_Grassfields,bamu1253,Bamun,bax,Africa,5.49017,10.8477,Atlantic-Congo,ALGABBamun
+bilejarawan,Bile_Jarawan,bile1244,Bile,bil,Africa,8.90052,11.1907,Atlantic-Congo,Blench2006
+bwazzajarawan,Bwazza_Jarawan,mbul1260,Mbula-Bwazza,mbu,Africa,9.60769,12.2439,Atlantic-Congo,Blench2006
+c101baboledz,C101_Babole_Dz,dibo1245,Dibole,bvx,Africa,1.07773,17.2305,Atlantic-Congo,Leitch1989
+c101baboleep,C101_Babole_Ep,dibo1245,Dibole,bvx,Africa,1.07773,17.2305,Atlantic-Congo,Leitch1989
+c101babolema,C101_Babole_Ma,dibo1245,Dibole,bvx,Africa,1.07773,17.2305,Atlantic-Congo,Leitch1989
+c104aka,C104_Aka,yaka1272,Yaka (Central African Republic),axk,Africa,3.6515,17.2713,Atlantic-Congo,62146
+c105mbenga,C105_Mbenga,yaka1272,Yaka (Central African Republic),axk,Africa,3.6515,17.2713,Atlantic-Congo,58506
+c141bonyala,C141_Bonyala,bong1284,Bongili,bui,Africa,0.37063,16.6079,Atlantic-Congo,ALGABC141Bonyala
+c142mondongo,C142_Mondongo,bamw1238,Bamwe,bmg,Africa,2.16773,19.1644,Atlantic-Congo,ALGABC142Mondongo
+c15bongili,C15_Bongili,bong1284,Bongili,bui,Africa,0.37063,16.6079,Atlantic-Congo,29588
+c21ngare,C21_Ngare,mbok1243,Mboko,mdu,Africa,0.43541,14.7935,Atlantic-Congo,ALGABC21Ngare
+c22akwa,C22_Akwa,akwa1248,Akwa,akw,Africa,-0.39897,15.4623,Atlantic-Congo,ALGABC22Akwa
+c24koyo,C24_Koyo,koyo1242,Koyo,koh,Africa,-0.69688,15.7508,Atlantic-Congo,CBOLDC24Koyo
+c25abunji,C25A_Bunji,mbos1242,Mbosi,mdw,Africa,-1.23019,15.5322,Atlantic-Congo,ALGABC25ABunji
+c25bolee,C25B_Olee,mbos1242,Mbosi,mdw,Africa,-1.23019,15.5322,Atlantic-Congo,ALGABC25BOlee
+c25condinga,C25C_Ondinga,mbos1242,Mbosi,mdw,Africa,-1.23019,15.5322,Atlantic-Congo,448432
+c25eeboyi,C25E_Eboyi,mbos1242,Mbosi,mdw,Africa,-1.23019,15.5322,Atlantic-Congo,ALGABC25EEboyi
+c25mboshi,C25_Mboshi,mbos1242,Mbosi,mdw,Africa,-1.23019,15.5322,Atlantic-Congo,ALGABC25Mboshi
+c302bolondo,C302_Bolondo,bolo1263,Bolondo,bzm,Africa,2.46327,19.6181,Atlantic-Congo,ALGABC302Bolondo
+c322zamba,C322_Zamba,zamb1245,Zamba,,Africa,1.25,18.3,Atlantic-Congo,29588
+c323mpama,C323_Mpama,mpam1239,Mpama,,Africa,-0.739203,17.685662,Atlantic-Congo,29588
+c32bobangi,C32_Bobangi,bang1354,Bangi,bni,Africa,-0.87437,17.227,Atlantic-Congo,CBOLDC32Bobangi
+c34sakata,C34_Sakata,saka1287,Sakata,skt,Africa,-2.85653,17.9669,Atlantic-Congo,BurssensC34Sakata
+c36dlingala,C36d_Lingala,ling1263,Lingala,lin,Africa,-4.409174,15.28532,Atlantic-Congo,86570
+c36gmonyongo,C36g_Monyongo,bamw1238,Bamwe,bmg,Africa,2.16773,19.1644,Atlantic-Congo,ALGABC36gMonyongo
+c36gmosange,C36g_Mosange,ndol1238,Ndolo,ndl,Africa,2.15101,19.4087,Atlantic-Congo,ALGABC36gMosange
+c37ebudza,C37_Ebudza,budz1238,Budza,bja,Africa,2.19951,22.6107,Atlantic-Congo,ALGABC37Ebudza
+c401babati1919,C401_Babati_1919,bwaa1238,Bwa,bww,Africa,2.5957,25.2514,Atlantic-Congo,161489
+c401pakabete,C401_Pakabete,pagi1243,Pagibete,pae,Africa,3.15636,22.1212,Atlantic-Congo,ALGABC401Pakabete
+c412libobi,C412_Libobi,bamw1238,Bamwe,bmg,Africa,2.16773,19.1644,Atlantic-Congo,ALGABC412Libobi
+c41ngombe,C41_Ngombe,ngom1268,Ngombe (Democratic Republic of Congo),ngc,Africa,1.45357,20.14148,Atlantic-Congo,Stapleton1903
+c42ebwela,C42_Ebwela,bwel1238,Bwela,bwl,Africa,3.22,19.28,Atlantic-Congo,ALGABC42Ebwela
+c43abaati,C43A_Baati,bwaa1238,Bwa,bww,Africa,2.5957,25.2514,Atlantic-Congo,ALGABC43ABaati
+c44bwa,C44_Bwa,bwaa1238,Bwa,bww,Africa,2.5957,25.2514,Atlantic-Congo,ALGABC44Bwa
+c52soko1919,C52_Soko_1919,sode1235,So (Democratic Republic of Congo),soc,Africa,1.25037,23.6907,Atlantic-Congo,161489
+c52soko,C52_Soko,sode1235,So (Democratic Republic of Congo),soc,Africa,1.25037,23.6907,Atlantic-Congo,Stapleton1903
+c54turumba1919,C54_Turumba_1919,lomb1260,Lombo,loo,Africa,0.88267,24.6862,Atlantic-Congo,161489
+c55lokele,C55_Lokele,kele1255,Kele (Democratic Republic of Congo),khy,Africa,0.36906,24.3098,Atlantic-Congo,Stapleton1903
+c61ekonda,C61E_Konda,mong1338,Mongo (Atlantic-Congo),lol,Africa,-1.54228,20.4259,Atlantic-Congo,29588
+c61mongo,C61_Mongo,mong1338,Mongo (Atlantic-Congo),lol,Africa,-1.54228,20.4259,Atlantic-Congo,32310
+c71tetela,C71_Tetela,tete1250,Tetela,tll,Africa,-4.29314,24.546,Atlantic-Congo,144044
+c76ombo,C76_Ombo,ombo1238,Ombo,oml,Africa,-2.32162,25.1748,Atlantic-Congo,74895
+c81dengese,C81_Dengese,deng1250,Dengese,dez,Africa,-3.26337,21.4194,Atlantic-Congo,29588
+c83bushong,C83_Bushong,bush1247,Bushoong,buf,Africa,-4.69463,21.4556,Atlantic-Congo,79525
+c85wongo,C85_Wongo,wong1247,Wongo,won,Africa,-5.73837,20.5054,Atlantic-Congo,29588
+d11mbole,D11_Mbole,mbol1247,Mbole,mdq,Africa,-0.57181,24.0443,Atlantic-Congo,29588
+d12lengola,D12_Lengola,leng1258,Lengola,lej,Africa,-1.95874,25.3343,Atlantic-Congo,29588
+d13metoko,D13_Metoko,mitu1240,Mituku,zmq,Africa,-1.57031,25.104,Atlantic-Congo,ALGABD13Metoko
+d14enya,D14_Enya,enya1247,Enya,gey,Africa,0.56,25.15,Atlantic-Congo,29588
+d201liko,D201_Liko,lika1243,Lika,lik,Africa,2.13777,27.6088,Atlantic-Congo,ALGABD201Liko
+d20bvamba1919,*D20B_Vamba_1919,amba1263,Amba (Uganda),rwm,Africa,0.81206,30.0014,Atlantic-Congo,161489
+d211kango,D211_Kango,kang1285,Kango (Tshopo District),kzy,Africa,1.59855,27.0186,Atlantic-Congo,ALGABD211Kango
+d21baali,D21_Baali,bali1274,Bali (Democratic Republic of Congo),bcp,Africa,1.1807,26.5941,Atlantic-Congo,ALGABD21Baali
+d23kibirakumu1919,D23_Kibira-Kumu_1919,komo1260,Komo (Democratic Republic of Congo),kmw,Africa,-0.76333,26.7144,Atlantic-Congo,161489
+d24songola,D24_Songola,song1300,Songoora,sod,Africa,-2.21871,26.3477,Atlantic-Congo,29588
+d25lega,D25_Lega,lega1249,Lega-Shabunda,lea,Africa,-3.83196,27.1424,Atlantic-Congo,Botne1994
+d28holoholo,D28_Holoholo,holo1240,Holoholo,hoo,Africa,-5.37545,28.3274,Atlantic-Congo,72803
+d304homa1919,*D304_Homa_1919,homa1239,Homa,hom,Africa,4.97912,28.0039,Atlantic-Congo,161489
+d305nyangali,*D305_Nyanga-li,nyan1303,Nyanga-li,nyc,Africa,2.97634,29.1805,Atlantic-Congo,161489
+d308bodo2,*D308_Bodo2,budu1250,Budu,buu,Africa,2.00501,27.951,Atlantic-Congo,161489
+d308ebodo,*D308_Ebodo,budu1250,Budu,buu,Africa,2.00501,27.951,Atlantic-Congo,ALGABD308Ebodo
+d311bila,D311_Bila,bila1255,Bila,bip,Africa,1.16839,28.7626,Atlantic-Congo,ALGABD311Bila
+d313mbuttu1919,D313_Mbuttu_1919,budu1250,Budu,buu,Africa,2.00501,27.951,Atlantic-Congo,161489
+d32bira,D32_Bira,bera1259,Bera,brf,Africa,1.50054,30.0293,Atlantic-Congo,ALGABD32Bira
+d32birabunia,D32_Bira_Bunia,bera1259,Bera,brf,Africa,1.50054,30.0293,Atlantic-Congo,161489
+d331bvanuma,D331_Bvanuma,vanu1242,Vanuma,vau,Africa,0.93847,29.81348,Atlantic-Congo,ALGABD331Bvanuma
+d333ndaaka,D333_Ndaaka,ndak1241,Ndaka,ndk,Africa,1.53341,27.9693,Atlantic-Congo,ALGABD333Ndaaka
+d334mbo,D334_Mbo,mbod1238,Mbo (Democratic Republic of Congo),zmw,Africa,1.11602,28.018,Atlantic-Congo,ALGABD334Mbo
+d33nyali,D33_Nyali,nyal1250,Nyali,nlj,Africa,1.92098,30.0201,Atlantic-Congo,29588
+d43nyanga,D43_Nyanga,nyan1304,Nyanga,nyj,Africa,-1.29357,28.31546,Atlantic-Congo,113504
+d55buyu,D55_Buyu,buyu1239,Buyu,byi,Africa,-5.41806,28.5545,Atlantic-Congo,29588
+dugurijarawan,Duguri_Jarawan,dugu1249,Duguri,dbm,Africa,10.05,10.21,Atlantic-Congo,Blench2006
+e46sonjo,E46_Sonjo,temi1247,Temi,soz,Africa,-2.19303,35.8035,Atlantic-Congo,30800
+e51kikuyu,E51_Kikuyu,kiku1240,Kikuyu,kik,Africa,-0.29005,36.719,Atlantic-Congo,30800
+e52embu,E52_Embu,embu1241,Embu,ebu,Africa,-0.62822,37.5933,Atlantic-Congo,30800
+e52mbeere,E52_Mbeere,embu1241,Embu,ebu,Africa,-0.62822,37.5933,Atlantic-Congo,30800
+e531muthambi,E531_Muthambi,mwim1241,Mwimbi-Muthambi,mws,Africa,-0.11968,37.5939,Atlantic-Congo,30800
+e531mwimbi,E531_Mwimbi,mwim1241,Mwimbi-Muthambi,mws,Africa,-0.11968,37.5939,Atlantic-Congo,30800
+e53igoji,E53_Igoji,meru1245,Meru,mer,Africa,0.26484,37.7396,Atlantic-Congo,30800
+e53imenti,E53_Imenti,meru1245,Meru,mer,Africa,0.26484,37.7396,Atlantic-Congo,30800
+e53meruimenti,E53_Meruimenti,meru1245,Meru,mer,Africa,0.26484,37.7396,Atlantic-Congo,30800
+e53meru,E53_Meru,meru1245,Meru,mer,Africa,0.26484,37.7396,Atlantic-Congo,30800
+e53merutig,E53_Merutig,meru1245,Meru,mer,Africa,0.26484,37.7396,Atlantic-Congo,30800
+e53miutini,E53_Miutini,meru1245,Meru,mer,Africa,0.26484,37.7396,Atlantic-Congo,30800
+e53tigania,E53_Tigania,meru1245,Meru,mer,Africa,0.26484,37.7396,Atlantic-Congo,30800
+e541chuka,E541_Chuka,chuk1274,Chuka,cuh,Africa,-0.27405,37.6116,Atlantic-Congo,30800
+e54tharaka,E54_Tharaka,thar1283,Tharaka,thk,Africa,-0.13221,38.073,Atlantic-Congo,30800
+e55kamba,E55_Kamba,kamb1297,Kamba (Kenya),kam,Africa,-1.60827,37.9532,Atlantic-Congo,30800
+e55kambakitu,E55_Kamba_Kitu,kamb1297,Kamba (Kenya),kam,Africa,-1.60827,37.9532,Atlantic-Congo,30800
+e55kambamach,E55_Kamba_Mach,kamb1297,Kamba (Kenya),kam,Africa,-1.60827,37.9532,Atlantic-Congo,30800
+e56daiso,E56_Daiso,dhai1238,Dhaiso,dhs,Africa,-4.81209,38.818,Atlantic-Congo,30800
+e621bmachame,E621B_Machame,mach1266,Machame,jmc,Africa,-3.29385,37.0703,Atlantic-Congo,30800
+e621csiha,E621C_Siha,mach1266,Machame,jmc,Africa,-3.29385,37.0703,Atlantic-Congo,30800
+e621dkibosho,E621D_Kibosho,mach1266,Machame,jmc,Africa,-3.29385,37.0703,Atlantic-Congo,30800
+e622akimochi,E622A_Kimochi,moch1256,Mochi,old,Africa,-3.33743,37.3357,Atlantic-Congo,30800
+e622clema,E622C_Lema,vunj1238,Vunjo,vun,Africa,-3.42531,37.5847,Atlantic-Congo,30800
+e622cmamba,E622C_Mamba,vunj1238,Vunjo,vun,Africa,-3.42531,37.5847,Atlantic-Congo,30800
+e622cvunjo,E622C_Vunjo,vunj1238,Vunjo,vun,Africa,-3.42531,37.5847,Atlantic-Congo,30800
+e623akiseri,E623A_Kiseri,romb1244,Rombo,rof,Africa,-3.07772,37.5382,Atlantic-Congo,30800
+e623dkeni,E623D_Keni,romb1244,Rombo,rof,Africa,-3.07772,37.5382,Atlantic-Congo,30800
+e623mkuu,E623_Mkuu,romb1244,Rombo,rof,Africa,-3.07772,37.5382,Atlantic-Congo,30800
+e64kahe,E64_Kahe,kahe1238,Kahe,hka,Africa,-3.51412,37.5759,Atlantic-Congo,30800
+e65gweno,E65_Gweno,gwen1239,Gweno,gwe,Africa,-3.68407,37.6827,Atlantic-Congo,30800
+e701elwana,E701_Elwana,ilwa1237,Ilwana,mlk,Africa,-0.66322,39.793,Atlantic-Congo,30800
+e71aupperpokomo,E71A_Upper_Pokomo,poko1261,Pokomo,pkb,Africa,-2.31587,40.2897,Atlantic-Congo,30800
+e72agiryama,E72a_Giryama,giry1241,Giryama,nyf,Africa,-3.30638,39.6648,Atlantic-Congo,30800
+e73digo,E73_Digo,digo1243,Digo,dig,Africa,-4.62101,39.1752,Atlantic-Congo,30800
+e74adawida,E74a_Dawida,tait1250,Taita,dav,Africa,-3.79347,38.57254,Atlantic-Congo,30800
+e74atuveta,E74a_Tuveta,tave1240,Taveta,tvs,Africa,-3.41822,37.7061,Atlantic-Congo,30800
+f12bende,F12_Bende,bend1258,Bende,bdp,Africa,-6.22082,30.5926,Atlantic-Congo,30800
+f21ntuzu,F21_Ntuzu,suku1261,Sukuma,suk,Africa,-3.16082,32.8765,Atlantic-Congo,30800
+f21sukuma,F21_Sukuma,suku1261,Sukuma,suk,Africa,-3.16082,32.8765,Atlantic-Congo,30800
+f22nyamwezi,F22_Nyamwezi,nyam1276,Nyamwezi,nym,Africa,-5.08559,32.94452,Atlantic-Congo,30800
+f23sumbwa,F23_Sumbwa,sumb1240,Sumbwa,suw,Africa,-3.47335,31.9457,Atlantic-Congo,30800
+f24kimbu,F24_Kimbu,kimb1242,Kimbu,kiv,Africa,-7.23023,33.6445,Atlantic-Congo,30800
+f25bungu,F25_Bungu,bung1265,Bungu,wun,Africa,-8.32587,32.8801,Atlantic-Congo,30800
+f31nyiramba,F31_Nyiramba,nila1242,Nilamba,nim,Africa,-4.50002,34.3068,Atlantic-Congo,30800
+f32nyaturucha,F32_Nyaturucha,nyat1246,Nyaturu,rim,Africa,-5.12263,34.6657,Atlantic-Congo,30800
+f32nyaturuwil,F32_Nyaturuwil,nyat1246,Nyaturu,rim,Africa,-5.12263,34.6657,Atlantic-Congo,30800
+f33langi,F33_Langi,lang1320,Langi,lag,Africa,-4.71413,35.9517,Atlantic-Congo,30800
+fefegrassfields,Fefe_Grassfields,fefe1239,Fe'fe',fmp,Africa,5.18158,10.1442,Atlantic-Congo,ALGABFefeGrassfields
+g11gogo,G11_Gogo,gogo1263,Gogo,gog,Africa,-6.35951,35.4807,Atlantic-Congo,ALGABG11Gogo
+g12kagulu,G12_Kagulu,kagu1239,Kagulu,kki,Africa,-6.38204,37.0534,Atlantic-Congo,ALGABG12Kagulu
+g22anorthpare,G22A_North_Pare,asut1235,Asu (Tanzania),asa,Africa,-4.17978,37.8323,Atlantic-Congo,ALGABG22ANorthPare
+g22asu,G22_Asu,asut1235,Asu (Tanzania),asa,Africa,-4.17978,37.8323,Atlantic-Congo,ALGABG22Asu
+g22bsouthpare,G22B_South_Pare,asut1235,Asu (Tanzania),asa,Africa,-4.17978,37.8323,Atlantic-Congo,ALGABG22BSouthPare
+g23sambaa,G23_Sambaa,sham1280,Shambala,ksb,Africa,-4.8,38.29,Atlantic-Congo,30800
+g24bondei,G24_Bondei,bond1247,Bondei,bou,Africa,-5.10749,38.5079,Atlantic-Congo,30800
+g31zigua,G31_Zigua,zigu1242,Zigula,ziw,Africa,-5.61864,38.4114,Atlantic-Congo,30800
+g32doe,G32_Doe,doee1238,Doe,doe,Africa,-6.25844,38.4902,Atlantic-Congo,30800
+g32kwere,G32_Kwere,kwer1261,Kwere,cwe,Africa,-6.50666,38.4449,Atlantic-Congo,30800
+g33zaramo,G33_Zaramo,zara1247,Zaramo,zaj,Africa,-6.87705,38.9258,Atlantic-Congo,30800
+g34nguungulu,G34_Nguungulu,ngul1246,Ngulu,ngp,Africa,-5.79734,37.6823,Atlantic-Congo,30800
+g35luguru,G35_Luguru,lugu1238,Luguru,ruf,Africa,-6.86828,37.5557,Atlantic-Congo,30800
+g36kami,G36_Kami,kami1256,Kami (Tanzania),kcu,Africa,-6.71075,37.98,Atlantic-Congo,30800
+g37kutu,G37_Kutu,kutu1263,Kutu,kdc,Africa,-7.23789,37.8623,Atlantic-Congo,30800
+g39saghala,G39_Saghala,saga1256,Sagala,sbm,Africa,-6.98537,36.9153,Atlantic-Congo,30800
+g401mwani,G401_Mwani,mwan1247,Mwani,wmw,Africa,-12.5821,40.4601,Atlantic-Congo,ALGABG401Mwani
+g412mwiini,G412_Mwiini,swah1253,Swahili,swh,Africa,-8.25605,37.624,Atlantic-Congo,ALGABG412Mwiini
+g41bajuni,G41_Bajuni,swah1253,Swahili,swh,Africa,-8.25605,37.624,Atlantic-Congo,ALGABG41Bajuni
+g42aamu,G42a_Amu,swah1253,Swahili,swh,Africa,-8.25605,37.624,Atlantic-Congo,ALGABG42aAmu
+g42dunguja,G42d_Unguja,swah1253,Swahili,swh,Africa,-8.25605,37.624,Atlantic-Congo,ALGABG42dUnguja
+g42swahili,G42_Swahili,swah1253,Swahili,swh,Africa,-8.25605,37.624,Atlantic-Congo,ALGABG42Swahili
+g43kae,G43_Kae,swah1253,Swahili,swh,Africa,-8.25605,37.624,Atlantic-Congo,ALGABG43Kae
+g44angazija,G44a_Ngazija,ngaz1238,Ngazidja Comorian,zdj,Africa,-11.6129,43.36,Atlantic-Congo,ALGABG44aNgazija
+g44bndzwani,G44b_Ndzwani,ndzw1235,Ndzwani Comorian,wni,Africa,-12.2123,44.3709,Atlantic-Congo,ALGABG44bNdzwani
+g44dmaore,G44D_Maore,maor1244,Maore Comorian,swb,Africa,-12.830306,45.154942,Atlantic-Congo,ALGABG44DMaore
+g51pogoro,G51_Pogoro,pogo1243,Pogolo,poy,Africa,-8.72283,36.4148,Atlantic-Congo,30800
+g52ndamba,G52_Ndamba,ndam1239,Ndamba,ndj,Africa,-8.40485,36.0271,Atlantic-Congo,30800
+g61sangu,G61_Sangu,sang1330,Sangu (Tanzania),sbp,Africa,-8.4,33.9,Atlantic-Congo,30800
+g62hehe,G62_Hehe,hehe1240,Hehe,heh,Africa,-7.71572,35.7255,Atlantic-Congo,30800
+g63bena,G63_Bena,bena1262,Bena (Tanzania),bez,Africa,-9.26671,35.0364,Atlantic-Congo,30800
+g64pangwa,G64_Pangwa,pang1287,Pangwa,pbr,Africa,-9.96782,34.8039,Atlantic-Congo,30800
+g65kinga,G65_Kinga,nucl1379,Nuclear Kinga,zga,Africa,-9.35868,34.2321,Atlantic-Congo,30800
+g66wanji,G66_Wanji,vwan1235,Vwanji,wbi,Africa,-9.00683,34.0757,Atlantic-Congo,30800
+h111hangala,H111_Hangala,laar1238,Laari,ldi,Africa,-4.25,14.9,Atlantic-Congo,CBOLDH111Hangala
+h11beembe,H11_Beembe,beem1239,Beembe,beq,Africa,-3.95895,14.1,Atlantic-Congo,CBOLDH11Beembe
+h12civilicongo,H12_Civili_Congo,vili1238,Vili,vif,Africa,-4.06716,11.3804,Atlantic-Congo,ALGABH12CiviliCongo
+h131kisundicongokimongo1988,H131_Kisundi_Congo_Kimongo_1988,suun1239,Suundi,sdj,Africa,-4.58488,13.3212,Atlantic-Congo,ALGABH131KisundiCongoKimongo1988
+h13kikunyi1989,H13_Kikunyi_1989,kuny1238,Kunyi,njx,Africa,-3.69702,12.5197,Atlantic-Congo,ALGABH13Kikunyi1989
+h16akisikongo2013,H16a_Kisikongo_2013,sans1272,San Salvador Kongo,kwy,Africa,-5.33539,13.3587,Atlantic-Congo,ALGABH16aKisikongo2013
+h16akisolongodrc2012,H16a_Kisolongo_DRC_2012,koon1244,Koongo,kng,Africa,-5.57722,14.4771,Atlantic-Congo,ALGABH16aKisolongoDRC2012
+h16bkindibu2013,H16b_Kindibu_2013,koon1244,Koongo,kng,Africa,-5.57722,14.4771,Atlantic-Congo,ALGABH16bKindibu2013
+h16cilinji,H16_Cilinji,yomb1244,Yombe,yom,Africa,-4.86227,12.6362,Atlantic-Congo,29588
+h16cimbala,H16_Cimbala,yomb1244,Yombe,yom,Africa,-4.86227,12.6362,Atlantic-Congo,29588
+h16cizobe,H16_Cizobe,yomb1244,Yombe,yom,Africa,-4.86227,12.6362,Atlantic-Congo,29588
+h16ckiyombedrc1982,H16c_Kiyombe_DRC_1982,yomb1244,Yombe,yom,Africa,-4.86227,12.6362,Atlantic-Congo,ALGABH16cKiyombeDRC1982
+h16cyombe,H16c_Yombe,yomb1244,Yombe,yom,Africa,-4.86227,12.6362,Atlantic-Congo,CBOLDH16cYombe
+h16dciwoyodrc2012,H16d_Ciwoyo_DRC_2012,yomb1244,Yombe,yom,Africa,-4.86227,12.6362,Atlantic-Congo,ALGABH16dCiwoyoDRC2012
+h16flaadi,H16f_Laadi,laar1238,Laari,ldi,Africa,-4.25,14.9,Atlantic-Congo,160312
+h16gkimpangu2012,H16g_Kimpangu_2012,koon1244,Koongo,kng,Africa,-5.57722,14.4771,Atlantic-Congo,ALGABH16gKimpangu2012
+h16gntandu,H16g_Ntandu,koon1244,Koongo,kng,Africa,-5.57722,14.4771,Atlantic-Congo,29588
+h16hkinkanu2012,H16h_Kinkanu_2012,koon1244,Koongo,kng,Africa,-5.57722,14.4771,Atlantic-Congo,ALGABH16hKinkanu2012
+h16kikongo,H16_Kikongo,koon1244,Koongo,kng,Africa,-5.57722,14.4771,Atlantic-Congo,Butaye1909
+h16kimbatangidinga,H16_Kimbata_Ngidinga,koon1244,Koongo,kng,Africa,-5.57722,14.4771,Atlantic-Congo,29588
+h16kimbeko,H16_Kimbeko,koon1244,Koongo,kng,Africa,-5.57722,14.4771,Atlantic-Congo,29588
+h21akimbundu,H21a_Kimbundu,kimb1241,Kimbundu,kmb,Africa,-8.97835,14.8893,Atlantic-Congo,ALGABH21aKimbundu
+h31yaka,H31_Yaka,yaka1269,Yaka (Democratic Republic of Congo),yaf,Africa,-6.93964,16.9965,Atlantic-Congo,Ruttenberg1969
+h321soonde,H321_Soonde,sond1250,Sonde,shc,Africa,-6.32223,18.3555,Atlantic-Congo,29588
+h32suku,H32_Suku,suku1259,Suku,sub,Africa,-5.76495,17.7736,Atlantic-Congo,29588
+h41mbala,H41_Mbala,mbal1257,Mbala,mdp,Africa,-5.11888,18.041,Atlantic-Congo,29588
+h42hunganna,H42_Hunganna,hung1278,Hungana,hum,Africa,-3.69695,18.4312,Atlantic-Congo,29588
+jd53shi,JD53_Shi,shii1238,Shi,shr,Africa,-2.55777,28.6122,Atlantic-Congo,315062
+jd62rundi,JD62_Rundi,rund1242,Rundi,run,Africa,-2.94,29.97,Atlantic-Congo,30800
+jd64shubi,JD64_Shubi,shub1238,Shubi,suj,Africa,-2.97663,31.0681,Atlantic-Congo,30800
+jd65hangaza,JD65_Hangaza,hang1260,Hangaza,han,Africa,-2.52347,30.7074,Atlantic-Congo,30800
+jd66kiha,JD66_Kiha,haaa1252,Ha,haq,Africa,-3.77873,30.4894,Atlantic-Congo,30800
+jd67kivinza,JD67_Kivinza,vinz1238,Vinza,vin,Africa,-4.99312,30.5699,Atlantic-Congo,30800
+je11runyoro,JE11_Runyoro,nyor1246,Nyoro,nyo,Africa,0.95294,31.3493,Atlantic-Congo,30800
+je12rutooro,JE12_Rutooro,toor1238,Tooro,ttj,Africa,0.57291,30.6389,Atlantic-Congo,30800
+je13runyankore,JE13_Runyankore,nyan1307,Nyankole,nyn,Africa,-0.46364,30.548,Atlantic-Congo,30800
+je14rukiga,JE14_Rukiga,chig1238,Chiga,cgg,Africa,-1.04387,29.9122,Atlantic-Congo,30800
+je15luganda,JE15_Luganda,gand1255,Ganda,lug,Africa,0.66884,32.15153,Atlantic-Congo,30800
+je16lusoga,JE16_Lusoga,soga1242,Soga,xog,Africa,0.40456,33.3942,Atlantic-Congo,30800
+je17gwere,JE17_Gwere,gwer1238,Gwere,gwr,Africa,1.11392,33.8227,Atlantic-Congo,30800
+je21runyambo,JE21_Runyambo,nyam1277,Nyambo,now,Africa,-1.6096,30.9156,Atlantic-Congo,30800
+je22haya,JE22_Haya,haya1250,Haya,hay,Africa,-1.70878,31.4846,Atlantic-Congo,30800
+je23zinza,JE23_Zinza,zinz1238,Zinza,zin,Africa,-2.64132,32.1755,Atlantic-Congo,30800
+je24kerebe,JE24_Kerebe,kere1283,Kerewe,ked,Africa,-2.09315,33.5326,Atlantic-Congo,30800
+je25jita,JE25_Jita,jita1239,Jita,jit,Africa,-1.62681,33.9141,Atlantic-Congo,30800
+je25kilegi,JE25_Kilegi,kara1481,Kara (Tanzania),reg,Africa,-1.83511,33.0488,Atlantic-Congo,30800
+je25mkwaya,JE25_Mkwaya,kway1241,Kwaya,kya,Africa,-1.80737,33.71,Atlantic-Congo,30800
+je31cbukusu,JE31c_Bukusu,buku1249,Bukusu,bxk,Africa,0.68043,34.7719,Atlantic-Congo,30800
+je31lumasaaba,JE31_Lumasaaba,masa1299,Masaaba,myx,Africa,1.05906,34.2829,Atlantic-Congo,30800
+je32luyia,JE32_Luyia,saam1283,Saamia,lsm,Africa,0.3652,34.0335,Atlantic-Congo,30800
+je34samialugwe,JE34_Samialugwe,saam1283,Saamia,lsm,Africa,0.3652,34.0335,Atlantic-Congo,30800
+je401ngoreme,JE401_Ngoreme,ngur1263,Ngurimi,ngq,Africa,-1.8485,34.6173,Atlantic-Congo,30800
+je402ikizu,JE402_Ikizu,ikiz1238,Ikizu,ikz,Africa,-1.9915,34.3589,Atlantic-Congo,30800
+je403suba,JE403_Suba,suba1238,Suba,sxb,Africa,-0.95719,34.1033,Atlantic-Congo,30800
+je404shasi,JE404_Shasi,ikiz1238,Ikizu,ikz,Africa,-1.9915,34.3589,Atlantic-Congo,30800
+je41maragoli,JE41_Maragoli,logo1258,Logooli,rag,Africa,0.09487,34.729,Atlantic-Congo,30800
+je42gusii,JE42_Gusii,gusi1247,Gusii,guz,Africa,-0.78872,34.76751,Atlantic-Congo,30800
+je43kuria,JE43_Kuria,kuri1259,Kuria,kuj,Africa,-1.50636,34.5049,Atlantic-Congo,30800
+je43kuriamago,JE43_Kuria_Mago,kuri1259,Kuria,kuj,Africa,-1.50636,34.5049,Atlantic-Congo,30800
+je43kuriatari,JE43_Kuria_Tari,kuri1259,Kuria,kuj,Africa,-1.50636,34.5049,Atlantic-Congo,30800
+je44zanaki,JE44_Zanaki,zana1238,Zanaki,zak,Africa,-2.26367,34.0542,Atlantic-Congo,30800
+je45nata,JE45_Nata,ikom1245,Ikoma-Nata-Isenye,ntk,Africa,-1.94989,34.5361,Atlantic-Congo,30800
+k11ciokwe,K11_Ciokwe,chok1245,Chokwe,cjk,Africa,-9.66082,21.3992,Atlantic-Congo,29588
+k14lwena,K14_Lwena,luva1239,Luvale,lue,Africa,-13.5382,22.2924,Atlantic-Congo,29588
+k15mbunda,K15_Mbunda,mbun1249,Mbunda,mck,Africa,-14.603,21.9768,Atlantic-Congo,29588
+k21lozi,K21_Lozi,lozi1239,Lozi,loz,Africa,-17.7052,24.7398,Atlantic-Congo,29588
+k31luyana,K31_Luyana,luya1241,Luyana,lyn,Africa,-15.01,22.67,Atlantic-Congo,29588
+k332rumanyo,K332_Rumanyo,diri1252,Diriku,diu,Africa,-18.1681,20.6678,Atlantic-Congo,33386
+k33kwangali,K33_Kwangali,kwan1273,Kwangali,kwn,Africa,-17.9026,19.256,Atlantic-Congo,29588
+komgrassfields,Kom_Grassfields,komc1235,Kom (Cameroon),bkm,Africa,6.2596,10.3348,Atlantic-Congo,ALGABKomGrassfields
+kulungjarawan,Kulung_Jarawan,kulu1255,Kulung (Nigeria),bbu,Africa,9.20815,11.04651,Atlantic-Congo,Blench2006
+l11pende,L11_Pende,phen1239,Phende,pem,Africa,-5.64735,19.8275,Atlantic-Congo,29588
+l12bholu,L12b_Holu,holu1245,Holu,hol,Africa,-8.14754,17.572,Atlantic-Congo,29588
+l13kwese,L13_Kwese,kwes1244,Kwese,kws,Africa,-5.60445,18.5759,Atlantic-Congo,29588
+l221lwalwa,L221_Lwalwa,lwal1238,Lwalu,lwa,Africa,-7.16388,22.1097,Atlantic-Congo,29588
+l23songe,L23_Songe,song1303,Songe,sop,Africa,-5.71993,25.2765,Atlantic-Congo,ALGABL23Songe
+l31alubakasai,L31a_Luba-Kasai,luba1249,Luba-Lulua,lua,Africa,-5.72717,22.4422,Atlantic-Congo,CBOLDL31aLubaKasai
+l32kanyok,L32_Kanyok,kany1247,Kanyok,kny,Africa,-7.31878,23.613,Atlantic-Congo,29588
+l33lubashaba,L33_Luba-Shaba,luba1250,Luba-Katanga,lub,Africa,-8.2816,25.8918,Atlantic-Congo,29588
+l34hemba,L34_Hemba,hemb1242,Hemba,hem,Africa,-7.77459,27.5913,Atlantic-Congo,29588
+l35sanga,L35_Sanga,sang1331,Sanga (Democratic Republic of Congo),sng,Africa,-10.0236,26.8462,Atlantic-Congo,29588
+l41kaonde,L41_Kaonde,kaon1241,Kaonde,kqn,Africa,-12.4129,25.7646,Atlantic-Congo,29588
+l51salampasu,L51_Salampasu,sala1268,Salampasu,slx,Africa,-5.44937,23.1502,Atlantic-Congo,29588
+l52lunda,L52_Lunda,lund1266,Lunda,lun,Africa,-11.1793,23.8662,Atlantic-Congo,29588
+l53runda,L53_Runda,ruun1238,Ruund,rnd,Africa,-8.86971,21.4164,Atlantic-Congo,29588
+l62nkoya,L62_Nkoya,nkoy1244,Nkoya,nka,Africa,-14.8513,24.7649,Atlantic-Congo,29588
+m11pimbwe,M11_Pimbwe,pimb1238,Pimbwe,piw,Africa,-6.81358,31.4289,Atlantic-Congo,ALGABM11Pimbwe
+m12lungwa,M12_Lungwa,rung1255,Rungwa,rnw,Africa,-7.24959,31.7614,Atlantic-Congo,ALGABM12Lungwa
+m13fipa,M13_Fipa,fipa1238,Fipa,fip,Africa,-7.88963,31.3442,Atlantic-Congo,ALGABM13Fipa
+m14rungu,M14_Rungu,mamb1296,Mambwe-Lungu,mgr,Africa,-8.86817,31.2269,Atlantic-Congo,ALGABM14Rungu
+m15mambwe,M15_Mambwe,mamb1296,Mambwe-Lungu,mgr,Africa,-8.86817,31.2269,Atlantic-Congo,ALGABM15Mambwe
+m21ndali,M21_Ndali,ndal1241,Ndali,ndh,Africa,-9.88948,33.6118,Atlantic-Congo,ALGABM21Ndali
+m21wanda,M21_Wanda,wand1264,Wanda,wbh,Africa,-8.34522,32.4375,Atlantic-Congo,ALGABM21Wanda
+m22namwanga,M22_Namwanga,nyam1275,Nyamwanga,mwn,Africa,-9.11261,32.3163,Atlantic-Congo,ALGABM22Namwanga
+m23nyiha,M23_Nyiha,nyih1240,Nyiha (Tanzania),nih,Africa,-9.4472,32.9057,Atlantic-Congo,ALGABM23Nyiha
+m24malila,M24_Malila,mali1279,Malila,mgq,Africa,-9.16619,33.339,Atlantic-Congo,ALGABM24Malila
+m25safwa,M25_Safwa,safw1238,Safwa,sbk,Africa,-8.54936,33.4766,Atlantic-Congo,ALGABM25Safwa
+m28lambya,M28_Lambya,lamb1272,Lambya,lai,Africa,-9.49372,33.15852,Atlantic-Congo,ALGABM28Lambya
+m31nyakyusa,M31_Nyakyusa,nyak1260,Nyakyusa-Ngonde,nyy,Africa,-9.71018,33.7763,Atlantic-Congo,ALGABM31Nyakyusa
+m41taabwa,M41_Taabwa,taab1238,Taabwa,tap,Africa,-7.91416,29.5238,Atlantic-Congo,ALGABM41Taabwa
+m42bemba,M42_Bemba,bemb1257,Bemba (Zambia),bem,Africa,-10.6122,29.2993,Atlantic-Congo,ALGABM42Bemba
+m52lala,M52_Lala,lala1264,Lala-Bisa,leb,Africa,-12.945,30.2297,Atlantic-Congo,29588
+m54lamba,M54_Lamba,lamb1271,Lamba,lam,Africa,-12.3366,27.9026,Atlantic-Congo,29588
+m61lenje,M61_Lenje,lenj1248,Lenje,leh,Africa,-14.7192,28.2581,Atlantic-Congo,29588
+m62soli,M62_Soli,soli1239,Soli,sby,Africa,-15.5213,28.7934,Atlantic-Congo,29588
+m64tonga,M64_Tonga,tong1318,Tonga,toi,Africa,-17.422325,27.103495,Atlantic-Congo,29588
+mbulajarawan,Mbula_Jarawan,mbul1260,Mbula-Bwazza,mbu,Africa,9.60769,12.2439,Atlantic-Congo,Blench2006
+moghamograssfields,Moghamo_Grassfields,meta1238,Meta',mgo,Africa,5.88942,9.87416,Atlantic-Congo,ALGABMoghamoGrassfields
+mungakagrassfields,Mungaka_Grassfields,mung1266,Mungaka,mhk,Africa,5.89752,10.0294,Atlantic-Congo,ALGABMungakaGrassfields
+n11manda,N11_Manda,mand1423,Manda (Tanzania),mgs,Africa,-10.3991,34.7424,Atlantic-Congo,30800
+n12ngoni,N12_Ngoni,ngon1269,Ngoni,ngo,Africa,-11.7794,37.4118,Atlantic-Congo,30800
+n13matengo,N13_Matengo,mate1258,Matengo,mgv,Africa,-11.554,35.0056,Atlantic-Congo,30800
+n14mpoto,N14_Mpoto,mpot1240,Mpoto,mpa,Africa,-11.13767,34.71269,Atlantic-Congo,30800
+n21tumbukamalawi,N21_Tumbuka_Malawi,tumb1250,Tumbuka,tum,Africa,-11.3297,33.3738,Atlantic-Congo,29588
+n31chewa,N31_Chewa,nyan1308,Nyanja,nya,Africa,-14.8047,32.8108,Atlantic-Congo,CBOLDN31Chewa
+n42kunda,N42_Kunda,kund1255,Kunda (Sena),kdn,Africa,-15.7337,30.2804,Atlantic-Congo,29588
+njengrassfields,Njen_Grassfields,njen1238,Njen,njj,Africa,5.75169,9.90439,Atlantic-Congo,ALGABNjenGrassfields
+okugrassfields,Oku_Grassfields,okuu1243,Oku (Cameroon),oku,Africa,6.23712,10.5096,Atlantic-Congo,ALGABOkuGrassfields
+p11ndengeleko,P11_Ndengeleko,nden1248,Ndengereko,ndg,Africa,-7.54628,38.958,Atlantic-Congo,30800
+p12rufiji,P12_Rufiji,nden1248,Ndengereko,ndg,Africa,-7.54628,38.958,Atlantic-Congo,30800
+p13matumbi,P13_Matumbi,matu1259,Matumbi,mgw,Africa,-8.53734,39.0409,Atlantic-Congo,30800
+p14ngindo,P14_Ngindo,ngin1244,Ngindo,nnq,Africa,-9.78145,37.9832,Atlantic-Congo,30800
+p15mbunga,P15_Mbunga,mbun1248,Mbunga,mgy,Africa,-8.19661,36.5362,Atlantic-Congo,30800
+p21yao,P21_Yao,yaoo1241,Yao,yao,Africa,-13.6119,35.2387,Atlantic-Congo,30800
+p22mwera,P22_Mwera,mwer1248,Mwera (Chimwera),mwe,Africa,-9.75639,38.8762,Atlantic-Congo,30800
+p23simakonde,P23_Simakonde,mako1251,Makonde,kde,Africa,-10.9906,39.5133,Atlantic-Congo,30800
+p25mabia,P25_Mabia,mako1251,Makonde,kde,Africa,-10.9906,39.5133,Atlantic-Congo,30800
+p31emakhua,P31_Emakhua,makh1264,Makhuwa,vmw,Africa,-14.8509,38.8052,Atlantic-Congo,CBOLDP31Emakhua
+p31gikorovere,P31G_Ikorovere,makh1261,Makhuwa-Meetto,mgh,Africa,-11.9553,38.6874,Atlantic-Congo,ALGABP31GIkorovere
+r11umbundu,R11_Umbundu,umbu1257,Umbundu,umb,Africa,-12.4763,14.4148,Atlantic-Congo,Schadeberg1990
+r21kwanyama,R21_Kwanyama,kuan1247,Kuanyama,kua,Africa,-17.7176,16.58,Atlantic-Congo,29588
+r22ndonga,R22_Ndonga,ndon1254,Ndonga,ndo,Africa,-17.22,17.35,Atlantic-Congo,29588
+r31herero,R31_Herero,here1253,Herero,her,Africa,-21.0231,20.5655,Atlantic-Congo,29588
+s11shona,S11_Shona,shon1251,Shona,sna,Africa,-17.20849,29.75725,Atlantic-Congo,CBOLDS11Shona
+s16kalanga,S16_Kalanga,kala1384,Kalanga,kck,Africa,-21.2887,27.401,Atlantic-Congo,CBOLDS16Kalanga
+s21venda,S21_Venda,vend1245,Venda,ven,Africa,-22.188,29.9523,Atlantic-Congo,CBOLDS21Venda
+s311shekgalagari,S311_Shekgalagari,kgal1244,Kgalagadi,xkv,Africa,-24.9208,22.72016,Atlantic-Congo,ALGABS311Shekgalagari
+s31tswana,S31_Tswana,tswa1253,Tswana,tsn,Africa,-24.368,24.7587,Atlantic-Congo,ALGABS31Tswana
+s41xhosa,S41_Xhosa,xhos1239,Xhosa,xho,Africa,-31.0389,28.0769,Atlantic-Congo,WebstersXhosa
+s42zulu,S42_Zulu,zulu1248,Zulu,zul,Africa,-28.9,30.2,Atlantic-Congo,isiZulu
+s44ndebele,S44_Ndebele,nort2795,North Ndebele,nde,Africa,-20.2513,27.4096,Atlantic-Congo,29588
+s51tshwa,S51_Tshwa,tswa1255,Tswa,tsc,Africa,-22.9891,32.4287,Atlantic-Congo,29588
+s53tsonga,S53_Tsonga,tson1249,Tsonga,tso,Africa,-23.5754,31.8105,Atlantic-Congo,66179
+tivtivoid,Tiv_Tivoid,tivv1240,Tiv,tiv,Africa,6.88039,9.26287,Atlantic-Congo,7621
+zaambojarawan,Zaambo_Jarawan,mbul1260,Mbula-Bwazza,mbu,Africa,9.60769,12.2439,Atlantic-Congo,Blench2006
