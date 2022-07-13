@@ -83,7 +83,7 @@ I have
 
 The each “block” may or may not move along each conversion edge. In total, the proportion of blocks that move should follow the probability `pMove`, so the following prior implements essentially a binomial distribution over all blocks and conversion edges.
 
-      <distribution id="ConvMovePrior" spec="ConversionMovePrior" network="@Tree.t:beastlingTree" pMove="@pMove">
+      <distribution id="ConvMovePrior" spec="contactrees.model.ConversionMovePrior" network="@Tree.t:beastlingTree" pMove="@pMove">
         <blockSet spec="contactrees.BlockSet" id="allBlocks" network="@Tree.t:beastlingTree">
           <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
             <block idref="$(concept)"/>
