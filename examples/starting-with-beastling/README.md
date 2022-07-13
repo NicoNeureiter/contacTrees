@@ -139,7 +139,7 @@ The operators for adding, removing, and changing conversion edges need to be add
         </plate>
     </operator>
 
-And the existing tree operators (everything that changes the language tree) need to be replaced by the corresponding contacTrees operators. These adapted tree operators ensure that contact edges do not become invalid when the language tree is changed.
+And the existing tree operators (everything that changes the language tree) need to be replaced by the corresponding contacTrees operators. These adapted tree operators ensure that conversion edges do not become invalid when the language tree is changed.
 
 ```
 -    <operator id="SubtreeSlide.t:beastlingTree" spec="SubtreeSlide" tree="@Tree.t:beastlingTree" markclades="true" weight="15.0" />
@@ -162,5 +162,9 @@ And the existing tree operators (everything that changes the language tree) need
 ```
 
 ### Logging
+The logging of contacTrees results is very similar to a standard phylogenetic analysis, but in order to log the conversion edges we need to use the ACGWithMetaDataLogger. Similar to a tree-logger, this writes newick strings into a nexus file, but it uses the extended Newick format to include conversion edges.
 
-...
+```
+-      <log id="TreeLoggerWithMetaData" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:beastlingTree" dp="4" />
++      <log id="ACGLoggerWithMetaData" spec="contactrees.ACGWithMetaDataLogger" network="@Tree.t:beastlingTree" blockSet="@allBlocks" branchratemodel="@StrictClockModel.c:default"/>
+```
