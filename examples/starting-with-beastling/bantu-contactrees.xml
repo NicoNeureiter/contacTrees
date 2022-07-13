@@ -1230,17 +1230,14 @@ analysis using BEASTling and the above configuration may not be valid.
         </distribution>
       </distribution>
     </distribution>
-    <operator id="SubtreeSlide.t:beastlingTree" spec="SubtreeSlide" tree="@Tree.t:beastlingTree" markclades="true" weight="15.0" />
-    <operator id="narrow.t:beastlingTree" spec="Exchange" tree="@Tree.t:beastlingTree" markclades="true" weight="15.0" />
-    <operator id="wide.t:beastlingTree" isNarrow="false" spec="Exchange" tree="@Tree.t:beastlingTree" markclades="true" weight="3.0" />
-    <operator id="WilsonBalding.t:beastlingTree" spec="WilsonBalding" tree="@Tree.t:beastlingTree" markclades="true" weight="3.0" />
-    <operator id="UniformOperator.t:beastlingTree" spec="Uniform" tree="@Tree.t:beastlingTree" weight="30.0" />
-    <operator id="treeScaler.t:beastlingTree" scaleFactor="0.5" spec="ScaleOperator" tree="@Tree.t:beastlingTree" weight="3.0" />
-    <operator id="treeRootScaler.t:beastlingTree" scaleFactor="0.5" spec="ScaleOperator" tree="@Tree.t:beastlingTree" rootOnly="true" weight="3.0" />
-    <operator id="UpDown" spec="UpDownOperator" scaleFactor="0.5" weight="3.0">
-      <tree idref="Tree.t:beastlingTree" name="up" />
-      <parameter idref="birthRate.t:beastlingTree" name="down" />
-    </operator>
+
+    <operator id="CFWilsonBalding" spec="contactrees.operators.CFWilsonBalding" acg="@Tree.t:beastlingTree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" includeRoot="false" alpha="0.1" networkPrior="@ACGTreePrior" weight="1.0"/>
+    <operator id="CFNarrowExchange" spec="contactrees.operators.CFSubtreeExchange" acg="@Tree.t:beastlingTree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="true" networkPrior="@ACGTreePrior" weight="10.0"/>
+    <operator id="CFWideExchange" spec="contactrees.operators.CFSubtreeExchange" acg="@Tree.t:beastlingTree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="false" networkPrior="@ACGTreePrior" weight="1.0"/>
+    <operator id="ACGscaler" spec="contactrees.operators.ACGScaler" acg="@Tree.t:beastlingTree" scaleFactor="0.9" weight="10.0" parameterInverse="@clockRate.c:default"/>
+    <operator id="ACGscaler.rootOnly" spec="contactrees.operators.ACGScaler" acg="@Tree.t:beastlingTree" scaleFactor="0.75" weight="1.0" rootOnly="true"/>
+    <operator id="CFUniform" spec="contactrees.operators.CFUniform" acg="@Tree.t:beastlingTree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" scaleFactor="0.9" networkPrior="@ACGTreePrior" weight="28.0"/>
+
     <operator id="YuleBirthRateScaler.t:beastlingTree" spec="ScaleOperator" parameter="@birthRate.t:beastlingTree" scaleFactor="0.5" weight="3.0" />
     <operator id="featureClockRateGammaUpDown:bantu-vocabulary" spec="UpDownOperator" scaleFactor="0.5" weight="0.3">
       <parameter idref="featureClockRateGammaShape:bantu-vocabulary" name="up" />
@@ -1297,7 +1294,7 @@ analysis using BEASTling and the above configuration may not be valid.
       <log idref="posterior" />
     </logger>
     <logger mode="tree" fileName="bantu-beastling.nex" logEvery="1000" id="treeLogger">
-      <log id="TreeLoggerWithMetaData" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:beastlingTree" dp="4" />
+      <log id="TreeLoggerWithMetaData" spec="contactrees.ACGWithMetaDataLogger" network="@Tree.t:beastlingTree" blockSet="@allBlocks" branchratemodel="@StrictClockModel.c:default"/>
     </logger>
   </run>
 </beast>
