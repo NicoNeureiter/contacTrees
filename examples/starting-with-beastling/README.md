@@ -83,7 +83,7 @@ I have
 
 The each “block” may or may not move along each conversion edge. In total, the proportion of blocks that move should follow the probability `pMove`, so the following prior implements essentially a binomial distribution over all blocks and conversion edges.
 
-      <distribution id="ConvMovePrior" spec="ConversionMovePrior" network="@Tree.t:beastlingTree" pMove="@pMove">
+      <distribution id="ConvMovePrior" spec="contactrees.model.ConversionMovePrior" network="@Tree.t:beastlingTree" pMove="@pMove">
         <blockSet spec="contactrees.BlockSet" id="allBlocks" network="@Tree.t:beastlingTree">
           <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
             <block idref="$(concept)"/>
@@ -107,38 +107,64 @@ needs to contain the corresponding marginal tree for the specific block
 
 The operators for adding, removing, and changing conversion edges need to be added.
 
-    <operator id="AddRemoveConversion.t" spec="AddRemoveConversionGibbs" weight="50.0" acg="@Tree.t:beastlingTree" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" networkPrior="@ACGTreePrior">
+    <operator id="AddRemoveConversion.t" spec="contactrees.operators.AddRemoveConversionGibbs" weight="50.0" acg="@Tree.t:beastlingTree" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" networkPrior="@ACGTreePrior">
       <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
         <treeLikelihood idref="treeLikelihood.$(concept)"/>
       </plate>
     </operator>
     
-    <operator id="GibbsSampleMovesPerConversion.t" spec="GibbsSampleMovesPerConversion" weight="10.0" acg="@Tree.t:beastlingTree" pMove="@pMove" blockSet="@allBlocks" mcmcmc="true">
+    <operator id="GibbsSampleMovesPerConversion.t" spec="contactrees.operators.GibbsSampleMovesPerConversion" weight="10.0" acg="@Tree.t:beastlingTree" pMove="@pMove" blockSet="@allBlocks" mcmcmc="true">
         <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
           <treeLikelihood idref="treeLikelihood.$(concept)"/>
         </plate>
     </operator>
 
-    <operator id="ConvertedEdgeSlide.t" spec="ConvertedEdgeSlide" acg="@Tree.t:beastlingTree" apertureSize="0.2" weight="15.0"/>
-    <operator id="ConvertedEdgeFlip.t" spec="ConvertedEdgeFlip" acg="@Tree.t:beastlingTree" weight="1.0"/>
-    <operator id="ConversionSplit.t" spec="ConversionSplit" acg="@Tree.t:beastlingTree" weight="1.0"
+    <operator id="ConvertedEdgeSlide.t" spec="contactrees.operators.ConvertedEdgeSlide" acg="@Tree.t:beastlingTree" apertureSize="0.2" weight="15.0"/>
+    <operator id="ConvertedEdgeFlip.t" spec="contactrees.operators.ConvertedEdgeFlip" acg="@Tree.t:beastlingTree" weight="1.0"/>
+    <operator id="ConversionSplit.t" spec="contactrees.operators.ConversionSplit" acg="@Tree.t:beastlingTree" weight="1.0"
             blockSet="@allBlocks" conversionRate="@conversionRate" networkPrior="@ACGTreePrior" flip="false" pMove="@pMove"/>
-    <operator id="ConvertedEdgeHop.source" spec="ConvertedEdgeHopGibbs" acg="@Tree.t:beastlingTree" sourceOnly="true" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" networkPrior="@ACGTreePrior" weight="2.0">
+    <operator id="ConvertedEdgeHop.source" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:beastlingTree" sourceOnly="true" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" networkPrior="@ACGTreePrior" weight="2.0">
         <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
           <treeLikelihood idref="treeLikelihood.$(concept)"/>
         </plate>
     </operator>
-    <operator id="ConvertedEdgeHop.source.narrow" spec="ConvertedEdgeHopGibbs" acg="@Tree.t:beastlingTree" sourceOnly="true" nClosestRelatives="3" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" networkPrior="@ACGTreePrior" weight="6.0">
+    <operator id="ConvertedEdgeHop.source.narrow" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:beastlingTree" sourceOnly="true" nClosestRelatives="3" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" networkPrior="@ACGTreePrior" weight="6.0">
         <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
           <treeLikelihood idref="treeLikelihood.$(concept)"/>
         </plate>
     </operator>
-    <operator id="ConvertedEdgeHop.narrow" spec="ConvertedEdgeHopGibbs" acg="@Tree.t:beastlingTree" blockSet="@allBlocks" nClosestRelatives="3" pMove="@pMove" conversionRate="@conversionRate" networkPrior="@ACGTreePrior" weight="2.0">
+    <operator id="ConvertedEdgeHop.narrow" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:beastlingTree" blockSet="@allBlocks" nClosestRelatives="3" pMove="@pMove" conversionRate="@conversionRate" networkPrior="@ACGTreePrior" weight="2.0">
         <plate var="concept" range="animal,arm,ashes,bark,bed,belly,big,bird,bite,blood,bone,breast,burn,child,cloud,come,count,dew,die,dog,drink,ear,eat,egg,elephant,eye,face,fall,fat_oil,feather,fingernail,fire,fire-wood,fish,five,fly,four,give,goat,ground_soil,hair,head,hear,heart,horn,house,hunger,intestine,iron,kill,knee,knife,know,leaf,leg,liver,louse,man,moon,mouth,name,navel,neck,night,nose,one,person,rain,road,root,salt,sand,see,send,shame,sing,skin,sky,sleep,smoke,snake,spear,steal,stone,sun,tail,ten,three,tongue,tooth,tree,two,urine,village,vomit,walk,war,water,wind,woman">
           <treeLikelihood idref="treeLikelihood.$(concept)"/>
         </plate>
     </operator>
-    
-### Logging
 
-...
+And the existing tree operators (everything that changes the language tree) need to be replaced by the corresponding contacTrees operators. These adapted tree operators ensure that conversion edges do not become invalid when the language tree is changed.
+
+```
+-    <operator id="SubtreeSlide.t:beastlingTree" spec="SubtreeSlide" tree="@Tree.t:beastlingTree" markclades="true" weight="15.0" />
+-    <operator id="narrow.t:beastlingTree" spec="Exchange" tree="@Tree.t:beastlingTree" markclades="true" weight="15.0" />
+-    <operator id="wide.t:beastlingTree" isNarrow="false" spec="Exchange" tree="@Tree.t:beastlingTree" markclades="true" weight="3.0" />
+-    <operator id="WilsonBalding.t:beastlingTree" spec="WilsonBalding" tree="@Tree.t:beastlingTree" markclades="true" weight="3.0" />
+-    <operator id="UniformOperator.t:beastlingTree" spec="Uniform" tree="@Tree.t:beastlingTree" weight="30.0" />
+-    <operator id="treeScaler.t:beastlingTree" scaleFactor="0.5" spec="ScaleOperator" tree="@Tree.t:beastlingTree" weight="3.0" />
+-    <operator id="treeRootScaler.t:beastlingTree" scaleFactor="0.5" spec="ScaleOperator" tree="@Tree.t:beastlingTree" rootOnly="true" weight="3.0" />
+-    <operator id="UpDown" spec="UpDownOperator" scaleFactor="0.5" weight="3.0">
+-      <tree idref="Tree.t:beastlingTree" name="up" />
+-      <parameter idref="birthRate.t:beastlingTree" name="down" />
+-    </operator>
++    <operator id="CFWilsonBalding" spec="contactrees.operators.CFWilsonBalding" acg="@Tree.t:beastlingTree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" includeRoot="false" alpha="0.1" networkPrior="@ACGTreePrior" weight="1.0"/>
++    <operator id="CFNarrowExchange" spec="contactrees.operators.CFSubtreeExchange" acg="@Tree.t:beastlingTree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="true" networkPrior="@ACGTreePrior" weight="10.0"/>
++    <operator id="CFWideExchange" spec="contactrees.operators.CFSubtreeExchange" acg="@Tree.t:beastlingTree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="false" networkPrior="@ACGTreePrior" weight="1.0"/>
++    <operator id="ACGscaler" spec="contactrees.operators.ACGScaler" acg="@Tree.t:beastlingTree" scaleFactor="0.9" weight="10.0" parameterInverse="@clockRate.c:default"/>
++    <operator id="ACGscaler.rootOnly" spec="contactrees.operators.ACGScaler" acg="@Tree.t:beastlingTree" scaleFactor="0.75" weight="1.0" rootOnly="true"/>
++    <operator id="CFUniform" spec="contactrees.operators.CFUniform" acg="@Tree.t:beastlingTree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" scaleFactor="0.9" networkPrior="@ACGTreePrior" weight="28.0"/>
+```
+
+### Logging
+The logging of contacTrees results is very similar to a standard phylogenetic analysis, but in order to log the conversion edges we need to use the ACGWithMetaDataLogger. Similar to a tree-logger, this writes newick strings into a nexus file, but it uses the extended Newick format to include conversion edges.
+
+```
+-      <log id="TreeLoggerWithMetaData" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:beastlingTree" dp="4" />
++      <log id="ACGLoggerWithMetaData" spec="contactrees.ACGWithMetaDataLogger" network="@Tree.t:beastlingTree" blockSet="@allBlocks" branchratemodel="@StrictClockModel.c:default"/>
+```
