@@ -98,7 +98,8 @@
             beast.evolution.tree.coalescent.BayesianSkyline.treeIntervals,
             beast.evolution.tree.coalescent.BayesianSkyline.groupSizes,
             beast.evolution.tree.coalescent.BayesianSkyline.popSizes,
-            beast.evolution.speciation.YuleModel.originHeight
+            beast.evolution.speciation.YuleModel.originHeight,
+            contactrees.model.ACGDistribution.cfModel
             '
         buttonLabelMap='beast.app.beauti.BeautiInitDlg.&gt;&gt; details=Edit parameters'
     >
@@ -116,6 +117,9 @@
             hasPartitions="none" icon='2.png.x' forceExpansion='TRUE'
             isVisible='true'
         />
+<!--
+            path='distribution/distribution/distribution/network'
+-->
         <mergepoint id='aux-tipdates-panels'/>
 
         <panel spec='BeautiPanelConfig' panelname="Site Model" tiptext="Site model and substitution model specifications"
@@ -212,7 +216,7 @@
 
             <!-- default tree prior -->
             <plugin id="ACGBirthDeathModel" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate" linearContactGrowth="true" upperConvCountBound="50">
-                <cfModel id="yuleModel" spec="YuleModel" tree="@acg">
+                <cfModel id="YuleModel.t:Tree" spec="beast.evolution.speciation.YuleModel" tree="@acg">
                     <parameter name='birthDiffRate' id="birthRate" value='1.0' estimate='true'/>
                 </cfModel>
             </plugin>
@@ -251,22 +255,6 @@
             </operator>
 
 
-            <connect srcID='clockRate.c:$(n)'  targetID='ACGScaler_clockInverse' inputName='parameterInverse' if='inposterior(clockRate.c:$(n))'/>
-
-            <connect srcID='treeLikelihood.t:$(n)'  targetID='AddRemoveConversion' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
-            <connect srcID='treeLikelihood.t:$(n)'  targetID='GibbsSampleMovesPerConversion' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
-            <connect srcID='treeLikelihood.t:$(n)'  targetID='ConvertedEdgeHop.source' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
-            <connect srcID='treeLikelihood.t:$(n)'  targetID='ConvertedEdgeHop.source.narrow' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
-            <connect srcID='treeLikelihood.t:$(n)'  targetID='ConvertedEdgeHop.narrow' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
-
-            <connect if="acg/estimate=true" inputName="operator" srcID="CFWilsonBalding" targetID="mcmc">Performs Wilson-Balding global rearrangement of acg</connect>
-            <connect if="acg/estimate=true" inputName="operator" srcID="CFNarrowExchange" targetID="mcmc">Narrow exchange performs local rearrangement of acg</connect>
-            <connect if="acg/estimate=true" inputName="operator" srcID="CFWideExchange" targetID="mcmc">Wide exchange performs global rearrangement of acg</connect>
-            <connect if="acg/estimate=true" inputName="operator" srcID="ACGScaler" targetID="mcmc">Scales all internal nodes for acg and scales the clock rate in the opposite direction</connect>
-            <connect if="acg/estimate=true" inputName="operator" srcID="ACGScaler_clockInverse" targetID="mcmc">Scales all internal nodes for acg and scales the clock rate inversely to the node height</connect>
-            <connect if="acg/estimate=true" inputName="operator" srcID="ACGScaler_rootOnly" targetID="mcmc"></connect>
-            <connect if="acg/estimate=true" inputName="operator" srcID="CFUniform" targetID="mcmc">Draws a new internal node height uniformally for acg</connect>
-            <connect if="acg/estimate=true" inputName="operator" srcID="AddRemoveConversion" targetID="mcmc">Add or remove a contact edge from acg</connect>
 
             <operator id='proportionInvariantScaler.s:$(n)' spec='ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@proportionInvariant.s:$(n)"/>
             <operator id='mutationRateScaler.s:$(n)' spec='ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@mutationRate.s:$(n)"/>
@@ -305,7 +293,7 @@
             <connect srcID='mutationRate.s:$(n)'              targetID='state' inputName='stateNode' if='inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true'/>
             <connect srcID='gammaShape.s:$(n)'                targetID='state' inputName='stateNode' if='inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true'/>
             <connect srcID='clockRate.c:$(n)'                 targetID='state' inputName='stateNode' if='inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true'/>
-            <connect srcID='birthRate'                        targetID='state' inputName='stateNode' if='inposterior(YuleModel) and inposterior(acg) and birthRate/estimate=true'/>
+            <connect srcID='birthRate'                        targetID='state' inputName='stateNode' if='inposterior(YuleModel.t:Tree) and inposterior(acg) and birthRate/estimate=true'/>
             <connect srcID='block.t:$(n)'                     targetID='allBlocks' inputName='block' if='inposterior(block.t:$(n))'/>
             
             <connect srcID='proportionInvariantScaler.s:$(n)' targetID='mcmc' inputName='operator' if='inlikelihood(proportionInvariant.s:$(n)) and proportionInvariant.s:$(n)/estimate=true'>Scales proportion of invariant sites parameter of partition $(n)</connect>
@@ -319,14 +307,33 @@
             </connect>
 
             <connect srcID='allTipDatesRandomWalker'   targetID='mcmc' inputName='operator' if='inposterior(acg) and acg/estimate=true and allTipDatesRandomWalker/weight!=0.0'>Estimates tip dates</connect>
+<!--
+The srcIDs are not defined, and they have an equivalent in the ACG operators (yes?) so these connector rules can be removed?
+            <connect if="inposterior(YuleModel.t:Tree) and acg/estimate=true" inputName="operator" srcID="YuleModelTreeScaler" targetID="mcmc">Scales all internal nodes</connect>
+            <connect if="inposterior(YuleModel.t:Tree) and acg/estimate=true" inputName="operator" srcID="YuleModelTreeRootScaler" targetID="mcmc">Scales root node</connect>
+            <connect if="inposterior(YuleModel.t:Tree) and acg/estimate=true" inputName="operator" srcID="YuleModelUniformOperator" targetID="mcmc">Draws new internal node heights uniformally</connect>
+            <connect if="inposterior(YuleModel.t:Tree) and acg/estimate=true" inputName="operator" srcID="YuleModelSubtreeSlide" targetID="mcmc">Performs subtree slide rearrangement</connect>
+            <connect if="inposterior(YuleModel.t:Tree) and acg/estimate=true" inputName="operator" srcID="YuleModelNarrow" targetID="mcmc">Narrow exchange performs local rearrangement</connect>
+            <connect if="inposterior(YuleModel.t:Tree) and acg/estimate=true" inputName="operator" srcID="YuleModelWide" targetID="mcmc">Wide exchange performs global rearrangement</connect>
+            <connect if="inposterior(YuleModel.t:Tree) and acg/estimate=true" inputName="operator" srcID="YuleModelWilsonBalding" targetID="mcmc">Performs Wilson-Balding global rearrangement</connect>
+-->
+            <connect srcID='clockRate.c:$(n)'  targetID='ACGScaler_clockInverse' inputName='parameterInverse' if='inposterior(clockRate.c:$(n))'/>
 
-            <connect if="inposterior(YuleModel) and acg/estimate=true" inputName="operator" srcID="YuleModelTreeScaler" targetID="mcmc">Scales all internal nodes</connect>
-            <connect if="inposterior(YuleModel) and acg/estimate=true" inputName="operator" srcID="YuleModelTreeRootScaler" targetID="mcmc">Scales root node</connect>
-            <connect if="inposterior(YuleModel) and acg/estimate=true" inputName="operator" srcID="YuleModelUniformOperator" targetID="mcmc">Draws new internal node heights uniformally</connect>
-            <connect if="inposterior(YuleModel) and acg/estimate=true" inputName="operator" srcID="YuleModelSubtreeSlide" targetID="mcmc">Performs subtree slide rearrangement</connect>
-            <connect if="inposterior(YuleModel) and acg/estimate=true" inputName="operator" srcID="YuleModelNarrow" targetID="mcmc">Narrow exchange performs local rearrangement</connect>
-            <connect if="inposterior(YuleModel) and acg/estimate=true" inputName="operator" srcID="YuleModelWide" targetID="mcmc">Wide exchange performs global rearrangement</connect>
-            <connect if="inposterior(YuleModel) and acg/estimate=true" inputName="operator" srcID="YuleModelWilsonBalding" targetID="mcmc">Performs Wilson-Balding global rearrangement</connect>
+            <connect srcID='treeLikelihood.t:$(n)'  targetID='AddRemoveConversion' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
+            <connect srcID='treeLikelihood.t:$(n)'  targetID='GibbsSampleMovesPerConversion' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
+            <connect srcID='treeLikelihood.t:$(n)'  targetID='ConvertedEdgeHop.source' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
+            <connect srcID='treeLikelihood.t:$(n)'  targetID='ConvertedEdgeHop.source.narrow' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
+            <connect srcID='treeLikelihood.t:$(n)'  targetID='ConvertedEdgeHop.narrow' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
+
+            <connect if="acg/estimate=true" inputName="operator" srcID="CFWilsonBalding" targetID="mcmc">Performs Wilson-Balding global rearrangement of acg</connect>
+            <connect if="acg/estimate=true" inputName="operator" srcID="CFNarrowExchange" targetID="mcmc">Narrow exchange performs local rearrangement of acg</connect>
+            <connect if="acg/estimate=true" inputName="operator" srcID="CFWideExchange" targetID="mcmc">Wide exchange performs global rearrangement of acg</connect>
+            <connect if="acg/estimate=true" inputName="operator" srcID="ACGScaler" targetID="mcmc">Scales all internal nodes for acg and scales the clock rate in the opposite direction</connect>
+            <connect if="acg/estimate=true" inputName="operator" srcID="ACGScaler_clockInverse" targetID="mcmc">Scales all internal nodes for acg and scales the clock rate inversely to the node height</connect>
+            <connect if="acg/estimate=true" inputName="operator" srcID="ACGScaler_rootOnly" targetID="mcmc"></connect>
+            <connect if="acg/estimate=true" inputName="operator" srcID="CFUniform" targetID="mcmc">Draws a new internal node height uniformally for acg</connect>
+            <connect if="acg/estimate=true" inputName="operator" srcID="AddRemoveConversion" targetID="mcmc">Add or remove a contact edge from acg</connect>
+
 
             <connect srcID='treeLikelihood.t:$(n)'              targetID='tracelog' inputName='log' if='inlikelihood(treeLikelihood.t:$(n))'/>
             <connect srcID='TreeHeight'                       targetID='tracelog' inputName='log' if='inposterior(acg)  and acg/estimate=true'/>
