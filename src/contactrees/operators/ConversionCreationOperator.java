@@ -8,6 +8,7 @@ import beast.evolution.tree.Node;
 import beast.util.Randomizer;
 import contactrees.Conversion;
 import contactrees.model.ACGDistribution;
+import contactrees.model.ConversionPrior;
 
 /**
  * Abstract class of ACG operators that add new converted edges
@@ -24,8 +25,12 @@ public abstract class ConversionCreationOperator extends BorrowingOperator {
 
     public Input<ACGDistribution> networkPriorInput = new Input<>(
             "networkPrior",
-            "The network prior defines how new edges should be sampled.",
-            Input.Validate.REQUIRED);
+            "The network prior (or conversion prior) defines how new edges should be sampled.");
+
+    public Input<ConversionPrior> conversionPriorInput = new Input<>(
+            "conversionPrior",
+            "The conversion prior (or network prior) defines how new edges should be sampled.",
+            Input.Validate.XOR, networkPriorInput);
 
     @Override
     public void initAndValidate() {
@@ -58,7 +63,10 @@ public abstract class ConversionCreationOperator extends BorrowingOperator {
      * @return log probability density of chosen attachment.
      */
     public double attachEdge(Conversion conv) {
-        return networkPriorInput.get().attachEdge(conv);
+        if (networkPriorInput.get() != null)
+            return networkPriorInput.get().attachEdge(conv);
+        else
+            return conversionPriorInput.get().attachEdge(conv);
     }
 
     /**
@@ -69,7 +77,10 @@ public abstract class ConversionCreationOperator extends BorrowingOperator {
      * @return log probability density
      */
     public double getEdgeAttachmentProb(Conversion conv) {
-        return networkPriorInput.get().getEdgeAttachmentProb(conv);
+        if (networkPriorInput.get() != null)
+            return networkPriorInput.get().getEdgeAttachmentProb(conv);
+        else
+            return conversionPriorInput.get().getEdgeAttachmentProb(conv);
     }
 
     /**
