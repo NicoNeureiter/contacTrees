@@ -1,0 +1,85 @@
+<beast version='2.0'
+       namespace='beast.app.beauti:beast.core:beast.evolution.branchratemodel:beast.evolution.speciation:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.evolution:beast.math.distributions'>
+
+
+ <!-- tree priors -->
+    <mergewith point='acgTreePriorTemplates'>
+
+        <!-- Coalescent for Bayesian skyline -->
+        <subtemplate id='BICEPS' class='biceps.BICEPS'
+                     mainid='BICEPS.t:Species'
+                     suppressInputs='biceps.BICEPS.tree,
+                     biceps.BICEPS.treeIntervals,
+                     biceps.BICEPS.equalEpochs'>
+            <![CDATA[
+            <distribution spec="biceps.BICEPS" id='BICEPS.t:Species'
+                populationShape="3.0"
+                ploidy="1.0"
+                linkedMean="true" 
+                logMeans="false"
+                equalEpochs="false"
+               >
+                <groupSizes id="BICEPSGroupSizes.t:Species" spec="parameter.IntegerParameter" dimension="10" estimate="false">1</groupSizes>
+                <populationMean id="BICEPSPopSize.t:Species" spec="parameter.RealParameter" value="1.0" lower="0.0" estimate="true"/>
+                <treeIntervals spec='TreeIntervals' id='BICEPSTreeIntervals.t:Species' tree='@Tree.t:Species'/>
+            </distribution>
+             <prior id="BICEPSPopSizePrior.t:Species" name="distribution" x="@BICEPSPopSize.t:Species">
+                <LogNormal meanInRealSpace="true" name="distr" M="1" S="1"/>
+            </prior>
+            
+            <operator id='BICEPSPopSizesScaler.t:Species' spec='BactrianScaleOperator' scaleFactor="0.1" weight="5" parameter="@BICEPSPopSize.t:Species"/>
+            <operator id='BICEPSGroupSizesDelta.t:Species' spec='DeltaExchangeOperator' delta="1" weight="6" integer="true" intparameter="@BICEPSGroupSizes.t:Species"/>
+            
+            <!--
+            <operator id="BICEPSEpochTop.t:Species" spec="biceps.operators.EpochFlexOperator" tree="@Tree.t:Species" weight="2.0" scaleFactor="0.1"/>
+            <operator id="BICEPSEpochAll.t:Species" spec="biceps.operators.EpochFlexOperator" tree="@Tree.t:Species" weight="2.0" scaleFactor="0.1" fromOldestTipOnly="false"/>      
+            <operator id="BICEPSTreeFlex.t:Species" spec="biceps.operators.TreeStretchOperator" scaleFactor="0.01" tree="@Tree.t:Species" weight="2.0"/>
+            <operator id='BICEPSTreeRootScaler.t:Species' spec='beast.evolution.operators.BactrianScaleOperator' scaleFactor="0.1" weight="3" tree="@Tree.t:Species" rootOnly='true'/>
+            <operator id='BICEPSUniformOperator.t:Species' spec='beast.evolution.operators.BactrianNodeOperator' weight="30" tree="@Tree.t:Species"/>
+            <operator id='BICEPSSubtreeSlide.t:Species' spec='beast.evolution.operators.BactrianSubtreeSlide' weight="15" size="1.0" tree="@Tree.t:Species"/>
+            <operator id='BICEPSNarrow.t:Species' spec='Exchange' isNarrow='true' weight="15" tree="@Tree.t:Species"/>
+            <operator id='BICEPSWide.t:Species' spec='Exchange' isNarrow='false' weight="3" tree="@Tree.t:Species"/>
+            <operator id='BICEPSWilsonBalding.t:Species' spec='WilsonBalding' weight="3" tree="@Tree.t:Species"/>
+            -->
+            
+]]>
+            <connect srcID='BICEPS.t:Species' targetID='prior' inputName='distribution'
+                     if='inposterior(BICEPS.t:Species) and Tree.t:Species/estimate=true'>Coalescent with Integrated Bayesian epoch prior for tree t:Species
+            </connect>
+
+            <connect srcID='BICEPSPopSizePrior.t:Species' targetID='prior' inputName='distribution' 
+                    if='inposterior(BICEPS.t:Species) and BICEPSPopSize.t:Species/estimate=true'/>
+
+            <connect srcID='BICEPSPopSize.t:Species'                 targetID='state' inputName='stateNode' if='inposterior(BICEPS.t:Species) and BICEPSPopSize.t:Species/estimate=true'/>
+            <connect srcID='BICEPSGroupSizes.t:Species'              targetID='state' inputName='stateNode' if='inposterior(BICEPS.t:Species) and BICEPSGroupSizes.t:Species/estimate=true and BICEPS.t:Species/equalEpochs=false'/>
+
+
+            <!--
+            <connect srcID='BICEPSEpochTop.t:Species'                targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:Species) and Tree.t:Species/estimate=true'>Scales all internal nodes for tree t:Species</connect>
+            <connect srcID='BICEPSEpochAll.t:Species'                targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:Species) and Tree.t:Species/estimate=true'>Scales all internal nodes for tree t:Species</connect>
+            <connect srcID='BICEPSTreeFlex.t:Species'                targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:Species) and Tree.t:Species/estimate=true'>Scales all internal nodes for tree t:Species</connect>
+
+            <connect srcID='BICEPSTreeRootScaler.t:Species'          targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:Species) and Tree.t:Species/estimate=true'>Scales root node for tree t:Species</connect>
+            <connect srcID='BICEPSUniformOperator.t:Species'         targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:Species) and Tree.t:Species/estimate=true'>Draws new internal node heights uniformally for tree t:Species</connect>
+            <connect srcID='BICEPSSubtreeSlide.t:Species'            targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:Species) and Tree.t:Species/estimate=true'>Performs subtree slide rearrangement of tree t:Species</connect>
+            <connect srcID='BICEPSNarrow.t:Species'                  targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:Species) and Tree.t:Species/estimate=true'>Narrow exchange performs local rearrangement of tree t:Species</connect>
+            <connect srcID='BICEPSWide.t:Species'                    targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:Species) and Tree.t:Species/estimate=true'>Wide exchange performs global rearrangement of tree t:Species</connect>
+            <connect srcID='BICEPSWilsonBalding.t:Species'           targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:Species) and Tree.t:Species/estimate=true'>Performs Wilson-Balding global rearrangement of tree t:Species</connect>
+            -->
+            
+            <connect srcID='BICEPSGroupSizesDelta.t:Species'         targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:Species) and BICEPSGroupSizes.t:Species/estimate=true and BICEPS.t:Species/equalEpochs=false'>Propose group sizes for BICEPS prior on tree t:Species</connect>
+            <connect srcID='BICEPSPopSizesScaler.t:Species'          targetID='mcmc' inputName='operator'
+                    if='inposterior(BICEPS.t:Species) and BICEPSPopSize.t:Species/estimate=true'>Scale population size of Coalscent prior of tree t:Species
+            </connect>
+            
+            <connect srcID='BICEPS.t:Species' targetID='tracelog' inputName='log'
+                     if='inposterior(BICEPS.t:Species)'/>
+            <connect srcID='BICEPSPopSize.t:Species' targetID='tracelog' inputName='log'
+                     if='inposterior(BICEPS.t:Species) and BICEPSPopSize.t:Species/estimate=true'/>
+
+        </subtemplate>
+
+
+
+    </mergewith>
+</beast>
