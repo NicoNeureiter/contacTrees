@@ -3,6 +3,7 @@ package contactrees;
 import java.util.ArrayList;
 import java.util.List;
 
+import beast.core.BEASTInterface;
 import beast.core.Input;
 import beast.core.StateNode;
 import beast.evolution.branchratemodel.BranchRateModel;
@@ -10,6 +11,7 @@ import beast.evolution.branchratemodel.StrictClockModel;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import contactrees.CFEventList.Event;
+import contactrees.model.likelihood.CTreeLikelihood;
 
 
 /**
@@ -30,9 +32,7 @@ public class MarginalTree extends Tree {
             "block",
             "The block object cinitArraysontaining the moves this marginal tree follows along the conversion graph.",
             Input.Validate.REQUIRED);
-    public Input<BranchRateModel.Base> branchRateModelInput = new Input<>(
-            "branchRateModel",
-            "A model describing the rates on the branches of the clonal frame tree.");
+    private Input<BranchRateModel.Base> branchRateModelInput = new Input<>("branchRateModel", "", new StrictClockModel());
     public Input<ArrayList<String>> frozenTaxaInput = new Input<>(
             "frozenTaxa",
             "Taxa for which the last branch should have a fixed branch rate of 0.",
@@ -58,6 +58,20 @@ public class MarginalTree extends Tree {
         manuallyUpdated = true;
     }
 
+    public void setBranchRateModel(BranchRateModel.Base brm) {
+        branchRateModel = brm;
+//        branchRateModelInput.setValue(brm, this);
+        branchRateModelInput = new Input<>("branchRateModel", "", brm);
+        hasBranchRates = true;
+    }
+
+    private CTreeLikelihood getLikelihood() {
+        for (BEASTInterface beastObject : getOutputs())
+            if (beastObject instanceof CTreeLikelihood)
+                return (CTreeLikelihood) beastObject;
+        throw new RuntimeException("No CTreeLikelihood found in the outputs of the marginal tree.");
+    }
+
     @Override
     public void initAndValidate() {
 
@@ -65,13 +79,11 @@ public class MarginalTree extends Tree {
         block = blockInput.get();
         frozenTaxa = frozenTaxaInput.get();
 
-        if (branchRateModelInput.get() != null) {
-            branchRateModel = branchRateModelInput.get();
-            hasBranchRates = true;
-        } else {
-            branchRateModel = new StrictClockModel();
-            hasBranchRates = false;
-        }
+        branchRateModel = new StrictClockModel();
+        hasBranchRates = false;
+
+//        branchRateModel = getLikelihood().stealClockModel();
+//        hasBranchRates = !(branchRateModel instanceof StrictClockModel);
 
         // Initialize to clonal frame of acg
         String beastID = ID;
@@ -80,12 +92,11 @@ public class MarginalTree extends Tree {
 
         super.initAndValidate();
         activeCFlineages = new ArrayList<>();
-        for (Node node : acg.getNodesAsArray()) activeCFlineages.add(null);
+        for (Node node : acg.getNodesAsArray())
+            activeCFlineages.add(null);
 
         recalculate();
-        outdated = true;
-        manuallyUpdated = false;
-        setEverythingDirty(true);
+        makeOutdated();
     }
 
     @Override
@@ -112,6 +123,12 @@ public class MarginalTree extends Tree {
             }
             return false;
         }
+    }
+
+    public void makeOutdated() {
+        outdated = true;
+        setEverythingDirty(true);
+        manuallyUpdated = false;
     }
 
     @Override
