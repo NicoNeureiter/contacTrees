@@ -266,10 +266,10 @@
             <operator id='gammaShapeScaler.s:$(n)' spec='ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@gammaShape.s:$(n)"/>
             <operator id='allTipDatesRandomWalker' spec='TipDatesRandomWalker' windowSize="1" weight="0" tree="@Tree.t:Species"/>
 
-            <prior id='YuleBirthRatePrior' x='@birthRate.t:Species'><distr spec="beast.math.distributions.Uniform" lower='0' upper='Infinity'/></prior>
+            <prior id='YuleBirthRatePrior.t:Species' x='@birthRate.t:Species'><distr spec="beast.math.distributions.Uniform" lower='0' upper='Infinity'/></prior>
             <prior id='GammaShapePrior.s:$(n)' x='@gammaShape.s:$(n)'><distr spec="beast.math.distributions.Exponential"><mean spec="parameter.RealParameter" estimate="false" value="1.0"/></distr></prior>
             <prior id='PropInvariantPrior.s:$(n)' x='@proportionInvariant.s:$(n)'><distr spec="beast.math.distributions.Uniform" lower='0' upper='1'/></prior>
-            <operator id='YuleBirthRateScaler' spec='ScaleOperator' scaleFactor="0.75" weight="3" parameter="@birthRate.t:Species"/>
+            <operator id='YuleBirthRateScaler.t:Species' spec='ScaleOperator' scaleFactor="0.75" weight="3" parameter="@birthRate.t:Species"/>
             <operator id='StrictClockRateScaler.c:Species' spec='ScaleOperator' scaleFactor="0.75" weight="3" parameter='@clockRate.c:Species'/>
 
 ]]>
@@ -304,7 +304,7 @@
             <connect srcID='mutationRateScaler.s:$(n)'        targetID='mcmc' inputName='operator' if='nooperator(FixMeanMutationRatesOperator) and inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true'>Scales mutation rate of partition s:$(n)</connect>
             <connect srcID='gammaShapeScaler.s:$(n)'          targetID='mcmc' inputName='operator' if='inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true'>Scales gamma shape parameter of partition s:$(n)</connect>
             <connect srcID='StrictClockRateScaler.c:Species'     targetID='mcmc' inputName='operator' if='inlikelihood(clockRate.c:Species) and clockRate.c:Species/estimate=true'>Scale clock rate of partition c:$(n)</connect>
-            <connect srcID='YuleBirthRateScaler'              targetID='mcmc' inputName='operator' if='inposterior(birthRate.t:Species) and birthRate.t:Species/estimate=true'>Scales birth rate of Yule prior</connect>
+            <connect srcID='YuleBirthRateScaler.t:Species'              targetID='mcmc' inputName='operator' if='inposterior(birthRate.t:Species) and birthRate.t:Species/estimate=true'>Scales birth rate of Yule prior</connect>
 
             <connect srcID='allTipDatesRandomWalker'   targetID='mcmc' inputName='operator' if='inposterior(Tree.t:Species) and Tree.t:Species/estimate=true and allTipDatesRandomWalker/weight!=0.0'>Estimates tip dates</connect>
             <connect srcID='clockRate.c:Species'  targetID='ACGScaler_clockInverse' inputName='parameterInverse' if='inposterior(clockRate.c:Species)'/>
@@ -337,7 +337,7 @@
 
             <connect srcID='GammaShapePrior.s:$(n)'           targetID='prior' inputName='distribution' if='inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true'>Prior on gamma shape for partition s:$(n)</connect>
             <connect srcID='PropInvariantPrior.s:$(n)'        targetID='prior' inputName='distribution' if='inlikelihood(proportionInvariant.s:$(n)) and proportionInvariant.s:$(n)/estimate=true'>Prior on proportion invariant for partition s:$(n)</connect>
-            <connect srcID='YuleBirthRatePrior'               targetID='prior' inputName='distribution' if='inposterior(YuleModel.t:Species) and inposterior(Tree.t:Species) and birthRate.t:Species/estimate=true'>Prior on Yule birth rate for partition s:$(n)</connect>
+            <connect srcID='YuleBirthRatePrior.t:Species'               targetID='prior' inputName='distribution' if='inposterior(YuleModel.t:Species) and inposterior(Tree.t:Species) and birthRate.t:Species/estimate=true'>Prior on Yule birth rate for partition s:$(n)</connect>
 
             <mergepoint id='aux-partitiontemplate'/>
         </partitiontemplate>

@@ -2,5 +2,6 @@
     <depends on="beast2" atleast="2.6.0" atmost="2.6.9"/>
     <depends on="feast" atleast="7.5.3"/>
     <depends on="BEASTLabs" atleast="1.9.0"/>
+    <depends on="BICEPS" atleast="1.0.0"/>
     <addonapp class="contactrees.acgannotator.ACGAnnotator" description="ContactreesAnnotator" icon="contactrees/acgannotator/icon.png"/>
 </package>

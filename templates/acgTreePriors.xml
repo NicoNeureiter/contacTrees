@@ -5,6 +5,41 @@
  <!-- tree priors -->
     <mergewith point='acgTreePriorTemplates'>
 
+        <subtemplate id='YuleModel' class='beast.evolution.speciation.YuleModel' mainid='YuleModel.t:Species'>
+            <![CDATA[
+            <plugin spec='YuleModel' id="YuleModel.t:Species" tree='@Tree.t:Species'>
+                <parameter name='birthDiffRate' id="birthRate.t:Species" value='1.0'/>
+            </plugin>
+
+            <prior id='YuleBirthRatePrior.t:Species' x='@birthRate.t:Species'><distr spec="beast.math.distributions.Uniform" lower='0' upper='1000'/></prior>
+
+  		    <scale id='YuleBirthRateScaler.t:Species' spec='ScaleOperator' scaleFactor="0.75" weight="3" parameter="@birthRate.t:Species"/>
+			]]>
+
+            <connect srcID='YuleModel.t:Species' targetID='prior' inputName='distribution'
+                     if='inposterior(YuleModel.t:Species) and inposterior(Tree.t:Species) and Tree.t:Species/estimate=true'>Yule
+                speciation prior on tree t:Species
+            </connect>
+            <connect srcID='birthRate.t:Species' targetID='state' inputName='stateNode'
+                     if='inposterior(YuleModel.t:Species) and inposterior(Tree.t:Species) and inposterior(birthRate.t:Species) and birthRate.t:Species/estimate=true'/>
+
+            <connect srcID='YuleBirthRatePrior.t:Species' targetID='prior' inputName='distribution'
+                     if='inposterior(YuleModel.t:Species) and inposterior(Tree.t:Species) and birthRate.t:Species/estimate=true'>
+                Yule speciation process birth rate of partition t:Species
+            </connect>
+            <connect srcID='YuleBirthRateScaler.t:Species' targetID='mcmc' inputName='operator'
+                     if='inposterior(YuleModel.t:Species) and inposterior(Tree.t:Species) and birthRate.t:Species/estimate=true'>
+                Scale birth rate of Yule prior of tree t:Species
+            </connect>
+
+            <connect srcID='YuleModel.t:Species' targetID='tracelog' inputName='log'
+                     if='inposterior(YuleModel.t:Species) and inposterior(Tree.t:Species) and Tree.t:Species/estimate=true'/>
+            <connect srcID='birthRate.t:Species' targetID='tracelog' inputName='log'
+                     if='inposterior(YuleModel.t:Species) and inposterior(Tree.t:Species) and birthRate.t:Species/estimate=true'/>
+
+			<connect srcID='birthRate.t:Species' targetID='SBI' inputName='birthRate' if='inposterior(YuleModel.t:Species) and inposterior(birthRate.t:Species)'/>
+        </subtemplate>
+
         <!-- Coalescent for Bayesian skyline -->
         <subtemplate id='BICEPS' class='biceps.BICEPS'
                      mainid='BICEPS.t:Species'
