@@ -113,6 +113,11 @@
         />
         <mergepoint id='aux-partitions-panels'/>
 
+        <!--panel spec='BeautiPanelConfig' panelname="Tip Dates" tiptext="Allows to specify data that a taxon was sampled"
+            path='state/stateNode[id=Tree.t:Species]'
+            hasPartitions="none" icon='2.png.x' forceExpansion='TRUE'
+            isVisible='true'
+        /-->
         <panel spec='BeautiPanelConfig' panelname="Tip Dates" tiptext="Allows to specify data that a taxon was sampled"
             path='tree'
             hasPartitions="none" icon='2.png.x' forceExpansion='TRUE'
@@ -129,10 +134,18 @@
         />
         <mergepoint id='aux-sitemodel-panels'/>
 
-        <panel spec="BeautiPanelConfig" panelname="Species Clock Model" icon='4.png.x'
-            path='distribution/distribution[id="likelihood"]/distribution/branchRateModel'
-            tiptext="Species Clock model" forceExpansion="TRUE"
+        <panel spec='BeautiPanelConfig' panelname="Species Clock Model" tiptext="Clock model"
+            path='branchRateModel'
+            hasPartitions="ClockModel" icon='4.png.x' forceExpansion='TRUE'
         />
+        <!--panel spec="BeautiPanelConfig" panelname="Species Clock Model" icon='4.png.x'
+            path='branchRateModel'
+            tiptext="Species Clock model" forceExpansion="TRUE"
+        /-->
+        <!--panel spec='BeautiPanelConfig' panelname="Species Clock Model" tiptext="Clock model"
+            path='distribution/distribution[id="likelihood"]/distribution/'
+            hasPartitions="ClockModel" icon='4.png.x' forceExpansion='TRUE'
+        /-->
 
         <!--panel spec='BeautiPanelConfig' panelname="Clock Model" tiptext="Clock model"
             path='tree/branchRateModel'
@@ -185,8 +198,8 @@
             </plugin>
             
 
-            <plugin spec='contactrees.model.likelihood.CTreeLikelihood' id="treeLikelihood.t:$(n)" data="@data">
-                <tree id="MarginalTree.t:$(n)" spec="contactrees.MarginalTree" network="@Tree.t:Species" block="@block.t:$(n)" />
+            <plugin spec='contactrees.model.likelihood.CTreeLikelihood' id="treeLikelihood.t:$(n)" data="@data" tree="@Tree.t:Species">
+                <marginalTree id="MarginalTree.t:$(n)" spec="contactrees.MarginalTree" network="@Tree.t:Species" block="@block.t:$(n)" />
                 <siteModel idref="SiteModel.s:$(n)"/>
                 <branchRateModel spec='StrictClockModel' id='StrictClock.c:Species'>
                     <clock.rate id='clockRate.c:Species' spec='parameter.RealParameter' value='1.0' estimate='false'/>
@@ -243,8 +256,8 @@
 
             <operator id="ACGScaler_rootOnly" spec="contactrees.operators.ACGScaler" acg="@Tree.t:Species" scaleFactor="0.75" weight="1.0" rootOnly="true"/>
             <operator id="CFUniform" spec="contactrees.operators.CFUniform" acg="@Tree.t:Species" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" scaleFactor="0.9" conversionPrior="@ConvPrior" weight="28.0"/>
-            <operator id="AddRemoveConversion" spec="contactrees.operators.AddRemoveConversionGibbs" weight="50.0" acg="@Tree.t:Species" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" conversionPrior="@ConvPrior">
-            </operator>
+            <operator id="AddRemoveConversion" spec="contactrees.operators.AddRemoveConversionGibbs" weight="50.0" acg="@Tree.t:Species" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" conversionPrior="@ConvPrior"/>
+
             <operator id="GibbsSampleMovesPerConversion" spec="contactrees.operators.GibbsSampleMovesPerConversion" weight="10.0" acg="@Tree.t:Species" pMove="@pMove" blockSet="@allBlocks" mcmcmc="true">
             </operator>
         
@@ -309,7 +322,7 @@
             <connect srcID='allTipDatesRandomWalker'   targetID='mcmc' inputName='operator' if='inposterior(Tree.t:Species) and Tree.t:Species/estimate=true and allTipDatesRandomWalker/weight!=0.0'>Estimates tip dates</connect>
             <connect srcID='clockRate.c:Species'  targetID='ACGScaler_clockInverse' inputName='parameterInverse' if='inposterior(clockRate.c:Species)'/>
 
-            <connect srcID='treeLikelihood.t:$(n)'  targetID='AddRemoveConversion' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
+            <connect srcID='treeLikelihood.t:$(n)'  targetID='AddRemoveConversion' inputName='treeLikelihood' />
             <connect srcID='treeLikelihood.t:$(n)'  targetID='GibbsSampleMovesPerConversion' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
             <connect srcID='treeLikelihood.t:$(n)'  targetID='ConvertedEdgeHop.source' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
             <connect srcID='treeLikelihood.t:$(n)'  targetID='ConvertedEdgeHop.source.narrow' inputName='treeLikelihood' if='inposterior(treeLikelihood.t:$(n))'/>
@@ -343,7 +356,7 @@
         </partitiontemplate>
 
         <mergepoint id='substModelTemplates'/>
-        <mergepoint id='contacTreesClockModelTemplates'/>
+        <mergepoint id='clockModelTemplates'/>
         <mergepoint id='acgTreePriorTemplates'/>
         <mergepoint id='parametricDistributions'/>
 

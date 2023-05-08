@@ -1,8 +1,9 @@
 package contactrees.model.likelihood;
 
+import beast.app.beauti.Beauti;
 import beast.core.Description;
+import beast.core.Input;
 import beast.evolution.branchratemodel.BranchRateModel;
-import beast.evolution.branchratemodel.StrictClockModel;
 import beast.evolution.likelihood.TreeLikelihood;
 import contactrees.MarginalTree;
 
@@ -11,36 +12,48 @@ import contactrees.MarginalTree;
         "Felsenstein, Joseph (1981). Evolutionary trees from DNA sequences: a maximum likelihood approach. J Mol Evol 17 (6): 368-376.")
 public class CTreeLikelihood extends TreeLikelihood {
 
-    public BranchRateModel.Base marginalTreeClock;
+    public Input<MarginalTree> marginalTreeInput = new Input<>("marginalTree", "marginal tree based on actual tree");
 
-    public BranchRateModel.Base stealClockModel() {
-        BranchRateModel.Base clockModel =  branchRateModelInput.get();
-        branchRateModelInput.setValue(new StrictClockModel(), this);
-        return clockModel;
-    }
+    public BranchRateModel.Base marginalTreeClock;
 
     @Override
     public void initAndValidate() {
 
-        MarginalTree mTree = (MarginalTree) treeInput.get();
-        marginalTreeClock =  branchRateModelInput.get();
+        if (!Beauti.isInBeauti()) {
 
-        if (marginalTreeClock != null) {
-            // Forward branchRateModel to the tree and use fixed strict clock model here instead
-            mTree.setBranchRateModel(marginalTreeClock);
-            branchRateModelInput.setValue(null, this);
+            MarginalTree mTree;
+            if (marginalTreeInput.get() != null) {
+                mTree = marginalTreeInput.get();
+                treeInput.set(mTree);
+            } else {
+                // If the marginalTreeInput is null, the treeInput has to be a marginal tree
+                mTree = (MarginalTree) treeInput.get();
+                marginalTreeInput.set(mTree);
+            }
+
+            marginalTreeClock =  branchRateModelInput.get();
+            if (marginalTreeClock != null) {
+                // Forward branchRateModel to the tree and use fixed strict clock model here instead
+                mTree.setBranchRateModel(marginalTreeClock);
+                branchRateModelInput.setValue(null, this);
+            }
         }
 
         super.initAndValidate();
 
-        if (marginalTreeClock != null) {
+        if (Beauti.isInBeauti() && marginalTreeClock != null) {
             // Reset branchRateModelInput for XML file
             branchRateModelInput.setValue(marginalTreeClock, this);
         }
 
         // Update the marginal tree with the new model
-        mTree.recalculate();
-        mTree.makeOutdated();
+        if (!Beauti.isInBeauti()) {
+            MarginalTree mTree = marginalTreeInput.get();
+            mTree.recalculate();
+            mTree.makeOutdated();
+            marginalTreeInput.setValue(null, this);
+        }
+
     }
 
 

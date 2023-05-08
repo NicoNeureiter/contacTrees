@@ -32,7 +32,7 @@ public class MarginalTree extends Tree {
             "block",
             "The block object cinitArraysontaining the moves this marginal tree follows along the conversion graph.",
             Input.Validate.REQUIRED);
-    private Input<BranchRateModel.Base> branchRateModelInput = new Input<>("branchRateModel", "", new StrictClockModel());
+    public Input<BranchRateModel.Base> branchRateModelInput = new Input<>("branchRateModel", "", new StrictClockModel());
     public Input<ArrayList<String>> frozenTaxaInput = new Input<>(
             "frozenTaxa",
             "Taxa for which the last branch should have a fixed branch rate of 0.",
@@ -59,10 +59,9 @@ public class MarginalTree extends Tree {
     }
 
     public void setBranchRateModel(BranchRateModel.Base brm) {
+        branchRateModelInput.setValue(brm, this);
         branchRateModel = brm;
-//        branchRateModelInput.setValue(brm, this);
-        branchRateModelInput = new Input<>("branchRateModel", "", brm);
-        hasBranchRates = true;
+        hasBranchRates = (branchRateModel != null);
     }
 
     private CTreeLikelihood getLikelihood() {
@@ -79,11 +78,9 @@ public class MarginalTree extends Tree {
         block = blockInput.get();
         frozenTaxa = frozenTaxaInput.get();
 
-        branchRateModel = new StrictClockModel();
-        hasBranchRates = false;
-
-//        branchRateModel = getLikelihood().stealClockModel();
+        branchRateModel = branchRateModelInput.get();
 //        hasBranchRates = !(branchRateModel instanceof StrictClockModel);
+        hasBranchRates = (branchRateModel != null);
 
         // Initialize to clonal frame of acg
         String beastID = ID;
