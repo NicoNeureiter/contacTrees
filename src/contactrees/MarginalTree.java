@@ -160,7 +160,6 @@ public class MarginalTree extends Tree {
     }
 
     public void recalculate() {
-//        System.out.println("RECALCULATE " + getID());
         startEditing(null);
         if (customdebug) System.out.print("*");
 
