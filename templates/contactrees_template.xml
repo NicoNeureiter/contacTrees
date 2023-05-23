@@ -200,14 +200,13 @@
             <plugin id='expectedConversions' spec='parameter.RealParameter' estimate='false' value='0.25'/>
             <plugin id='conversionRate' spec='contactrees.model.ConversionRate' expectedConversions='@expectedConversions' linearContactGrowth='true' network='@Tree.t:tree'/>
             <plugin id='pMove' spec='parameter.RealParameter' estimate='false' value='0.2'/>
-            
+
             <prior id='ClockPrior.c:clock' x='@clockRate.c:clock'><distr spec='beast.math.distributions.Uniform' upper='Infinity'/></prior>
             <prior id='MutationRatePrior.s:$(n)' x='@mutationRate.s:$(n)'><distr spec="OneOnX"/></prior>
 
             <!-- tree and its properties -->
             <taxonset id='taxonSet' spec='beast.evolution.alignment.TaxonSet' alignment='@$(n)' />
             <plugin spec='contactrees.ConversionGraph' id='Tree.t:tree' taxonset='@taxonSet'/>
-
             
             <!--plugin spec='beast.evolution.tree.RandomTree' id='RandomTree.t' estimate='false' trait='@datetrait.$(n)' initial='@Tree.t:tree'-->
             <!--plugin spec='beast.evolution.tree.RandomTree' id='RandomTree.t' estimate='false' initial='@Tree.t:tree'-->
@@ -223,9 +222,14 @@
                 <parameter name='birthDiffRate' id="birthRate.t:tree" value='1.0' estimate='true'/>
             </plugin>
             
-            <plugin id="ConvPrior" spec="contactrees.model.ConversionPrior" network="@Tree.t:tree" conversionRate="@conversionRate" linearContactGrowth="true" upperConvCountBound="50"/>
-
-            <plugin id="ConvMovePrior" spec="contactrees.model.ConversionMovePrior" network="@Tree.t:tree" blockSet="@allBlocks" pMove="@pMove"/>
+            <prior id="ConvPrior.t:tree" spec="contactrees.model.ConversionPrior" network="@Tree.t:tree" conversionRate="@conversionRate" linearContactGrowth="true" upperConvCountBound="50"/>
+            <prior id="ConvMovePrior.t:tree" spec="contactrees.model.ConversionMovePrior" network="@Tree.t:tree" blockSet="@allBlocks" pMove="@pMove"/>
+            <prior id="ExpectedConversionsPrior.t:tree" name="distribution" x="@expectedConversions">
+                <distr id="ExpectedConversionsPriorDistr.t:tree" spec="Exponential" mean="0.1" />
+            </prior>
+            <prior id="pMovePrior.t:tree" name="distribution" x="@pMove">
+                <distr id="pMovePriorDistr.t:tree" spec="Beta" alpha="2" beta="16" />
+            </prior>
 
             <plugin id='TreeHeight' spec='beast.evolution.tree.TreeHeightLogger' tree='@Tree.t:tree'/>
 
@@ -234,38 +238,36 @@
                 </log>
             </logger>
 
-            <operator id="CFWilsonBalding" spec="contactrees.operators.CFWilsonBalding" acg="@Tree.t:tree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" includeRoot="false" alpha="0.1" conversionPrior="@ConvPrior" weight="1.0"/>
-            <operator id="CFNarrowExchange" spec="contactrees.operators.CFSubtreeExchange" acg="@Tree.t:tree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="true" conversionPrior="@ConvPrior" weight="10.0"/>
-            <operator id="CFWideExchange" spec="contactrees.operators.CFSubtreeExchange" acg="@Tree.t:tree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="false" conversionPrior="@ConvPrior" weight="1.0"/>
+            <operator id="CFWilsonBalding" spec="contactrees.operators.CFWilsonBalding" acg="@Tree.t:tree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" includeRoot="false" alpha="0.1" conversionPrior="@ConvPrior.t:tree" weight="1.0"/>
+            <operator id="CFNarrowExchange" spec="contactrees.operators.CFSubtreeExchange" acg="@Tree.t:tree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="true" conversionPrior="@ConvPrior.t:tree" weight="10.0"/>
+            <operator id="CFWideExchange" spec="contactrees.operators.CFSubtreeExchange" acg="@Tree.t:tree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="false" conversionPrior="@ConvPrior.t:tree" weight="1.0"/>
             <operator id="ACGScaler" spec="contactrees.operators.ACGScaler" acg="@Tree.t:tree" scaleFactor="0.9" weight="3.0"/>
 
             <operator id="ACGScaler_clockInverse" spec="contactrees.operators.ACGScaler" acg="@Tree.t:tree" scaleFactor="0.9" weight="7.0">
             </operator>
 
             <operator id="ACGScaler_rootOnly" spec="contactrees.operators.ACGScaler" acg="@Tree.t:tree" scaleFactor="0.75" weight="1.0" rootOnly="true"/>
-            <operator id="CFUniform" spec="contactrees.operators.CFUniform" acg="@Tree.t:tree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" scaleFactor="0.9" conversionPrior="@ConvPrior" weight="28.0"/>
-            <operator id="AddRemoveConversion" spec="contactrees.operators.AddRemoveConversionGibbs" weight="50.0" acg="@Tree.t:tree" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" conversionPrior="@ConvPrior">
+            <operator id="CFUniform" spec="contactrees.operators.CFUniform" acg="@Tree.t:tree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" scaleFactor="0.9" conversionPrior="@ConvPrior.t:tree" weight="28.0"/>
+            <operator id="AddRemoveConversion" spec="contactrees.operators.AddRemoveConversionGibbs" weight="50.0" acg="@Tree.t:tree" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" conversionPrior="@ConvPrior.t:tree">
             </operator>
             <operator id="GibbsSampleMovesPerConversion" spec="contactrees.operators.GibbsSampleMovesPerConversion" weight="10.0" acg="@Tree.t:tree" pMove="@pMove" blockSet="@allBlocks" mcmcmc="true">
             </operator>
         
             <operator id="ConvertedEdgeSlide" spec="contactrees.operators.ConvertedEdgeSlide" acg="@Tree.t:tree" apertureSize="0.2" weight="15.0"/>
             <operator id="ConvertedEdgeFlip" spec="contactrees.operators.ConvertedEdgeFlip" acg="@Tree.t:tree" weight="1.0"/>
-            <operator id="ConversionSplit" spec="contactrees.operators.ConversionSplit" acg="@Tree.t:tree" weight="1.0"
-                    blockSet="@allBlocks" conversionRate="@conversionRate" conversionPrior="@ConvPrior" flip="false" pMove="@pMove"/>
-            <operator id="ConvertedEdgeHop.source" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:tree" sourceOnly="true" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" conversionPrior="@ConvPrior" weight="2.0">
-            </operator>
-            <operator id="ConvertedEdgeHop.source.narrow" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:tree" sourceOnly="true" nClosestRelatives="3" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" conversionPrior="@ConvPrior" weight="6.0">
-            </operator>
-            <operator id="ConvertedEdgeHop.narrow" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:tree" blockSet="@allBlocks" nClosestRelatives="3" pMove="@pMove" conversionRate="@conversionRate" conversionPrior="@ConvPrior" weight="2.0">
-            </operator>
+            <operator id="ConversionSplit" spec="contactrees.operators.ConversionSplit" acg="@Tree.t:tree" weight="1.0" blockSet="@allBlocks" conversionRate="@conversionRate" conversionPrior="@ConvPrior.t:tree" flip="false" pMove="@pMove"/>
+            <operator id="ConvertedEdgeHop.source" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:tree" sourceOnly="true" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" conversionPrior="@ConvPrior.t:tree" weight="2.0"/>
+            <operator id="ConvertedEdgeHop.source.narrow" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:tree" sourceOnly="true" nClosestRelatives="3" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" conversionPrior="@ConvPrior.t:tree" weight="6.0"/>
+            <operator id="ConvertedEdgeHop.narrow" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:tree" blockSet="@allBlocks" nClosestRelatives="3" pMove="@pMove" conversionRate="@conversionRate" conversionPrior="@ConvPrior.t:tree" weight="2.0"/>
 
-
+            <operator id="expectedConversionsScaler" spec="ScaleOperator" parameter="@expectedConversions" scaleFactor="0.3" weight="1.0" />
+            <operator id="pMoveScaler" spec="ScaleOperator" parameter="@pMove" scaleFactor="0.3" weight="1.0" />
 
             <operator id='proportionInvariantScaler.s:$(n)' spec='ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@proportionInvariant.s:$(n)"/>
             <operator id='mutationRateScaler.s:$(n)' spec='ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@mutationRate.s:$(n)"/>
             <operator id='gammaShapeScaler.s:$(n)' spec='ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@gammaShape.s:$(n)"/>
             <operator id='allTipDatesRandomWalker' spec='TipDatesRandomWalker' windowSize="1" weight="0" tree="@Tree.t:tree"/>
+
 
             <prior id='YuleBirthRatePrior.t:tree' x='@birthRate.t:tree'><distr spec="beast.math.distributions.Uniform" lower='0' upper='Infinity'/></prior>
             <prior id='GammaShapePrior.s:$(n)' x='@gammaShape.s:$(n)'><distr spec="beast.math.distributions.Exponential"><mean spec="parameter.RealParameter" estimate="false" value="1.0"/></distr></prior>
@@ -275,41 +277,43 @@
 
 ]]>
 
-
-
-            <connect srcID='treeLikelihood.$(n)'            targetID='likelihood' inputName='distribution' if="isInitializing"/>
-            <connect srcID='YuleModel.t:tree'                    targetID='prior' inputName='distribution' if="isInitializing"/>
-            <connect srcID='ConvPrior'                        targetID='prior' inputName='distribution' if="isInitializing"/>
-            <connect srcID='ConvMovePrior'                        targetID='prior' inputName='distribution' if="isInitializing"/>
+            <connect srcID='treeLikelihood.$(n)'              targetID='likelihood' inputName='distribution' if="isInitializing"/>
+            <connect srcID='YuleModel.t:tree'                 targetID='prior' inputName='distribution' if="isInitializing"/>
+            <connect srcID='ConvPrior.t:tree'                        targetID='prior' inputName='distribution' if="isInitializing"/>
+            <connect srcID='ConvMovePrior.t:tree'                    targetID='prior' inputName='distribution' if="isInitializing"/>
+            <connect srcID='ExpectedConversionsPrior.t:tree'         targetID='prior' inputName='distribution' if="expectedConversions/estimate=true"/>
+            <connect srcID='pMovePrior.t:tree'                       targetID='prior' inputName='distribution' if="pMove/estimate=true"/>
             <connect method="beast.app.beauti.SiteModelInputEditor.customConnector"/>
 
             <connect srcID='treelog'                          targetID='mcmc' inputName='logger' if='inposterior(Tree.t:tree) and Tree.t:tree/estimate=true'/>
             <connect srcID='RandomTree.t'                     targetID='mcmc' inputName='init'   if='isInitializing'/>
             <connect method="beast.app.beauti.StateNodeInitialiserListInputEditor.customConnector"/>
 
-            <connect srcID='ClockPrior.c:clock'                targetID='prior' inputName='distribution' if='inlikelihood(clockRate.c:clock) and clockRate.c:clock/estimate=true'/>
+            <connect srcID='ClockPrior.c:clock'               targetID='prior' inputName='distribution' if='inlikelihood(clockRate.c:clock) and clockRate.c:clock/estimate=true'/>
 <!-- when FixMeanMutationRatesOperator, the prior is uniform due to the operator -->
             <connect srcID='MutationRatePrior.s:$(n)'         targetID='prior' inputName='distribution' if='nooperator(FixMeanMutationRatesOperator) and inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true'/>
 
-            <connect srcID='Tree.t:tree'                              targetID='state' inputName='stateNode' if='inposterior(Tree.t:tree) and Tree.t:tree/estimate=true'/>
-            <connect srcID='block.$(n)'                     targetID='state' inputName='stateNode' if='inposterior(Tree.t:tree)'/>
-            <connect srcID='conversionRate'                   targetID='state' inputName='stateNode' if='inposterior(Tree.t:tree)'/>
+            <connect srcID='Tree.t:tree'                      targetID='state' inputName='stateNode' if='inposterior(Tree.t:tree) and Tree.t:tree/estimate=true'/>
+            <connect srcID='block.$(n)'                       targetID='state' inputName='stateNode' if='inposterior(Tree.t:tree)'/>
+            <connect srcID='expectedConversions'              targetID='state' inputName='stateNode' if='inposterior(Tree.t:tree) and expectedConversions/estimate=true'/>
+            <!--connect srcID='conversionRate'                   targetID='state' inputName='stateNode' if='inposterior(Tree.t:tree) and conversionRate/estimate=true'/-->
+            <connect srcID='pMove'                            targetID='state' inputName='stateNode' if='inposterior(Tree.t:tree) and pMove/estimate=true'/>
             
             <connect srcID='proportionInvariant.s:$(n)'       targetID='state' inputName='stateNode' if='inlikelihood(proportionInvariant.s:$(n)) and proportionInvariant.s:$(n)/estimate=true'/>
             <connect srcID='mutationRate.s:$(n)'              targetID='state' inputName='stateNode' if='inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true'/>
             <connect srcID='gammaShape.s:$(n)'                targetID='state' inputName='stateNode' if='inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true'/>
-            <connect srcID='clockRate.c:clock'                 targetID='state' inputName='stateNode' if='inlikelihood(clockRate.c:clock) and clockRate.c:clock/estimate=true'/>
-            <connect srcID='birthRate.t:tree'              targetID='state' inputName='stateNode' if='inposterior(YuleModel.t:tree) and inposterior(Tree.t:tree) and birthRate.t:tree/estimate=true'/>
-            <connect srcID='block.$(n)'                     targetID='allBlocks' inputName='block' if='inposterior(block.$(n))'/>
+            <connect srcID='clockRate.c:clock'                targetID='state' inputName='stateNode' if='inlikelihood(clockRate.c:clock) and clockRate.c:clock/estimate=true'/>
+            <connect srcID='birthRate.t:tree'                 targetID='state' inputName='stateNode' if='inposterior(YuleModel.t:tree) and inposterior(Tree.t:tree) and birthRate.t:tree/estimate=true'/>
+            <connect srcID='block.$(n)'                       targetID='allBlocks' inputName='block' if='inposterior(block.$(n))'/>
             
             <connect srcID='proportionInvariantScaler.s:$(n)' targetID='mcmc' inputName='operator' if='inlikelihood(proportionInvariant.s:$(n)) and proportionInvariant.s:$(n)/estimate=true'>Scales proportion of invariant sites parameter of partition $(n)</connect>
             <connect srcID='mutationRateScaler.s:$(n)'        targetID='mcmc' inputName='operator' if='nooperator(FixMeanMutationRatesOperator) and inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true'>Scales mutation rate of partition s:$(n)</connect>
             <connect srcID='gammaShapeScaler.s:$(n)'          targetID='mcmc' inputName='operator' if='inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true'>Scales gamma shape parameter of partition s:$(n)</connect>
-            <connect srcID='StrictClockRateScaler.c:clock'     targetID='mcmc' inputName='operator' if='inlikelihood(clockRate.c:clock) and clockRate.c:clock/estimate=true'>Scale clock rate of partition c:$(n)</connect>
-            <connect srcID='YuleBirthRateScaler.t:tree'              targetID='mcmc' inputName='operator' if='inposterior(birthRate.t:tree) and birthRate.t:tree/estimate=true'>Scales birth rate of Yule prior</connect>
+            <connect srcID='StrictClockRateScaler.c:clock'    targetID='mcmc' inputName='operator' if='inlikelihood(clockRate.c:clock) and clockRate.c:clock/estimate=true'>Scale clock rate of partition c:$(n)</connect>
+            <connect srcID='YuleBirthRateScaler.t:tree'       targetID='mcmc' inputName='operator' if='inposterior(birthRate.t:tree) and birthRate.t:tree/estimate=true'>Scales birth rate of Yule prior</connect>
 
-            <connect srcID='allTipDatesRandomWalker'   targetID='mcmc' inputName='operator' if='inposterior(Tree.t:tree) and Tree.t:tree/estimate=true and allTipDatesRandomWalker/weight!=0.0'>Estimates tip dates</connect>
-            <connect srcID='clockRate.c:clock'  targetID='ACGScaler_clockInverse' inputName='parameterInverse' if='inposterior(clockRate.c:clock)'/>
+            <connect srcID='allTipDatesRandomWalker'          targetID='mcmc' inputName='operator' if='inposterior(Tree.t:tree) and Tree.t:tree/estimate=true and allTipDatesRandomWalker/weight!=0.0'>Estimates tip dates</connect>
+            <connect srcID='clockRate.c:clock'                targetID='ACGScaler_clockInverse' inputName='parameterInverse' if='inposterior(clockRate.c:clock)'/>
 
             <connect srcID='treeLikelihood.$(n)'  targetID='AddRemoveConversion' inputName='treeLikelihood' />
             <connect srcID='treeLikelihood.$(n)'  targetID='GibbsSampleMovesPerConversion' inputName='treeLikelihood' if='inposterior(treeLikelihood.$(n))'/>
@@ -324,27 +328,32 @@
             <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="ACGScaler_clockInverse" targetID="mcmc">Scales all internal nodes for acg and scales the clock rate inversely to the node height</connect>
             <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="ACGScaler_rootOnly" targetID="mcmc"></connect>
             <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="CFUniform" targetID="mcmc">Draws a new internal node height uniformally for acg</connect>
+            
             <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="AddRemoveConversion" targetID="mcmc">Add or remove a contact edge from acg</connect>
-
-            <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="GibbsSampleMovesPerConversion" targetID="mcmc"></connect>
-            <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="ConvertedEdgeHop.source" targetID="mcmc"></connect>
-            <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="ConvertedEdgeHop.source.narrow" targetID="mcmc"></connect>
-            <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="ConvertedEdgeHop.narrow" targetID="mcmc"></connect>
-
-
+            <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="GibbsSampleMovesPerConversion" targetID="mcmc">Resample the moves (borrowings) at a random contact edge</connect>
+            <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="ConvertedEdgeHop.source" targetID="mcmc">Randomly change the source of a contact edge</connect>
+            <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="ConvertedEdgeHop.source.narrow" targetID="mcmc">Randomly change the source of a contact edges to a branch near the previous one.</connect>
+            <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="ConvertedEdgeHop.narrow" targetID="mcmc">Randomly change the source or target of a contact edge to a branch near the previous one.</connect>
+            <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="ConvertedEdgeSlide" targetID="mcmc"></connect>
+            <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="ConvertedEdgeFlip" targetID="mcmc"></connect>
+            <connect if="Tree.t:tree/estimate=true" inputName="operator" srcID="ConversionSplit" targetID="mcmc"></connect>
+                        
+            <connect if="expectedConversions/estimate=true" inputName="operator" srcID="expectedConversionsScaler" targetID="mcmc"></connect>
+            <connect if="pMove/estimate=true" inputName="operator" srcID="pMoveScaler" targetID="mcmc"></connect>
+            
             <connect srcID='treeLikelihood.$(n)'              targetID='tracelog' inputName='log' if='inlikelihood(treeLikelihood.$(n))'/>
             <connect srcID='TreeHeight'                       targetID='tracelog' inputName='log' if='inposterior(Tree.t:tree)  and Tree.t:tree/estimate=true'/>
             <connect srcID='proportionInvariant.s:$(n)'       targetID='tracelog' inputName='log' if='inposterior(proportionInvariant.s:$(n)) and proportionInvariant.s:$(n)/estimate=true'/>
             <connect srcID='mutationRate.s:$(n)'              targetID='tracelog' inputName='log' if='inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true'/>
             <connect srcID='gammaShape.s:$(n)'                targetID='tracelog' inputName='log' if='inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true'/>
-            <connect srcID='clockRate.c:clock'                 targetID='tracelog' inputName='log' if='inlikelihood(clockRate.c:clock) and clockRate.c:clock/estimate=true'/>
-            <connect srcID='ConvPrior'                        targetID='tracelog' inputName='log' if='inposterior(ConvPrior) and inposterior(Tree.t:tree) and Tree.t:tree/estimate=true'/>
+            <connect srcID='clockRate.c:clock'                targetID='tracelog' inputName='log' if='inlikelihood(clockRate.c:clock) and clockRate.c:clock/estimate=true'/>
+            <connect srcID='ConvPrior.t:tree'                 targetID='tracelog' inputName='log' if='inposterior(ConvPrior.t:tree) and inposterior(Tree.t:tree) and Tree.t:tree/estimate=true'/>
             <connect srcID='YuleModel.t:tree'                 targetID='tracelog' inputName='log' if='inposterior(YuleModel.t:tree) and inposterior(Tree.t:tree) and Tree.t:tree/estimate=true'/>
-            <connect srcID='birthRate.t:tree'                        targetID='tracelog' inputName='log' if='inposterior(YuleModel.t:tree) and birthRate.t:tree/estimate=true'/>
+            <connect srcID='birthRate.t:tree'                 targetID='tracelog' inputName='log' if='inposterior(YuleModel.t:tree) and birthRate.t:tree/estimate=true'/>
 
             <connect srcID='GammaShapePrior.s:$(n)'           targetID='prior' inputName='distribution' if='inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true'>Prior on gamma shape for partition s:$(n)</connect>
             <connect srcID='PropInvariantPrior.s:$(n)'        targetID='prior' inputName='distribution' if='inlikelihood(proportionInvariant.s:$(n)) and proportionInvariant.s:$(n)/estimate=true'>Prior on proportion invariant for partition s:$(n)</connect>
-            <connect srcID='YuleBirthRatePrior.t:tree'               targetID='prior' inputName='distribution' if='inposterior(YuleModel.t:tree) and inposterior(Tree.t:tree) and birthRate.t:tree/estimate=true'>Prior on Yule birth rate for partition s:$(n)</connect>
+            <connect srcID='YuleBirthRatePrior.t:tree'        targetID='prior' inputName='distribution' if='inposterior(YuleModel.t:tree) and inposterior(Tree.t:tree) and birthRate.t:tree/estimate=true'>Prior on Yule birth rate for partition s:$(n)</connect>
 
             <mergepoint id='aux-partitiontemplate'/>
         </partitiontemplate>
