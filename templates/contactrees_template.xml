@@ -225,10 +225,10 @@
             <prior id="ConvPrior.t:tree" spec="contactrees.model.ConversionPrior" network="@Tree.t:tree" conversionRate="@conversionRate" linearContactGrowth="true" upperConvCountBound="50"/>
             <prior id="ConvMovePrior.t:tree" spec="contactrees.model.ConversionMovePrior" network="@Tree.t:tree" blockSet="@allBlocks" pMove="@pMove"/>
             <prior id="ExpectedConversionsPrior.t:tree" name="distribution" x="@expectedConversions">
-                <distr id="ExpectedConversionsPriorDistr.t:tree" spec="Exponential" mean="0.1" />
+                <distr spec="Exponential" mean="0.1" />
             </prior>
             <prior id="pMovePrior.t:tree" name="distribution" x="@pMove">
-                <distr id="pMovePriorDistr.t:tree" spec="Beta" alpha="2" beta="16" />
+                <distr spec="Beta" alpha="2" beta="16" />
             </prior>
 
             <plugin id='TreeHeight' spec='beast.evolution.tree.TreeHeightLogger' tree='@Tree.t:tree'/>
