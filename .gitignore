@@ -35,3 +35,6 @@ simulations/
 *.state
 *.trees
 *.tree
+/build/
+/release/
+/dist/

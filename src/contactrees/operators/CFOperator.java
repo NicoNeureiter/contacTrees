@@ -5,6 +5,7 @@ import java.util.List;
 
 import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
+import beast.base.inference.StateNode;
 import beast.base.util.Randomizer;
 import contactrees.Conversion;
 

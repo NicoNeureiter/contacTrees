@@ -1,7 +1,56 @@
-<package name="contacTrees" version="1.1.0">
-    <depends on="beast2" atleast="2.6.0" atmost="2.6.9"/>
-    <depends on="feast" atleast="7.5.3"/>
-    <depends on="BEASTLabs" atleast="1.9.0"/>
-    <depends on="BICEPS" atleast="1.0.0"/>
-    <addonapp class="contactrees.acgannotator.ACGAnnotator" description="ContactreesAnnotator" icon="contactrees/acgannotator/icon.png"/>
+<package name="contacTrees" version="1.2.0">
+    <depends on='BEAST.base' atleast='2.7.0'/>
+    <depends on='BEAST.app' atleast='2.7.0'/>
+    <depends on="feast" atleast="9.0.0"/>
+    <depends on="BEASTLabs" atleast="2.0.0"/>
+    <depends on="BICEPS" atleast="1.1.0"/>
+
+    <packageapp class="contactrees.acgannotator.ACGAnnotator" description="ContactreesAnnotator" icon="contactrees/acgannotator/icon.png"/>
+
+    <service type="beast.base.core.BEASTInterface">
+        <provider classname="contactrees.ACGStatsLogger"/>
+        <provider classname="contactrees.ACGWithBlocks"/>
+        <provider classname="contactrees.ACGWithMetaDataLogger"/>
+        <provider classname="contactrees.Block"/>
+        <provider classname="contactrees.BlockSet"/>
+        <provider classname="contactrees.ConversionGraph"/>
+        <provider classname="contactrees.MarginalNode"/>
+        <provider classname="contactrees.MarginalNodeSlow"/>
+        <provider classname="contactrees.MarginalTree"/>
+        <provider classname="contactrees.MarginalTreeSlow"/>
+        <provider classname="contactrees.model.ACGDistribution"/>
+        <provider classname="contactrees.model.ACGSimulator"/>
+        <provider classname="contactrees.model.BetaBinomialMovePrior"/>
+        <provider classname="contactrees.model.ConversionMovePrior"/>
+        <provider classname="contactrees.model.ConversionPrior"/>
+        <provider classname="contactrees.model.ConversionRate"/>
+        <provider classname="contactrees.model.FreezableClock"/>
+        <provider classname="contactrees.model.likelihood.CTreeLikelihood"/>
+        <provider classname="contactrees.model.SimulatedACGWithBlocks"/>
+        <provider classname="contactrees.operators.ACGScaler"/>
+        <provider classname="contactrees.operators.AddRemoveConversion"/>
+        <provider classname="contactrees.operators.AddRemoveConversionGibbs"/>
+        <provider classname="contactrees.operators.CFConversionSwap"/>
+        <provider classname="contactrees.operators.CFSubtreeExchange"/>
+        <provider classname="contactrees.operators.CFSubtreeSlide"/>
+        <provider classname="contactrees.operators.CFUniform"/>
+        <provider classname="contactrees.operators.CFWilsonBalding"/>
+        <provider classname="contactrees.operators.ConversionSplit"/>
+        <provider classname="contactrees.operators.ConvertedEdgeFlip"/>
+        <provider classname="contactrees.operators.ConvertedEdgeHop"/>
+        <provider classname="contactrees.operators.ConvertedEdgeHopGibbs"/>
+        <provider classname="contactrees.operators.ConvertedEdgeSlide"/>
+        <provider classname="contactrees.operators.GibbsSampleMovesPerBlock"/>
+        <provider classname="contactrees.operators.GibbsSampleMovesPerConversion"/>
+        <provider classname="contactrees.operators.ResampleBorrowings"/>
+        <provider classname="contactrees.RandomACG"/>
+        <!--
+            these are for testing only?
+            If not, uncomment one or both of the next lines, and 
+            edit build.xml to include these files in the jar file
+        <provider classname="contactrees.test.SimulatorOperator"/>
+        <provider classname="contactrees.test.StationarityTestSchedule"/>
+        -->
+    </service>
+
 </package>

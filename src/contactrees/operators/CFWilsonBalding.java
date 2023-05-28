@@ -1,8 +1,11 @@
 package contactrees.operators;
 
+import java.util.List;
+
 import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
+import beast.base.inference.StateNode;
 import beast.base.util.Randomizer;
 
 /**
@@ -188,4 +191,5 @@ public class CFWilsonBalding extends CFOperator {
 
         return destNodeP != null && (destNodeP.getHeight() <= srcNode.getHeight());
     }
+    
 }
