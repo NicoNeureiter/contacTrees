@@ -3,13 +3,13 @@ package contactrees;
 import java.util.ArrayList;
 import java.util.List;
 
-import beast.core.BEASTInterface;
-import beast.core.Input;
-import beast.core.StateNode;
-import beast.evolution.branchratemodel.BranchRateModel;
-import beast.evolution.branchratemodel.StrictClockModel;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
+import beast.base.core.BEASTInterface;
+import beast.base.core.Input;
+import beast.base.inference.StateNode;
+import beast.base.evolution.branchratemodel.BranchRateModel;
+import beast.base.evolution.branchratemodel.StrictClockModel;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
 import contactrees.CFEventList.Event;
 import contactrees.model.likelihood.CTreeLikelihood;
 

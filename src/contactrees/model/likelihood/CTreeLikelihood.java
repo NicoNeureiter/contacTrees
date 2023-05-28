@@ -1,11 +1,11 @@
 package contactrees.model.likelihood;
 
-import beast.app.beauti.Beauti;
-import beast.core.Description;
-import beast.core.Input;
-import beast.evolution.branchratemodel.BranchRateModel;
-import beast.evolution.branchratemodel.StrictClockModel;
-import beast.evolution.likelihood.TreeLikelihood;
+import beastfx.app.beauti.Beauti;
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.evolution.branchratemodel.BranchRateModel;
+import beast.base.evolution.branchratemodel.StrictClockModel;
+import beast.base.evolution.likelihood.TreeLikelihood;
 import contactrees.MarginalTree;
 
 @Description("Calculates the probability of sequence data on a beast.tree given a site and substitution model using " +

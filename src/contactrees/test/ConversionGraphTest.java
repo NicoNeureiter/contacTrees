@@ -13,7 +13,7 @@ import javax.naming.directory.InvalidAttributesException;
 
 import org.junit.Test;
 
-import beast.evolution.tree.Node;
+import beast.base.evolution.tree.Node;
 import contactrees.Block;
 import contactrees.Conversion;
 

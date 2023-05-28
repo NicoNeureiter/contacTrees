@@ -7,15 +7,15 @@ import java.util.List;
 
 import org.junit.Test;
 
-import beast.core.parameter.RealParameter;
-import beast.evolution.alignment.Alignment;
-import beast.evolution.branchratemodel.UCRelaxedClockModel;
-import beast.evolution.likelihood.TreeLikelihood;
-import beast.evolution.sitemodel.SiteModel;
-import beast.evolution.substitutionmodel.JukesCantor;
-import beast.evolution.tree.Tree;
-import beast.math.distributions.Uniform;
-import beast.util.TreeParser;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.evolution.alignment.Alignment;
+import beast.base.evolution.branchratemodel.UCRelaxedClockModel;
+import beast.base.evolution.likelihood.TreeLikelihood;
+import beast.base.evolution.sitemodel.SiteModel;
+import beast.base.evolution.substitutionmodel.JukesCantor;
+import beast.base.evolution.tree.Tree;
+import beast.base.inference.distribution.Uniform;
+import beast.base.evolution.tree.TreeParser;
 import contactrees.Block;
 import contactrees.Conversion;
 import contactrees.MarginalNode;

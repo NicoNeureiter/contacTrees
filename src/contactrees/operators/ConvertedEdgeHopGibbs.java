@@ -2,11 +2,11 @@ package contactrees.operators;
 
 import java.util.HashSet;
 
-import beast.core.Description;
-import beast.core.Input;
-import beast.evolution.likelihood.TreeLikelihood;
-import beast.evolution.tree.Node;
-import beast.util.Randomizer;
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.evolution.likelihood.TreeLikelihood;
+import beast.base.evolution.tree.Node;
+import beast.base.util.Randomizer;
 import contactrees.Conversion;
 import contactrees.MarginalTree;
 import contactrees.util.Util;

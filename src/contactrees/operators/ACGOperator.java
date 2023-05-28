@@ -2,9 +2,9 @@ package contactrees.operators;
 
 import javax.naming.directory.InvalidAttributesException;
 
-import beast.core.Input;
-import beast.core.Operator;
-import beast.evolution.tree.Node;
+import beast.base.core.Input;
+import beast.base.inference.Operator;
+import beast.base.evolution.tree.Node;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
 

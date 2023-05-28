@@ -41,9 +41,9 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 
-import beast.core.util.Log;
-import beast.evolution.tree.Node;
-import beast.math.statistic.DiscreteStatistics;
+import beast.base.core.Log;
+import beast.base.evolution.tree.Node;
+import beast.base.util.DiscreteStatistics;
 import contactrees.ACGWithBlocks;
 import contactrees.ACGWithMetaDataLogger;
 import contactrees.Block;

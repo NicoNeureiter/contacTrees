@@ -6,13 +6,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-import beast.core.BEASTObject;
-import beast.core.Description;
-import beast.core.Input;
-import beast.core.Loggable;
-import beast.evolution.branchratemodel.BranchRateModel;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
+import beast.base.core.BEASTObject;
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.core.Loggable;
+import beast.base.evolution.branchratemodel.BranchRateModel;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
 
 @Description("Logs conversion graphs annotated with metadata and/or rates")
 public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {

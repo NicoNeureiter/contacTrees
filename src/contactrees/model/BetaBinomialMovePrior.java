@@ -10,10 +10,10 @@ import java.util.Random;
 import org.apache.commons.math.special.Beta;
 import org.apache.commons.math3.distribution.BetaDistribution;
 
-import beast.core.Distribution;
-import beast.core.Input;
-import beast.core.State;
-import beast.core.parameter.RealParameter;
+import beast.base.inference.Distribution;
+import beast.base.core.Input;
+import beast.base.inference.State;
+import beast.base.inference.parameter.RealParameter;
 import contactrees.Block;
 import contactrees.BlockSet;
 import contactrees.Conversion;

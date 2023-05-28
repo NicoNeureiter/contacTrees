@@ -2,12 +2,12 @@ package contactrees.test.operators;
 
 import org.junit.Test;
 
-import beast.core.State;
-import beast.evolution.alignment.Alignment;
-import beast.evolution.alignment.Sequence;
-import beast.evolution.operators.Exchange;
-import beast.util.Randomizer;
-import beast.util.TreeParser;
+import beast.base.inference.State;
+import beast.base.evolution.alignment.Alignment;
+import beast.base.evolution.alignment.Sequence;
+import beast.base.evolution.operator.Exchange;
+import beast.base.util.Randomizer;
+import beast.base.evolution.tree.TreeParser;
 import junit.framework.TestCase;
 
 public class ExchangeOperatorTest extends TestCase {

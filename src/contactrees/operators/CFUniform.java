@@ -1,9 +1,9 @@
 package contactrees.operators;
 
-import beast.core.Description;
-import beast.core.Input;
-import beast.evolution.tree.Node;
-import beast.util.Randomizer;
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
+import beast.base.util.Randomizer;
 
 /**
  * Uniform operator for clonal frame nodes. This operator is capable of

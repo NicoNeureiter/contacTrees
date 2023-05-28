@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
-import beast.core.Operator;
-import beast.core.State;
-import beast.core.StateNode;
+import beast.base.inference.Operator;
+import beast.base.inference.State;
+import beast.base.inference.StateNode;
 import junit.framework.TestCase;
 
 /**

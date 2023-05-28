@@ -1,6 +1,6 @@
 package contactrees;
 
-import beast.evolution.tree.Node;
+import beast.base.evolution.tree.Node;
 
 /**
  * A class representing contact events that are one-edge

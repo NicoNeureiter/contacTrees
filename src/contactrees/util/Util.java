@@ -9,8 +9,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import beast.evolution.tree.Node;
-import beast.util.Randomizer;
+import beast.base.evolution.tree.Node;
+import beast.base.util.Randomizer;
 
 /**
  *

@@ -2,8 +2,8 @@ package contactrees.test;
 
 import org.junit.Test;
 
-import beast.evolution.tree.Node;
-import beast.util.TreeParser;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TreeParser;
 import contactrees.ConversionGraph;
 import junit.framework.TestCase;
 

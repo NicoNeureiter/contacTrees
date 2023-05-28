@@ -2,8 +2,8 @@ package contactrees.operators;
 
 import java.util.List;
 
-import beast.core.Description;
-import beast.core.Input;
+import beast.base.core.Description;
+import beast.base.core.Input;
 import contactrees.BlockSet;
 import contactrees.Conversion;
 import contactrees.MarginalTree;

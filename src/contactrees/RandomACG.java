@@ -38,21 +38,22 @@ import java.util.TreeSet;
 
 import org.apache.commons.math.MathException;
 
-import beast.evolution.tree.*;
-import beast.core.BEASTInterface;
-import beast.core.Description;
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.StateNode;
-import beast.core.StateNodeInitialiser;
-import beast.core.util.Log;
-import beast.evolution.alignment.Alignment;
-import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.coalescent.PopulationFunction;
-import beast.math.distributions.MRCAPrior;
-import beast.math.distributions.ParametricDistribution;
-import beast.util.HeapSort;
-import beast.util.Randomizer;
+import beast.base.core.BEASTInterface;
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.inference.StateNode;
+import beast.base.inference.StateNodeInitialiser;
+import beast.base.core.Log;
+import beast.base.evolution.alignment.Alignment;
+import beast.base.evolution.alignment.TaxonSet;
+import beast.base.evolution.tree.coalescent.PopulationFunction;
+import beast.base.evolution.tree.MRCAPrior;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TraitSet;
+import beast.base.inference.distribution.ParametricDistribution;
+import beast.base.util.HeapSort;
+import beast.base.util.Randomizer;
 
 
 
@@ -524,7 +525,7 @@ public class RandomACG extends ConversionGraph implements StateNodeInitialiser {
      * @param demographic
      * @return the root node of the given array of nodes after simulation of the
      *         coalescent under the given demographic model.
-     * @throws beast.evolution.tree.RandomTree.ConstraintViolatedException
+     * @throws beast.base.evolution.tree.coalescent.RandomTree.ConstraintViolatedException
      */
 //    public Node simulateCoalescent(final List<Node> nodes, final PopulationFunction demographic) throws ConstraintViolatedException {
 //        return simulateCoalescentWithMax(nodes, demographic, Double.POSITIVE_INFINITY);
@@ -535,7 +536,7 @@ public class RandomACG extends ConversionGraph implements StateNodeInitialiser {
      * @param demographic
      * @return the root node of the given array of nodes after simulation of the
      *         coalescent under the given demographic model.
-     * @throws beast.evolution.tree.RandomTree.ConstraintViolatedException
+     * @throws beast.base.evolution.tree.coalescent.RandomTree.ConstraintViolatedException
      */
     public Node simulateCoalescentWithMax(final List<Node> nodes, final PopulationFunction demographic,
                                           final double maxHeight) throws ConstraintViolatedException {

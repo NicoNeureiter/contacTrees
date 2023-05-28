@@ -7,7 +7,7 @@ import java.util.List;
 
 import javax.management.InvalidAttributeValueException;
 
-import beast.evolution.tree.Node;
+import beast.base.evolution.tree.Node;
 
 /**
  * Maintains an ordered list of events which make up the clonal frame.

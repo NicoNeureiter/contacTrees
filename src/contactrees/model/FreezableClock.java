@@ -2,10 +2,10 @@ package contactrees.model;
 
 import java.util.ArrayList;
 
-import beast.core.Input;
-import beast.evolution.alignment.Taxon;
-import beast.evolution.branchratemodel.BranchRateModel;
-import beast.evolution.tree.Node;
+import beast.base.core.Input;
+import beast.base.evolution.alignment.Taxon;
+import beast.base.evolution.branchratemodel.BranchRateModel;
+import beast.base.evolution.tree.Node;
 
 
 public class FreezableClock extends BranchRateModel.Base {

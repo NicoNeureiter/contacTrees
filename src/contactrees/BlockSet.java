@@ -6,9 +6,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
-import beast.core.CalculationNode;
-import beast.core.Description;
-import beast.core.Input;
+import beast.base.inference.CalculationNode;
+import beast.base.core.Description;
+import beast.base.core.Input;
 
 /**
  * @author Nico Neureiter

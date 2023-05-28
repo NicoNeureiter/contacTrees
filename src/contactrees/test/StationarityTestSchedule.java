@@ -10,11 +10,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import beast.core.Input;
-import beast.core.Logger;
-import beast.core.Operator;
-import beast.core.OperatorSchedule;
-import beast.util.Randomizer;
+import beast.base.core.Input;
+import beast.base.inference.Logger;
+import beast.base.inference.Operator;
+import beast.base.inference.OperatorSchedule;
+import beast.base.util.Randomizer;
 
 /**
  * OperatorSchedule which is designed to test the stationarity conditions of a single operator (without requiring ergodicity). 

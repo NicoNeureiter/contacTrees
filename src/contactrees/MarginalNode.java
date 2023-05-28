@@ -3,8 +3,8 @@ package contactrees;
 import java.util.List;
 import java.util.TreeMap;
 
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
 
 /**
  * Adds a field to the Node class specifying whether a given
@@ -72,7 +72,7 @@ public class MarginalNode extends Node {
     }
 
     @Override
-    protected void setParent(final Node parent, final boolean inOperator) {
+    public void setParent(final Node parent, final boolean inOperator) {
         this.parent = parent;
     }
 

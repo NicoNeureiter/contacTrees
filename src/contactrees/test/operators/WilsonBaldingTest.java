@@ -16,18 +16,21 @@
  */
 package contactrees.test.operators;
 
-import beast.core.*; 
-import beast.core.parameter.RealParameter;
-import beast.evolution.alignment.Alignment;
-import beast.evolution.alignment.Sequence;
-import beast.evolution.operators.WilsonBalding;
-import beast.evolution.tree.RandomTree;
-import beast.evolution.tree.Tree;
-import beast.evolution.tree.TreeTraceAnalysis;
-import beast.evolution.tree.coalescent.Coalescent;
-import beast.evolution.tree.coalescent.ConstantPopulation;
-import beast.evolution.tree.coalescent.TreeIntervals;
-import beast.util.Randomizer;
+import beast.base.inference.Logger;
+import beast.base.inference.MCMC;
+import beast.base.inference.State;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.core.BEASTObject;
+import beast.base.core.Input;
+import beast.base.evolution.alignment.Alignment;
+import beast.base.evolution.alignment.Sequence;
+import beast.base.evolution.tree.coalescent.RandomTree;
+import beast.base.evolution.tree.Tree;
+import beast.base.evolution.tree.coalescent.Coalescent;
+import beast.base.evolution.tree.coalescent.ConstantPopulation;
+import beast.base.evolution.tree.TreeIntervals;
+import beast.base.util.Randomizer;
+import beastfx.app.tools.TreeTraceAnalysis;
 import contactrees.ACGWithMetaDataLogger;
 import contactrees.BlockSet;
 import contactrees.ConversionGraph;
