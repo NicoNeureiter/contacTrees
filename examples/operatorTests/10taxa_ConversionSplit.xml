@@ -64,7 +64,7 @@
 	<operatorschedule id="schedule" spec="contactrees.test.StationarityTestSchedule" logInterval="$(logInterval)">
 	 	<simulatorOperator id="SimumlaterOperator" spec="contactrees.test.SimulatorOperator" distribution="@prior" state="@state" weight="1"/>
 	 	<operator id="ConversionSplit.t" spec="ConversionSplit" acg="@acg" weight="1" 
-	 	          blockSet="@allBlocks" conversionRate="@conversionRate" flipInput="false" pMove="@pMove"/> 
+	 	          blockSet="@allBlocks" conversionRate="@conversionRate" flip="false" pMove="@pMove" networkPrior="@ACGYulePrior.t"/> 
 	</operatorschedule>
 	
     <logger id="screenlog" logEvery="$(logInterval)">

@@ -64,7 +64,7 @@
     <operatorschedule id="schedule" spec="contactrees.test.StationarityTestSchedule" logInterval="$(logInterval)">
         <simulatorOperator id="SimumlaterOperator" spec="contactrees.test.SimulatorOperator" distribution="@prior" state="@state" weight="1"/>
         <operator id="CFWilsonBalding.t" spec="CFWilsonBalding" acg="@acg" alpha="0.1" conversionRate="@conversionRate"
-          pMove="@pMove" blockSet="@allBlocks" includeRoot="true" weight="1"/> 
+          pMove="@pMove" blockSet="@allBlocks" includeRoot="true" weight="1" networkPrior="@ACGYulePrior.t"/> 
     </operatorschedule>
     
     <logger id="screenlog" logEvery="$(logInterval)">

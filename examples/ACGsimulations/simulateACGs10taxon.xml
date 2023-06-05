@@ -1,50 +1,65 @@
 <beast version='2.0'
-       namespace='beast.evolution.tree.coalescent
+       namespace='beast.core
+                 :beast.core.parameter
+                 :beast.evolution.tree.coalescent
                  :beast.evolution.alignment
+                 :beast.math.distributions
                  :contactrees
                  :contactrees.model
                  :contactrees.util
                  :beast.util'>
 
-	<run spec="ACGSimulator" nSims="$(nSims)">
-	    <simACG spec="SimulatedACGWithBlocks" id="acgWithBlocks"
-	            conversionRate="$(convRate)" moveProb="$(pMove)">
-           <network spec="ConversionGraph" id="acg">
-            <taxonset spec="TaxonSet">
-                <taxon spec="Taxon" id="A"/>
-                <taxon spec="Taxon" id="B"/>
-                <taxon spec="Taxon" id="C"/>
-                <taxon spec="Taxon" id="D"/>
-                <taxon spec="Taxon" id="E"/>
-                <taxon spec="Taxon" id="F"/>
-                <taxon spec="Taxon" id="G"/>
-                <taxon spec="Taxon" id="H"/>
-                <taxon spec="Taxon" id="I"/>
-                <taxon spec="Taxon" id="J"/>
-            </taxonset>
-           </network>
-	       	<blockSet spec="BlockSet" id="blockSet" network="@acg">
-	       		<block spec="Block" id="block.0"/>
-	       		<block spec="Block" id="block.1"/>
-	       		<block spec="Block" id="block.2"/>
-	       		<block spec="Block" id="block.3"/>
-	       		<block spec="Block" id="block.4"/>
-	       		<block spec="Block" id="block.5"/>
-	       		<block spec="Block" id="block.6"/>
-	       		<block spec="Block" id="block.7"/>
-	       		<block spec="Block" id="block.8"/>
-	       		<block spec="Block" id="block.9"/>
-	       	</blockSet>
-		    <populationModel spec="ConstantPopulation" popSize="$(popSize)"/>
-		</simACG>
-		
-	    <logger logEvery="1" fileName="$(filebase).stats">
-	        <log spec="ACGStatsLogger" network="@acg" blockSet="@blockSet"/>
-	    </logger>
-		    
-		<logger logEvery="1" fileName="$(filebase).trees">
-	    	<log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@blockSet"/>
-		</logger>
-	</run>
+
+<stateNode spec="ConversionGraph" id="acg">
+	<taxonset spec="TaxonSet">
+	    <taxon spec="Taxon" id="A"/>
+	    <taxon spec="Taxon" id="B"/>
+	    <taxon spec="Taxon" id="C"/>
+	    <taxon spec="Taxon" id="D"/>
+	    <taxon spec="Taxon" id="E"/>
+	    <taxon spec="Taxon" id="F"/>
+	    <taxon spec="Taxon" id="G"/>
+	    <taxon spec="Taxon" id="H"/>
+	    <taxon spec="Taxon" id="I"/>
+	    <taxon spec="Taxon" id="J"/>
+	</taxonset>
+</stateNode>
+
+<stateNode spec="BlockSet" id="allBlocks" network="@acg">
+    <plate var="n" range="0,1,2,3,4,5,6,7,8,9">
+        <block spec="Block" id="block.$(n)"/>
+    </plate>
+</stateNode>
+
+<stateNode id="pMove" spec="RealParameter" estimate="false" value="$(pMove)"/>
+<stateNode id="conversionRate" spec="RealParameter" estimate="false" value="$(convRate)"/>
+<stateNode id="birthRate" spec="RealParameter" estimate="false" value="$(birthRate)"/>
+
+<run spec="DirectSimulator" nSamples="$(nSims)">
+    <distribution id="prior" spec="util.CompoundDistribution">
+	    <distribution id="ACGYulePrior.t" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
+	        <cfModel id="YuleModel" spec="beast.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
+	    </distribution>
+	    <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+	    <!-- 
+	    <distribution id="convRatePrior" spec="Prior" x="@conversionRate">
+	        <distr id="LogNormalDistr.convRatePrior" spec="LogNormalDistributionModel" meanInRealSpace="true" M="$(convRate)" S="1.0"/>
+	    </distribution>
+	    <distribution id="pMovePrior" spec="Prior" x="@pMove">
+	        <distr id="BetaDistr.pMovePrior" spec="Beta" alpha="30.0" beta="70.0"/>
+	    </distribution>
+	    -->
+    </distribution>
+	
+    <logger logEvery="1" fileName="$(filebase).stats">
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="pMove"/>
+        <log idref="conversionRate"/>
+    </logger>
+	    
+	<logger logEvery="1" fileName="$(filebase).trees">
+    	<log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
+	</logger>
+</run>
   
 </beast>
