@@ -12,13 +12,13 @@
     <property name="libcontactrees" location="../contactrees/lib" />
     <property name="release_dir" value="release" />
     <property name="addon_dir" value="${release_dir}/add-on" />
-    <property name="templates_dir" location="../contactrees/templates" />
+    <property name="templates_dir" location="../contactrees/fxtemplates" />
     <property name="distcontactrees" location="../contactrees/dist" />
     <property name="beast2path" location="../beast2" />
     <property name="srcBeast2" location="${beast2path}/src" />
     <property name="beast2classpath" location="${beast2path}/build" />
+    <property name="beastfxclasspath" location="../BeastFX/build" />
     <property name="feastclasspath" location="../feast/build" />
-    <property name="version" value="1.1.0" />
 
     <import file="${beast2path}/build.xml" />
 
@@ -29,21 +29,30 @@
     <path id="classpath">
         <pathelement path="${buildcontactrees}"/>
         <fileset dir="${libcontactrees}" includes="guava-23.0.jar"/>
-        <fileset dir="${beast2path}/lib" includes="junit-4.8.2.jar"/>
-        <fileset dir="${beast2path}/lib" includes="jam.jar"/>
+
         <fileset dir="${beast2path}/lib" includes="beagle.jar"/>
-        <fileset dir="${beast2path}/lib" includes="fest.jar"/>
         <fileset dir="${beast2path}/lib" includes="colt.jar"/>
-        <fileset dir="${beast2path}/lib" includes="antlr-runtime-4.7.jar"/>
-        <fileset dir="${beast2path}/lib" includes="commons-math3-3.1.1.jar"/>
+        <fileset dir="${beast2path}/lib" includes="antlr-runtime-4.10.1.jar"/>
+        <fileset dir="${beast2path}/lib" includes="commons-math3-3.6.1.jar"/>
+        <fileset dir="${beast2path}/lib/junit" includes="junit-platform-console-standalone-1.8.2.jar"/>
+
         <pathelement path="${beast2classpath}"/>
+        <pathelement path="${beastfxclasspath}"/>
         <pathelement path="${feastclasspath}"/>
     </path>
 
     <!-- start -->
     <target name="initcontactrees">
         <echo message="${ant.project.name}: ${ant.file}" />
-    </target>
+      	<available file="./version.xml" property="versionAvailable"/>
+        <fail unless="versionAvailable">
+              ** Required file version.xml does not exist. **
+        </fail>
+
+        <!-- Read package name and version from xml file -->
+        <xmlproperty file="./version.xml" prefix="fromVersionFile" />
+        <property name="ContacTreesVersion" value="${fromVersionFile.package(version)}" />
+     </target>
 
     <target name="cleancontactrees">
         <delete dir="${buildcontactrees}" />
@@ -134,6 +143,7 @@
 			</manifest>
 			<fileset dir="${buildcontactrees}">
 				<include name="**/*.class" />
+				<exclude name="contactrees/test/**/*.class" />
 				<include name="**/*.properties" />
 			</fileset>
 		</jar>
@@ -155,7 +165,7 @@
         <mkdir dir="${addon_dir}" />
         <mkdir dir="${addon_dir}/lib" />
         <mkdir dir="${addon_dir}/examples" />
-        <mkdir dir="${addon_dir}/templates" />
+        <mkdir dir="${addon_dir}/fxtemplates" />
 
         <copy todir="${addon_dir}">
             <fileset file="version.xml"/>
@@ -166,7 +176,7 @@
         </copy>
 
         <mkdir dir="${templates_dir}" />
-        <copy todir="${addon_dir}/templates">
+        <copy todir="${addon_dir}/fxtemplates">
             <fileset dir="${templates_dir}" includes="*.xml" />
         </copy>
 
@@ -177,12 +187,12 @@
         <copy todir="${addon_dir}">
             <fileset file="${distcontactrees}/contactrees.src.jar" />
         </copy>
-        <jar jarfile="${distcontactrees}/contactrees.addon.v${version}.zip">
+        <jar jarfile="${distcontactrees}/contactrees.addon.v${ContacTreesVersion}.zip">
             <fileset dir="${addon_dir}">
                 <include name="**/*" />
             </fileset>
         </jar>
-        <echo message="Add-on version release is finished." />
+        <echo message="Add-on version v${ContacTreesVersion}release is finished." />
     </target>
 
 </project>

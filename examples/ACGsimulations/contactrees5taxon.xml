@@ -1,5 +1,5 @@
 <beast version='2.0'
-       namespace='beast.evolution.tree.coalescent
+       namespace='beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.alignment:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.base.inference.parameter
                  :beast.evolution.alignment
                  :beast.evolution.operators
                  :beast.core
@@ -40,15 +40,15 @@
         <stateNode id="popSize" spec="RealParameter" estimate="false" value="$(popSize)"/>
  	</state>
  	
- 	<init id="RandomACG" spec="beast.evolution.tree.RandomTree" estimate="false" initial="@acg" taxa="@data:nodata">
+ 	<init id="RandomACG" spec="beast.base.evolution.tree.coalescent.RandomTree" estimate="false" initial="@acg" taxa="@data:nodata">
         <populationModel id="ConstantPopulation0.t" spec="ConstantPopulation" popSize="@popSize"/>
     </init>
 
-   <distribution id="posterior" spec="util.CompoundDistribution">
-        <distribution id="prior" spec="util.CompoundDistribution">
+   <distribution id="posterior" spec="beast.base.inference.CompoundDistribution">
+        <distribution id="prior" spec="beast.base.inference.CompoundDistribution">
             <distribution id="CoalescentConstant.t:treeSim" spec="Coalescent">
                 <populationModel id="ConstantPopulation.t" spec="ConstantPopulation" popSize="@popSize"/>
-                <treeIntervals id="TreeIntervals.t:treeSim" spec="TreeIntervals" tree="@acg"/>
+                <treeIntervals id="TreeIntervals.t:treeSim" spec="beast.base.evolution.tree.TreeIntervals" tree="@acg"/>
             </distribution>
 
             <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>

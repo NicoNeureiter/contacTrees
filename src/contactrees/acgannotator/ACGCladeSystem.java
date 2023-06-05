@@ -29,8 +29,8 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 
-import beast.app.treeannotator.CladeSystem;
-import beast.evolution.tree.Node;
+import beastfx.app.treeannotator.CladeSystem;
+import beast.base.evolution.tree.Node;
 import contactrees.ACGWithBlocks;
 import contactrees.BlockSet;
 import contactrees.Conversion;

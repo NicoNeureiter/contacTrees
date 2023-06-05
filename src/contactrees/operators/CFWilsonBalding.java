@@ -1,9 +1,12 @@
 package contactrees.operators;
 
-import beast.core.Description;
-import beast.core.Input;
-import beast.evolution.tree.Node;
-import beast.util.Randomizer;
+import java.util.List;
+
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
+import beast.base.inference.StateNode;
+import beast.base.util.Randomizer;
 
 /**
  * Implementation of Wilson-Balding operator modified for the clonal frame
@@ -188,4 +191,5 @@ public class CFWilsonBalding extends CFOperator {
 
         return destNodeP != null && (destNodeP.getHeight() <= srcNode.getHeight());
     }
+    
 }

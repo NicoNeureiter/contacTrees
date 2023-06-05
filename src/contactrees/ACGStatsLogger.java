@@ -6,10 +6,10 @@ package contactrees;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
-import beast.core.BEASTObject;
-import beast.core.Input;
-import beast.core.Loggable;
-import beast.evolution.tree.Node;
+import beast.base.core.BEASTObject;
+import beast.base.core.Input;
+import beast.base.core.Loggable;
+import beast.base.evolution.tree.Node;
 
 /**
  *

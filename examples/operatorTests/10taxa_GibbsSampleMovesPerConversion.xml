@@ -3,7 +3,7 @@
     <!ENTITY blockrange "0,1,2,3,4,5,6,7,8,9">
 ]>
 <beast version='2.0'
-       namespace='beast.evolution.tree.coalescent
+       namespace='beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.alignment:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.base.inference.parameter
                  :beast.evolution.alignment
                  :beast.evolution.operators
                  :beast.math.distributions
@@ -36,9 +36,9 @@
 </stateNode>
 
 <plate var="x" range="&blockrange;">
-    <distribution id="treeLikelihood.block$(x)" spec="beast.evolution.likelihood.TreeLikelihood" data="@data:nodata">
+    <distribution id="treeLikelihood.block$(x)" spec="beast.base.evolution.likelihood.TreeLikelihood" data="@data:nodata">
         <tree id="marginalTree.$(x)" spec="MarginalTree" network="@acg" block="@block.$(x)" nodetype="contactrees.MarginalNode"/>   
-        <branchRateModel spec="beast.evolution.branchratemodel.StrictClockModel" clock.rate="1.0"/>
+        <branchRateModel spec="beast.base.evolution.branchratemodel.StrictClockModel" clock.rate="1.0"/>
         <siteModel spec="SiteModel">
             <substModel spec="GeneralSubstitutionModel" rates="1.0 1.0">
                 <frequencies spec="Frequencies" frequencies="0.5 0.5"/>
@@ -65,9 +65,9 @@
         <stateNode id="birthRate" spec="RealParameter" estimate="false" value="$(birthRate)"/>
     </state>
 
-    <distribution id="prior" spec="util.CompoundDistribution">
+    <distribution id="prior" spec="beast.base.inference.CompoundDistribution">
         <distribution id="ACGYulePrior.t" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
-            <cfModel id="YuleModel" spec="beast.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
+            <cfModel id="YuleModel" spec="beast.base.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
         </distribution>
         <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
         <!-- 

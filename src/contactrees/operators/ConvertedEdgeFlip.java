@@ -1,9 +1,9 @@
 package contactrees.operators;
 
 import contactrees.Conversion;
-import beast.core.Description;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
+import beast.base.core.Description;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
 
 /**
  * @author Nico Neureiter

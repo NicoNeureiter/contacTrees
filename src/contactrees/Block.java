@@ -10,9 +10,9 @@ import java.util.List;
 
 import org.w3c.dom.Node;
 
-import beast.core.Description;
-import beast.core.Operator;
-import beast.core.StateNode;
+import beast.base.core.Description;
+import beast.base.inference.Operator;
+import beast.base.inference.StateNode;
 import contactrees.util.Util;
 
 
@@ -249,5 +249,10 @@ public class Block extends StateNode {
 
         return Arrays.deepHashCode(hashValues);
     }
+
+	@Override
+	public void log(long sample, PrintStream out) {
+		out.print(this.toString() + "\t");
+	}
 
 }

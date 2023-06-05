@@ -1,5 +1,5 @@
 <beast version='2.0'
-       namespace='beast.evolution.tree.coalescent
+       namespace='beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.alignment:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.base.inference.parameter
                  :beast.evolution.alignment
                  :beast.evolution.operators
                  :beast.math.distributions
@@ -46,9 +46,9 @@
         <stateNode id="birthRate" spec="RealParameter" estimate="false" value="$(birthRate)"/>
  	</state>
 
-    <distribution id="prior" spec="util.CompoundDistribution">
+    <distribution id="prior" spec="beast.base.inference.CompoundDistribution">
         <distribution id="ACGYulePrior.t" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
-            <cfModel id="YuleModel" spec="beast.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
+            <cfModel id="YuleModel" spec="beast.base.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
         </distribution>
         <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
         <!-- 

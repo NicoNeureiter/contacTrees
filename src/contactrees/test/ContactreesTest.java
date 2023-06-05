@@ -13,12 +13,12 @@ import java.util.Map;
 
 import org.junit.Before;
 
-import beast.core.Logger;
-import beast.core.MCMC;
-import beast.evolution.alignment.Alignment;
-import beast.evolution.alignment.Sequence;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
+import beast.base.inference.Logger;
+import beast.base.inference.MCMC;
+import beast.base.evolution.alignment.Alignment;
+import beast.base.evolution.alignment.Sequence;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
 import contactrees.ACGWithMetaDataLogger;
 import contactrees.Block;
 import contactrees.BlockSet;
@@ -331,7 +331,7 @@ public class ContactreesTest {
      *
      * @param runnable from which to remove log.
      */
-    public void disableScreenLog(beast.core.Runnable runnable) {
+    public void disableScreenLog(beast.base.inference.Runnable runnable) {
         if (runnable instanceof MCMC) {
             MCMC mcmc = (MCMC)runnable;
 

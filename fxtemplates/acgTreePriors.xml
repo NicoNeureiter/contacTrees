@@ -1,17 +1,17 @@
 <beast version='2.0'
-       namespace='beast.app.beauti:beast.core:beast.evolution.branchratemodel:beast.evolution.speciation:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.evolution:beast.math.distributions'>
+       namespace='beast.app.beauti:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.branchratemodel:beast.base.evolution.speciation:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.evolution:beast.base.inference.distribution'>
 
 
  <!-- tree priors -->
     <mergewith point='acgTreePriorTemplates'>
 
-        <subtemplate id='YuleModel' class='beast.evolution.speciation.YuleModel' mainid='YuleModel.t:tree'>
+        <subtemplate id='YuleModel' class='beast.base.evolution.speciation.YuleModel' mainid='YuleModel.t:tree'>
             <![CDATA[
             <plugin spec='YuleModel' id="YuleModel.t:tree" tree='@Tree.t:tree'>
                 <parameter name='birthDiffRate' id="birthRate.t:tree" value='1.0'/>
             </plugin>
 
-            <prior id='YuleBirthRatePrior.t:tree' x='@birthRate.t:tree'><distr spec="beast.math.distributions.Uniform" lower='0' upper='1000'/></prior>
+            <prior id='YuleBirthRatePrior.t:tree' x='@birthRate.t:tree'><distr spec="beast.base.inference.distribution.Uniform" lower='0' upper='1000'/></prior>
 
   		    <scale id='YuleBirthRateScaler.t:tree' spec='ScaleOperator' scaleFactor="0.75" weight="3" parameter="@birthRate.t:tree"/>
 			]]>
@@ -56,22 +56,22 @@
                >
                 <groupSizes id="BICEPSGroupSizes.t:tree" spec="parameter.IntegerParameter" dimension="10" estimate="false">1</groupSizes>
                 <populationMean id="BICEPSPopSize.t:tree" spec="parameter.RealParameter" value="1.0" lower="0.0" estimate="true"/>
-                <treeIntervals spec='TreeIntervals' id='BICEPSTreeIntervals.t:tree' tree='@Tree.t:tree'/>
+                <treeIntervals spec="beast.base.evolution.tree.TreeIntervals" id='BICEPSTreeIntervals.t:tree' tree='@Tree.t:tree'/>
             </distribution>
              <prior id="BICEPSPopSizePrior.t:tree" name="distribution" x="@BICEPSPopSize.t:tree">
                 <LogNormal meanInRealSpace="true" name="distr" M="1" S="1"/>
             </prior>
             
-            <operator id='BICEPSPopSizesScaler.t:tree' spec='BactrianScaleOperator' scaleFactor="0.1" weight="5" parameter="@BICEPSPopSize.t:tree"/>
+            <operator id='BICEPSPopSizesScaler.t:tree' spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" scaleFactor="0.1" weight="5" parameter="@BICEPSPopSize.t:tree"/>
             <operator id='BICEPSGroupSizesDelta.t:tree' spec='DeltaExchangeOperator' delta="1" weight="6" integer="true" intparameter="@BICEPSGroupSizes.t:tree"/>
             
             <!--
-            <operator id="BICEPSEpochTop.t:tree" spec="biceps.operators.EpochFlexOperator" tree="@Tree.t:tree" weight="2.0" scaleFactor="0.1"/>
-            <operator id="BICEPSEpochAll.t:tree" spec="biceps.operators.EpochFlexOperator" tree="@Tree.t:tree" weight="2.0" scaleFactor="0.1" fromOldestTipOnly="false"/>      
-            <operator id="BICEPSTreeFlex.t:tree" spec="biceps.operators.TreeStretchOperator" scaleFactor="0.01" tree="@Tree.t:tree" weight="2.0"/>
-            <operator id='BICEPSTreeRootScaler.t:tree' spec='beast.evolution.operators.BactrianScaleOperator' scaleFactor="0.1" weight="3" tree="@Tree.t:tree" rootOnly='true'/>
-            <operator id='BICEPSUniformOperator.t:tree' spec='beast.evolution.operators.BactrianNodeOperator' weight="30" tree="@Tree.t:tree"/>
-            <operator id='BICEPSSubtreeSlide.t:tree' spec='beast.evolution.operators.BactrianSubtreeSlide' weight="15" size="1.0" tree="@Tree.t:tree"/>
+            <operator id="BICEPSEpochTop.t:tree" spec="beast.base.evolution.operator.EpochFlexOperator" tree="@Tree.t:tree" weight="2.0" scaleFactor="0.1"/>
+            <operator id="BICEPSEpochAll.t:tree" spec="beast.base.evolution.operator.EpochFlexOperator" tree="@Tree.t:tree" weight="2.0" scaleFactor="0.1" fromOldestTipOnly="false"/>      
+            <operator id="BICEPSTreeFlex.t:tree" spec="beast.base.evolution.operator.TreeStretchOperator" scaleFactor="0.01" tree="@Tree.t:tree" weight="2.0"/>
+            <operator id='BICEPSTreeRootScaler.t:tree' spec='beast.base.evolution.operator.kernel.BactrianScaleOperator' scaleFactor="0.1" weight="3" tree="@Tree.t:tree" rootOnly='true'/>
+            <operator id='BICEPSUniformOperator.t:tree' spec='beast.base.evolution.operator.kernel.BactrianNodeOperator' weight="30" tree="@Tree.t:tree"/>
+            <operator id='BICEPSSubtreeSlide.t:tree' spec='beast.base.evolution.operator.kernel.BactrianSubtreeSlide' weight="15" size="1.0" tree="@Tree.t:tree"/>
             <operator id='BICEPSNarrow.t:tree' spec='Exchange' isNarrow='true' weight="15" tree="@Tree.t:tree"/>
             <operator id='BICEPSWide.t:tree' spec='Exchange' isNarrow='false' weight="3" tree="@Tree.t:tree"/>
             <operator id='BICEPSWilsonBalding.t:tree' spec='WilsonBalding' weight="3" tree="@Tree.t:tree"/>

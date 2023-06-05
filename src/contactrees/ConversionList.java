@@ -13,7 +13,7 @@ import java.util.Set;
 
 import javax.naming.directory.InvalidAttributesException;
 
-import beast.util.Randomizer;
+import beast.base.util.Randomizer;
 import contactrees.util.Util;
 
 /**

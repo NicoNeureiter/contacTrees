@@ -3,9 +3,10 @@ package contactrees.operators;
 import java.util.LinkedList;
 import java.util.List;
 
-import beast.core.Input;
-import beast.evolution.tree.Node;
-import beast.util.Randomizer;
+import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
+import beast.base.inference.StateNode;
+import beast.base.util.Randomizer;
 import contactrees.Conversion;
 
 /**

@@ -10,8 +10,8 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import beast.core.Input;
-import beast.evolution.tree.Node;
+import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
 import contactrees.util.parsers.ExtendedNewickBaseVisitor;
 import contactrees.util.parsers.ExtendedNewickLexer;
 import contactrees.util.parsers.ExtendedNewickParser;

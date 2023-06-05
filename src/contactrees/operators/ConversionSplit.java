@@ -6,10 +6,10 @@ import java.util.List;
 
 import org.apache.commons.math3.util.Pair;
 
-import beast.core.Description;
-import beast.core.Input;
-import beast.evolution.tree.Node;
-import beast.util.Randomizer;
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
+import beast.base.util.Randomizer;
 import contactrees.Block;
 import contactrees.Conversion;
 

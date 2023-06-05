@@ -20,8 +20,8 @@ import org.apache.commons.math3.exception.MathInternalError;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.apache.commons.math3.util.MathArrays;
 
-import beast.app.BeastMCMC;
-import beast.util.Randomizer;
+import beastfx.app.beast.BeastMCMC;
+import beast.base.util.Randomizer;
 import contactrees.ACGWithBlocks;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;

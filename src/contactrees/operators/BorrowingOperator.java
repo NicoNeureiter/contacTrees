@@ -3,11 +3,11 @@ package contactrees.operators;
 import java.util.ArrayList;
 import java.util.List;
 
-import beast.core.Input;
-import beast.core.StateNode;
-import beast.core.parameter.RealParameter;
-import beast.evolution.likelihood.TreeLikelihood;
-import beast.util.Randomizer;
+import beast.base.core.Input;
+import beast.base.inference.StateNode;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.evolution.likelihood.TreeLikelihood;
+import beast.base.util.Randomizer;
 import contactrees.Block;
 import contactrees.BlockSet;
 import contactrees.Conversion;

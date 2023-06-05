@@ -4,8 +4,8 @@ import java.util.HashSet;
 
 import org.junit.Test;
 
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
 import contactrees.test.ContactreesTest;
 import contactrees.util.Util;
 

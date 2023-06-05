@@ -1,11 +1,13 @@
 package contactrees.operators;
 
+import java.util.List;
 import java.util.Set;
 
-import beast.core.Input;
-import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
-import beast.util.Randomizer;
+import beast.base.core.Input;
+import beast.base.inference.StateNode;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.evolution.tree.Node;
+import beast.base.util.Randomizer;
 import contactrees.Conversion;
 import contactrees.model.ACGDistribution;
 import contactrees.model.ConversionPrior;
@@ -115,4 +117,10 @@ public abstract class ConversionCreationOperator extends BorrowingOperator {
         return logP;
     }
 
+    @Override
+    public List<StateNode> listStateNodes() {
+    	List<StateNode> list = super.listStateNodes(); 
+        list.remove(conversionRateInput.get());
+    	return list;
+    }
 }

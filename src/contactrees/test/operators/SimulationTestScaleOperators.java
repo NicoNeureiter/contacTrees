@@ -5,9 +5,9 @@ import static org.junit.Assert.assertEquals;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import beast.evolution.operators.ScaleOperator;
-import beast.evolution.tree.Node;
-import beast.util.TreeParser;
+import beast.base.evolution.operator.ScaleOperator;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TreeParser;
 import junit.framework.TestCase;
 
 public class SimulationTestScaleOperators extends TestSingleOperator {
