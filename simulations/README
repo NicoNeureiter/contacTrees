@@ -1,0 +1,2 @@
+This file is here to make sure the simulations directory is available when cloning from git.
+The simulations directory is used for unit tests of operators.

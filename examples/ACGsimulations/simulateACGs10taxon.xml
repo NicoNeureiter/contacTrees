@@ -34,9 +34,9 @@
 <stateNode id="birthRate" spec="RealParameter" estimate="false" value="$(birthRate)"/>
 
 <run spec="DirectSimulator" nSamples="$(nSims)">
-    <distribution id="prior" spec="util.CompoundDistribution">
+    <distribution id="prior" spec="beast.base.inference.CompoundDistribution">
 	    <distribution id="ACGYulePrior.t" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
-	        <cfModel id="YuleModel" spec="beast.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
+	        <cfModel id="YuleModel" spec="beast.base.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
 	    </distribution>
 	    <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
 	    <!-- 
@@ -57,6 +57,10 @@
 	    
 	<logger logEvery="1" fileName="$(filebase).trees">
     	<log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
+	</logger>
+
+	<logger logEvery="10" id="screenlog">
+    	<log idref="prior"/>
 	</logger>
 </run>
   

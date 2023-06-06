@@ -55,7 +55,7 @@ public abstract class TestSingleOperator {
 		String paramsPath = "examples/operatorTests/parameters.json";
 		System.out.println(xmlPath);
 		String[] simArgs = {"-overwrite", "-DF", paramsPath, "-seed", seed, "-prefix", workingDir, xmlPath};
-		System.out.println(simArgs);
+		System.out.println(Arrays.toString(simArgs));
 		BeastMCMC.main(simArgs);
 		samplesSimulator = readSamplesFromNexus(workingDir + FBASE_SIM + ".trees");
 

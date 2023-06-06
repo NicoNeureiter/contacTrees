@@ -34,6 +34,7 @@ import beastfx.app.tools.TreeTraceAnalysis;
 import contactrees.ACGWithMetaDataLogger;
 import contactrees.BlockSet;
 import contactrees.ConversionGraph;
+import contactrees.model.ConversionPrior;
 import contactrees.operators.CFWilsonBalding;
 import junit.framework.JUnit4TestAdapter;
 import org.junit.Assert;
@@ -131,8 +132,10 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 		
         ConversionGraph acg = new ConversionGraph();
         acg.initAndValidate();
+        acg.setID("acg");
         acg.assignFrom(treee);
 		BlockSet blockSet = BlockSet.create(acg);
+		blockSet.setID("blockSet");
 		ACGWithMetaDataLogger acgLogger = new ACGWithMetaDataLogger(acg, blockSet);	
 
 		TreeIntervals treeIntervals = new TreeIntervals();
@@ -143,15 +146,29 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 				"populationModel", constantPop
 				);
 
-		// Set up state:
-		State state = new State();
-		state.initByName("stateNode", acg);
 
 		// Set up operator:
+		RealParameter conversionRate = new RealParameter("0.01");
+		conversionRate.setID("conversionRate");
+		RealParameter pMove = new RealParameter("0.05");
+		pMove.setID("pMove");
+
+		// Set up state:
+		State state = new State();
+		state.initByName("stateNode", acg, "stateNode", conversionRate, "stateNode", pMove);
+		
+		ConversionPrior prior = new ConversionPrior();
+		prior.initByName("network", acg, 
+				//"expectedConversions", "1.0", 
+				"conversionRate", conversionRate);
+		
+		
 		CFWilsonBalding wilsonBalding = new CFWilsonBalding();
 		wilsonBalding.initByName("weight", "1", "acg", acg, "alpha", "0.1", 
-								 "conversionRate", "0.01", "pMove", "0.05",
-								 "blockSet", blockSet);
+								 "conversionRate", conversionRate, 
+								 "pMove", pMove,
+								 "blockSet", blockSet,
+								 "conversionPrior", prior);
 
 		// Set up logger:
 		TreeReport treeReport = new TreeReport();
