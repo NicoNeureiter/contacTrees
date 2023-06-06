@@ -45,12 +45,10 @@
         <provider classname="contactrees.operators.ResampleBorrowings"/>
         <provider classname="contactrees.RandomACG"/>
         <!--
-            these are for testing only?
-            If not, uncomment one or both of the next lines, and 
-            edit build.xml to include these files in the jar file
+            the following are for testing only
+        -->
         <provider classname="contactrees.test.SimulatorOperator"/>
         <provider classname="contactrees.test.StationarityTestSchedule"/>
-        -->
     </service>
 
 </package>
