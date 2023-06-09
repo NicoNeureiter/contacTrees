@@ -5,5 +5,6 @@
 
     "convRate": 50.0,
     "pMove": 0.2,
-    "birthRate": 1.0
+    "birthRate": 1.0,
+    "popSize": 2.0
 }

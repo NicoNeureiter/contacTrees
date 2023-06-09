@@ -83,7 +83,7 @@
     <operatorschedule id="schedule" spec="contactrees.test.StationarityTestSchedule" logInterval="$(logInterval)">
         <simulatorOperator id="SimumlaterOperator" spec="contactrees.test.SimulatorOperator" distribution="@prior" state="@state" weight="1"/>
         <operator id="AddRemoveConversionGibbs.t" spec="AddRemoveConversionGibbs" weight="1" acg="@acg"
-                  conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" state="@state">
+                  conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" networkPrior="@ACGYulePrior.t">
             <plate var="n" range="&blockrange;">
                 <treeLikelihood idref="treeLikelihood.block$(n)"/>
             </plate>
