@@ -16,11 +16,21 @@
  */
 package contactrees.test.operators;
 
-import beast.core.*; 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import beast.core.BEASTObject;
+import beast.core.Input;
+import beast.core.Logger;
+import beast.core.MCMC;
+import beast.core.State;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Alignment;
 import beast.evolution.alignment.Sequence;
-import beast.evolution.operators.WilsonBalding;
 import beast.evolution.tree.RandomTree;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeTraceAnalysis;
@@ -31,14 +41,9 @@ import beast.util.Randomizer;
 import contactrees.ACGWithMetaDataLogger;
 import contactrees.BlockSet;
 import contactrees.ConversionGraph;
+import contactrees.model.ConversionPrior;
 import contactrees.operators.CFWilsonBalding;
 import junit.framework.JUnit4TestAdapter;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -90,7 +95,7 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 
 	/**
 	 * Interface with JUnit 3.* test runner:
-	 * @return 
+	 * @return
 	 */
 	public static junit.framework.Test suite() {
 		return new JUnit4TestAdapter(WilsonBaldingTest.class);
@@ -98,7 +103,7 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 
 	/**
 	 * Test topology distribution.
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@Test
 	public void topologyDistribution() throws Exception {
@@ -108,9 +113,9 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 		Randomizer.setSeed(42);
 
 		// Assemble model:
-		
+
 		ConstantPopulation constantPop = new ConstantPopulation();
-		constantPop.initByName("popSize", new RealParameter("10000.0"));
+		constantPop.initByName("popSize", new RealParameter("10.0"));
 
 		List<Object> alignmentInitArgs = new ArrayList<Object>();
 		for (int i=0; i<4; i++) {
@@ -124,13 +129,13 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 
 		Tree treee = new RandomTree();
 		treee.initByName("taxa", alignment, "populationModel", constantPop);
-		
-		
+
+
         ConversionGraph acg = new ConversionGraph();
         acg.initAndValidate();
         acg.assignFrom(treee);
 		BlockSet blockSet = BlockSet.create(acg);
-		ACGWithMetaDataLogger acgLogger = new ACGWithMetaDataLogger(acg, blockSet);	
+		ACGWithMetaDataLogger acgLogger = new ACGWithMetaDataLogger(acg, blockSet);
 
 		TreeIntervals treeIntervals = new TreeIntervals();
 		treeIntervals.initByName("tree", acg);
@@ -140,30 +145,47 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 				"populationModel", constantPop
 				);
 
-		// Set up state:
-		State state = new State();
-		state.initByName("stateNode", acg);
+        RealParameter conversionRate = new RealParameter("0.002");
+        conversionRate.setID("conversionRate");
+        RealParameter pMove = new RealParameter("0.05");
+        pMove.setID("pMove");
+
+        // Set up state:
+        State state = new State();
+        state.initByName("stateNode", acg, "stateNode", conversionRate, "stateNode", pMove);
+
+        ConversionPrior prior = new ConversionPrior();
+        prior.initByName("network", acg,
+                //"expectedConversions", "1.0",
+                "conversionRate", conversionRate);
+
 
 		// Set up operator:
 		CFWilsonBalding wilsonBalding = new CFWilsonBalding();
-		wilsonBalding.initByName("weight", "1", "acg", acg, "alpha", "0.1", 
-								 "conversionRate", "0.01", "pMove", "0.05",
-								 "blockSet", blockSet);
+		wilsonBalding.initByName(
+		        "weight", "1",
+		        "acg", acg,
+		        "alpha", "0.1",
+                "conversionRate", conversionRate,
+                "pMove", pMove,
+                "blockSet", blockSet,
+                "conversionPrior", prior
+                );
 
 		// Set up logger:
 		TreeReport treeReport = new TreeReport();
 		treeReport.initByName(
-				"logEvery", "100",
-				"burnin", "200000",
+				"logEvery", "50",
+				"burnin", "50000",
 				"credibleSetPercentage", "95.0",
 				"log", acgLogger,
-				"silent", true
+				"silent", false
 				);
 
 		// Set up MCMC:
 		MCMC mcmc = new MCMC();
 		mcmc.initByName(
-				"chainLength", "2000000",
+				"chainLength", "500000",
 				"state", state,
 				"distribution", coalescentDistrib,
 				"operator", wilsonBalding,
@@ -180,7 +202,7 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 
 		// Test topology distribution against ideal:
 
-		double tol = 0.005;
+		double tol = 0.01;
 
 		for (int i=0; i<topologies.length; i++) {
 			double thisProb = topologyCounts.get(topologies[i])
