@@ -2,13 +2,11 @@ package contactrees.test.operators;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import beast.base.evolution.operator.ScaleOperator;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.TreeParser;
-import junit.framework.TestCase;
 
 public class SimulationTestScaleOperators extends TestSingleOperator {
 	

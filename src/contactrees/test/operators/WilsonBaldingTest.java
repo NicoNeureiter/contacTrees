@@ -155,7 +155,7 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 
 		// Set up state:
 		State state = new State();
-		state.initByName("stateNode", acg, "stateNode", conversionRate, "stateNode", pMove);
+		state.initByName("stateNode", acg, "stateNode", conversionRate, "stateNode", pMove, "experimental", true);
 		
 		ConversionPrior prior = new ConversionPrior();
 		prior.initByName("network", acg, 
@@ -177,9 +177,16 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 				"burnin", "50000",
 				"credibleSetPercentage", "95.0",
 				"log", acgLogger,
-				"silent", true
+				"silent", false
 				);
 
+		Logger screenlog = new Logger();
+		screenlog.initByName(
+				"logEvery", "10000", 
+				"log", coalescentDistrib
+				);
+
+		
 		// Set up MCMC:
 		MCMC mcmc = new MCMC();
 		mcmc.initByName(
@@ -187,7 +194,8 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 				"state", state,
 				"distribution", coalescentDistrib,
 				"operator", wilsonBalding,
-				"logger", treeReport
+				"logger", treeReport,
+				"logger", screenlog
 				);
 
 		// Run MCMC:

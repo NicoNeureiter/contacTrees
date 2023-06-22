@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import beast.base.inference.parameter.RealParameter;
+import contactrees.model.ConversionPrior;
 import contactrees.operators.CFOperator;
 import contactrees.test.ContactreesTest;
 
