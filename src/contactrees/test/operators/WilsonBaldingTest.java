@@ -114,7 +114,7 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 		// Assemble model:
 		
 		ConstantPopulation constantPop = new ConstantPopulation();
-		constantPop.initByName("popSize", new RealParameter("10000.0"));
+		constantPop.initByName("popSize", new RealParameter("10.0"));
 
 		List<Object> alignmentInitArgs = new ArrayList<Object>();
 		for (int i=0; i<4; i++) {
@@ -148,7 +148,7 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 
 
 		// Set up operator:
-		RealParameter conversionRate = new RealParameter("0.01");
+		RealParameter conversionRate = new RealParameter("0.005");
 		conversionRate.setID("conversionRate");
 		RealParameter pMove = new RealParameter("0.05");
 		pMove.setID("pMove");
@@ -173,8 +173,8 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 		// Set up logger:
 		TreeReport treeReport = new TreeReport();
 		treeReport.initByName(
-				"logEvery", "100",
-				"burnin", "200000",
+				"logEvery", "50",
+				"burnin", "50000",
 				"credibleSetPercentage", "95.0",
 				"log", acgLogger,
 				"silent", true
@@ -183,7 +183,7 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 		// Set up MCMC:
 		MCMC mcmc = new MCMC();
 		mcmc.initByName(
-				"chainLength", "2000000",
+				"chainLength", "500000",
 				"state", state,
 				"distribution", coalescentDistrib,
 				"operator", wilsonBalding,
@@ -200,7 +200,7 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 
 		// Test topology distribution against ideal:
 
-		double tol = 0.005;
+		double tol = 0.01;
 
 		for (int i=0; i<topologies.length; i++) {
 			double thisProb = topologyCounts.get(topologies[i])

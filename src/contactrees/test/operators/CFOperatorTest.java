@@ -17,11 +17,14 @@ public class CFOperatorTest extends ContactreesTest {
 	public void testCollapseExpandSymmetry() {
 		RealParameter cRate = new RealParameter(Double.toString(C_RATE));
 		RealParameter pMove = new RealParameter(Double.toString(P_MOVE));
-				
+		ConversionPrior prior = new ConversionPrior();
+		prior.initByName("network", acg, "conversionRate", cRate);
+
 		CFOperator cfOp = new CollapseExpandOperator();
-		cfOp.initByName("acg", acg, "conversionRate", cRate, "pMove", pMove, 
-						"blockSet", blockSet, "weight", 1.0);
-		double logHGF = cfOp.proposal(); 
+		cfOp.initByName("acg", acg, "conversionRate", cRate, "pMove", pMove,
+						"blockSet", blockSet, "conversionPrior", prior,
+						"weight", 1.0);
+		double logHGF = cfOp.proposal();
 //		System.out.println(logHGF);
 		assertEquals(logHGF, 0.0, EPS);
 		
