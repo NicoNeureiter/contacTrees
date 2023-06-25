@@ -20,6 +20,7 @@ import beast.base.inference.Logger;
 import beast.base.inference.MCMC;
 import beast.base.inference.State;
 import beast.base.inference.parameter.RealParameter;
+import beast.base.inference.CompoundDistribution;
 import beast.base.core.BEASTObject;
 import beast.base.core.Input;
 import beast.base.evolution.alignment.Alignment;
@@ -148,7 +149,7 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 
 
 		// Set up operator:
-		RealParameter conversionRate = new RealParameter("0.005");
+		RealParameter conversionRate = new RealParameter("0.2");
 		conversionRate.setID("conversionRate");
 		RealParameter pMove = new RealParameter("0.05");
 		pMove.setID("pMove");
@@ -157,10 +158,18 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 		State state = new State();
 		state.initByName("stateNode", acg, "stateNode", conversionRate, "stateNode", pMove);
 		
-		ConversionPrior prior = new ConversionPrior();
-		prior.initByName("network", acg, 
-				//"expectedConversions", "1.0", 
-				"conversionRate", conversionRate);
+        ConversionPrior convPrior = new ConversionPrior();
+        convPrior.initByName(
+                "network", acg,
+                "conversionRate", conversionRate,
+                "linearContactGrowth", true
+        );
+
+        List<Distribution> priors = new ArrayList<>();
+        priors.add(coalescentDistrib);
+        priors.add(convPrior);
+        CompoundDistribution prior = new CompoundDistribution();
+        prior.initByName("distribution", priors);
 		
 		
 		CFWilsonBalding wilsonBalding = new CFWilsonBalding();
@@ -168,7 +177,7 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 								 "conversionRate", conversionRate, 
 								 "pMove", pMove,
 								 "blockSet", blockSet,
-								 "conversionPrior", prior);
+								 "conversionPrior", convPrior);
 
 		// Set up logger:
 		TreeReport treeReport = new TreeReport();
@@ -183,15 +192,18 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 		// Set up MCMC:
 		MCMC mcmc = new MCMC();
 		mcmc.initByName(
-				"chainLength", "500000",
+				"chainLength", "1000000",
 				"state", state,
-				"distribution", coalescentDistrib,
+				"distribution", prior,
 				"operator", wilsonBalding,
 				"logger", treeReport
 				);
 
 		// Run MCMC:
 		mcmc.run();
+
+		System.out.println("Conversion count: " + acg.getConvCount());
+		System.out.println("Tree height: " + acg.getArrayValue());
 
 		// Obtain analysis results:
 		TreeTraceAnalysis analysis = treeReport.getAnalysis();
