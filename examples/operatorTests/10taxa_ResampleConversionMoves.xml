@@ -1,5 +1,5 @@
 <beast version='2.0'
-       namespace='beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.alignment:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.base.inference.parameter
+       namespace='beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.alignment:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.base.inference.parameter:beast.base.inference.distribution
                  :beast.evolution.alignment
                  :beast.evolution.operators
                  :beast.math.distributions
@@ -51,11 +51,6 @@
             <cfModel id="YuleModel" spec="beast.base.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
         </distribution>
         <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
-        <!-- 
-        <distribution id="convRatePrior" spec="Prior" x="@conversionRate">
-            <distr id="LogNormalDistr.convRatePrior" spec="LogNormalDistributionModel" meanInRealSpace="true" M="$(convRate)" S="1.0"/>
-        </distribution>
-         -->
         <distribution id="pMovePrior" spec="Prior" x="@pMove">
             <distr id="BetaDistr.pMovePrior" spec="Beta" alpha="30.0" beta="70.0"/>
         </distribution>

@@ -21,6 +21,7 @@ import beast.base.inference.MCMC;
 import beast.base.inference.State;
 import beast.base.inference.parameter.RealParameter;
 import beast.base.inference.CompoundDistribution;
+import beast.base.inference.Distribution;
 import beast.base.core.BEASTObject;
 import beast.base.core.Input;
 import beast.base.evolution.alignment.Alignment;
