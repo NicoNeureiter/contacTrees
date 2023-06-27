@@ -92,7 +92,6 @@
 		       includeantruntime="false"
 		       source="1.8"
 		       target="1.8">
-                        <include name="beast/**/**" />
 			<include name="contactrees/**/**" />
 			<!-- compile JUnit test classes -->
 			<include name="test/beast/**" />
@@ -171,8 +170,8 @@
             <fileset file="version.xml"/>
         </copy>
         <copy todir="${addon_dir}/examples">
-            <fileset dir="examples" includes="*.xml">
-            </fileset>
+            <fileset dir="examples" includes="bantu*.xml"/>
+            <fileset dir="examples" includes="contactrees_example_v2.xml"/>
         </copy>
 
         <mkdir dir="${templates_dir}" />

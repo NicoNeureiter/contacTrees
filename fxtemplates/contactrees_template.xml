@@ -89,6 +89,8 @@
             beast.base.evolution.branchratemodel.UCRelaxedClockModel.tree,
             beast.base.evolution.branchratemodel.UCRelaxedClockModel.rateCategories,
             beast.base.evolution.branchratemodel.UCRelaxedClockModel.distr,
+            beast.base.evolution.branchratemodel.UCRelaxedClockModel.rates,
+            beast.base.evolution.branchratemodel.UCRelaxedClockModel.rateQuantiles,
             beast.base.evolution.branchratemodel.RandomLocalClockModel.tree,
             beast.base.evolution.branchratemodel.RandomLocalClockModel.meanRate,
             beast.base.evolution.branchratemodel.RandomLocalClockModel.indicators,
@@ -198,7 +200,9 @@
             <block spec='contactrees.Block' id='block.$(n)'/>
             
             <plugin id='expectedConversions' spec='parameter.RealParameter' estimate='false' value='0.25'/>
-            <plugin id='conversionRate' spec='contactrees.model.ConversionRate' expectedConversions='@expectedConversions' linearContactGrowth='true' network='@Tree.t:tree'/>
+            <plugin id='conversionRate' spec='contactrees.model.ConversionRate' expectedConversions='@expectedConversions' network='@Tree.t:tree'>
+            	<linearContactGrowth id="linearContactGrowth" spec="parameter.BooleanParameter">true</linearContactGrowth>
+            </plugin>
             <plugin id='pMove' spec='parameter.RealParameter' estimate='false' value='0.2'/>
 
             <prior id='ClockPrior.c:clock' x='@clockRate.c:clock'><distr spec='beast.base.inference.distribution.Uniform' upper='Infinity'/></prior>
@@ -223,7 +227,9 @@
                 <parameter name='birthDiffRate' id="birthRate.t:tree" value='1.0' estimate='true'/>
             </plugin>
             
-            <prior id="ConvPrior.t:tree" spec="contactrees.model.ConversionPrior" network="@Tree.t:tree" conversionRate="@conversionRate" linearContactGrowth="true" upperConvCountBound="50"/>
+            <prior id="ConvPrior.t:tree" spec="contactrees.model.ConversionPrior" network="@Tree.t:tree" conversionRate="@conversionRate" upperConvCountBound="50">
+                <linearContactGrowth idref="linearContactGrowth"/>
+            </prior>
             <prior id="ConvMovePrior.t:tree" spec="contactrees.model.ConversionMovePrior" network="@Tree.t:tree" blockSet="@allBlocks" pMove="@pMove"/>
             <prior id="ExpectedConversionsPrior.t:tree" name="distribution" x="@expectedConversions">
                 <distr spec="Exponential" mean="0.1" />
@@ -378,8 +384,13 @@
         </partitiontemplate>
 
         <mergepoint id='substModelTemplates'/>
-        <mergepoint id='clockModelTemplates'/>
+        
+        <!-- clock models -->
+        <mergepoint id='acgClockModelTemplates'/>
+        
+        <!-- tree priors -->
         <mergepoint id='acgTreePriorTemplates'/>
+        
         <mergepoint id='parametricDistributions'/>
 
         <subtemplate id='DefaultOperatorSchedule' class='beast.base.inference.OperatorSchedule' mainid='OperatorSchedule'
