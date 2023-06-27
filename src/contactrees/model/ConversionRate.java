@@ -5,6 +5,7 @@ import org.w3c.dom.Node;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.inference.StateNode;
+import beast.base.inference.parameter.BooleanParameter;
 import beast.base.inference.parameter.RealParameter;
 import contactrees.ConversionGraph;
 
@@ -21,10 +22,10 @@ public class ConversionRate extends RealParameter {
             "The conversion graph containing, composed of a tree (clonal frame) and conversion edges.",
             Input.Validate.REQUIRED);
 
-    final public Input<Boolean> linearContactGrowthInput = new Input<>(
+    final public Input<BooleanParameter> linearContactGrowthInput = new Input<>(
             "linearContactGrowth",
             "Contact process is applied per lineage, i.e. the expected number of contact edges grows linearly with lineages.",
-            Boolean.valueOf(false));
+            new BooleanParameter(new Boolean[] {false}));
 
     public ConversionRate() {
         valuesInput.setRule(Validate.OPTIONAL);
@@ -116,7 +117,7 @@ public class ConversionRate extends RealParameter {
      */
 
     protected double expectationToRate(Double expectation) {
-        if (linearContactGrowthInput.get()) {
+        if (linearContactGrowthInput.get().getValue()) {
             return expectation / getTreeLength();
         } else {
             return expectation / getPairedTreeLength();
@@ -124,7 +125,7 @@ public class ConversionRate extends RealParameter {
     }
 
     protected double rateToExpectation(Double rate) {
-        if (linearContactGrowthInput.get()) {
+        if (linearContactGrowthInput.get().getValue()) {
             return rate * getTreeLength();
         } else {
             return rate * getPairedTreeLength();
