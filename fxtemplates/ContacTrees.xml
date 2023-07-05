@@ -200,9 +200,7 @@
             <block spec='contactrees.Block' id='block.$(n)'/>
             
             <plugin id='expectedConversions' spec='parameter.RealParameter' estimate='false' value='0.25'/>
-            <plugin id='conversionRate' spec='contactrees.model.ConversionRate' expectedConversions='@expectedConversions' network='@Tree.t:tree'>
-            	<linearContactGrowth id="linearContactGrowth" spec="parameter.BooleanParameter">true</linearContactGrowth>
-            </plugin>
+            <plugin id='conversionRate' spec='contactrees.model.ConversionRate' expectedConversions='@expectedConversions' network='@Tree.t:tree' linearContactGrowth="true"/>
             <plugin id='pMove' spec='parameter.RealParameter' estimate='false' value='0.2'/>
 
             <prior id='ClockPrior.c:clock' x='@clockRate.c:clock'><distr spec='beast.base.inference.distribution.Uniform' upper='Infinity'/></prior>
@@ -227,9 +225,7 @@
                 <parameter name='birthDiffRate' id="birthRate.t:tree" value='1.0' estimate='true'/>
             </plugin>
             
-            <prior id="ConvPrior.t:tree" spec="contactrees.model.ConversionPrior" network="@Tree.t:tree" conversionRate="@conversionRate" upperConvCountBound="50">
-                <linearContactGrowth idref="linearContactGrowth"/>
-            </prior>
+            <prior id="ConvPrior.t:tree" spec="contactrees.model.ConversionPrior" network="@Tree.t:tree" conversionRate="@conversionRate" upperConvCountBound="50" linearContactGrowth="true"/>
             <prior id="ConvMovePrior.t:tree" spec="contactrees.model.ConversionMovePrior" network="@Tree.t:tree" blockSet="@allBlocks" pMove="@pMove"/>
             <prior id="ExpectedConversionsPrior.t:tree" name="distribution" x="@expectedConversions">
                 <distr spec="Exponential" mean="0.1" />

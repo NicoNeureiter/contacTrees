@@ -13,8 +13,8 @@ import org.apache.commons.math.distribution.PoissonDistributionImpl;
 
 import beast.base.inference.Distribution;
 import beast.base.core.Input;
+import beast.base.core.Log;
 import beast.base.inference.State;
-import beast.base.inference.parameter.BooleanParameter;
 import beast.base.inference.parameter.RealParameter;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
@@ -51,10 +51,10 @@ public class ConversionPrior extends Distribution {
     final public Input<Integer> upperCCBoundInput = new Input<>("upperConvCountBound",
             "Upper bound on conversion count.", Integer.MAX_VALUE);
 
-    final public Input<BooleanParameter> linearContactGrowthInput = new Input<>(
+    final public Input<Boolean> linearContactGrowthInput = new Input<>(
             "linearContactGrowth",
             "Contact process is applied per lineage, i.e. the expected number of contact edges grows linearly with lineages.",
-            new BooleanParameter(new Boolean[] {false}));
+            false);
 
     ConversionGraph acg;
     PriorityQueue<Conversion> convQueue;
@@ -64,6 +64,19 @@ public class ConversionPrior extends Distribution {
         super.initAndValidate();
         acg = networkInput.get();
         convQueue = new PriorityQueue<>();
+        
+        if (conversionRateInput.get() != null && conversionRateInput.get() instanceof ConversionRate) {
+        	ConversionRate rate = (ConversionRate) conversionRateInput.get();
+        	if (rate.linearContactGrowthInput.get() != linearContactGrowthInput.get()) {
+        		rate.linearContactGrowthInput.setValue(linearContactGrowthInput.get(), rate);
+        		Log.warning("==========================================================================");
+        		Log.warning("==========================================================================");        		
+        		Log.warning("LinearContactGrowth differs between " + getID()  + " and " + rate.getID());
+        		Log.warning("Setting linearContactGrowth to " + linearContactGrowthInput.get() + " on conversion rate parameter " + rate.getID());
+        		Log.warning("==========================================================================");
+        		Log.warning("==========================================================================");
+        	}
+        }
     }
 
     protected double getExpectedConversions() {
@@ -71,7 +84,7 @@ public class ConversionPrior extends Distribution {
             return expectedConversionsInput.get().getValue();
         } else {
             double convRate = conversionRateInput.get().getValue();
-            if (linearContactGrowthInput.get().getValue()) {
+            if (linearContactGrowthInput.get()) {
                 return convRate * acg.getClonalFrameLength();
             } else {
                 return convRate * acg.getClonalFramePairedLength();
@@ -84,7 +97,7 @@ public class ConversionPrior extends Distribution {
             return conversionRateInput.get().getValue();
         } else {
             double eConv = expectedConversionsInput.get().getValue();
-            if (linearContactGrowthInput.get().getValue()) {
+            if (linearContactGrowthInput.get()) {
                 return eConv / acg.getClonalFrameLength();
             } else {
                 return eConv / acg.getClonalFramePairedLength();
@@ -130,7 +143,7 @@ public class ConversionPrior extends Distribution {
 
             double waitingtime = dt * k * (k-1);
 
-            if (linearContactGrowthInput.get().getValue())
+            if (linearContactGrowthInput.get())
                 localConvRate = convRate / (k-1);
 
             // Add probability for waiting time in the current interval
@@ -215,7 +228,7 @@ public class ConversionPrior extends Distribution {
         List<Event> cfEvents = cfEventList.getCFEvents();
 
         // Choose event interval
-        double[] intervalVolumes = cfEventList.getIntervalVolumes(!linearContactGrowthInput.get().getValue());
+        double[] intervalVolumes = cfEventList.getIntervalVolumes(!linearContactGrowthInput.get());
         int iEvent = Util.sampleCategorical(intervalVolumes);
         Event event = cfEvents.get(iEvent);
         double pInterval = intervalVolumes[iEvent] / Util.sum(intervalVolumes);
@@ -253,7 +266,7 @@ public class ConversionPrior extends Distribution {
      * @return the log probability density of the attachment points
      */
     public double getEdgeAttachmentProb(Conversion conv) {
-        if (linearContactGrowthInput.get().getValue()) {
+        if (linearContactGrowthInput.get()) {
             double logQ = 0.0;
             double height = conv.getHeight();
             List<CFEventList.Event> events = acg.getCFEvents();
