@@ -63,7 +63,7 @@ public class CTreeLikelihood extends TreeLikelihood {
 
         // Update the marginal tree with the new model
         if (!Beauti.isInBeauti()) {
-            MarginalTree mTree = marginalTreeInput.get();
+            MarginalTree mTree = (MarginalTree) treeInput.get();
             mTree.recalculate();
             mTree.makeOutdated();
             marginalTreeInput.setValue(null, this);
