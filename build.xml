@@ -7,13 +7,13 @@
     </description>
 
     <!-- set global properties for this build -->
-    <property name="srccontactrees" location="../contactrees/src" />
-    <property name="buildcontactrees" location="../contactrees/build" />
-    <property name="libcontactrees" location="../contactrees/lib" />
+    <property name="srccontactrees" location="./src" />
+    <property name="buildcontactrees" location="./build" />
+    <property name="libcontactrees" location="./lib" />
     <property name="release_dir" value="release" />
     <property name="addon_dir" value="${release_dir}/add-on" />
-    <property name="templates_dir" location="../contactrees/fxtemplates" />
-    <property name="distcontactrees" location="../contactrees/dist" />
+    <property name="templates_dir" location="./fxtemplates" />
+    <property name="distcontactrees" location="./dist" />
     <property name="beast2path" location="../beast2" />
     <property name="srcBeast2" location="${beast2path}/src" />
     <property name="beast2classpath" location="${beast2path}/build" />
@@ -92,7 +92,7 @@
 		       includeantruntime="false"
 		       source="1.8"
 		       target="1.8">
-			<include name="contactrees/**/**" />
+			<include name="contacTrees/**/**" />
 			<!-- compile JUnit test classes -->
 			<include name="test/beast/**" />
 		</javac>
@@ -142,7 +142,7 @@
 			</manifest>
 			<fileset dir="${buildcontactrees}">
 				<include name="**/*.class" />
-				<exclude name="contactrees/test/**/*.class" />
+				<exclude name="contacTrees/test/**/*.class" />
 				<include name="**/*.properties" />
 			</fileset>
 		</jar>
