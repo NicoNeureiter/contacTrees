@@ -92,7 +92,7 @@
 		       includeantruntime="false"
 		       source="1.8"
 		       target="1.8">
-			<include name="contacTrees/**/**" />
+			<include name="contactrees/**/**" />
 			<!-- compile JUnit test classes -->
 			<include name="test/beast/**" />
 		</javac>
@@ -142,7 +142,7 @@
 			</manifest>
 			<fileset dir="${buildcontactrees}">
 				<include name="**/*.class" />
-				<exclude name="contacTrees/test/**/*.class" />
+				<exclude name="contactrees/test/**/*.class" />
 				<include name="**/*.properties" />
 			</fileset>
 		</jar>
