@@ -220,6 +220,11 @@ public class CFEventList {
 
     public double getIntervalVolume(int i, boolean edgePairVolume) {
         int k = events.get(i).lineages;
+
+        // If only a single lineage is active, return volume 0 (important for linear conversion growth)
+        if (k == 1)
+            return 0;
+
         double dt = events.get(i+1).t - events.get(i).t;
         if (edgePairVolume)
             return dt * k * (k-1);
