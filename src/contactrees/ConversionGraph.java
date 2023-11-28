@@ -54,8 +54,6 @@ public class ConversionGraph extends Tree {
 
     @Override
     public void initAndValidate() {
-//        System.setProperty("java.only", "true");
-
         super.initAndValidate();
 
         // Initialise conversions lists

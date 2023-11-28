@@ -65,10 +65,13 @@ public abstract class ConversionCreationOperator extends BorrowingOperator {
      * @return log probability density of chosen attachment.
      */
     public double attachEdge(Conversion conv) {
+        double logP;
         if (networkPriorInput.get() != null)
-            return networkPriorInput.get().attachEdge(conv);
+            logP = networkPriorInput.get().attachEdge(conv);
         else
-            return conversionPriorInput.get().attachEdge(conv);
+            logP = conversionPriorInput.get().attachEdge(conv);
+        assert conv.isValid();
+        return logP;
     }
 
     /**
