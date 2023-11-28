@@ -3,12 +3,6 @@ A [BEAST 2](http://beast2.org/) package for jointly inferring phylogies and cont
 
 ## Installation
 * Install BEAST 2 (available from [http://beast2.org](http://beast2.org)).
-* Add https://raw.githubusercontent.com/NicoNeureiter/contacTrees/master/package.xml to your package repositories
-	* Open BEAUti, select `File => Manage packages` menu. The package manager dialog pops up.
-	* Click the `Package Repositories` button. The repositories dialog pops up.
-	* Click `Add URL`
-	* Enter `https://raw.githubusercontent.com/NicoNeureiter/contacTrees/master/package.xml` in the entry, and click `OK`
-	* Click the `Done` button, and contacTrees should appear in the package list.
 * Install the contacTrees package through the [package manager](http://www.beast2.org/managing-packages/)
 
 ## Using contacTrees
