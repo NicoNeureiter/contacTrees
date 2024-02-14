@@ -527,7 +527,6 @@ public class ACGAnnotator {
                 }
 
                 System.out.println("Add conversion " + conv.getNode1().getNr() + " - " + conv.getNode2().getNr());
-                acg.addConversion(conv);
             }
         }
         System.out.println("nConv: " + acg.getConvCount());
