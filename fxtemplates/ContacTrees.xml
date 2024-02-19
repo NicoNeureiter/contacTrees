@@ -236,9 +236,12 @@
 
             <plugin id='TreeHeight' spec='beast.base.evolution.tree.TreeHeightLogger' tree='@Tree.t:tree'/>
 
-            <logger id='treelog' spec='beast.base.inference.Logger' logEvery="1000" fileName="$(tree).trees" mode='tree'>
+            <logger id='treelog' spec='beast.base.inference.Logger' logEvery="1000" fileName="$(tree).cf.trees" mode='tree'>
                 <log id='TreeWithMetaDataLogger' spec='beast.base.evolution.TreeWithMetaDataLogger' tree='@Tree.t:tree'>
                 </log>
+            </logger>
+            <logger id="acglog" spec="beast.base.inference.Logger" logEvery="1000" fileName="$(tree).acg.trees" mode="tree">
+                <log id="ACGWithMetaDataLogger" spec="contactrees.ACGWithMetaDataLogger" network="@Tree.t:tree" blockSet="@allBlocks"/>
             </logger>
 
             <operator id="CFWilsonBalding" spec="contactrees.operators.CFWilsonBalding" acg="@Tree.t:tree" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" includeRoot="false" alpha="0.1" conversionPrior="@ConvPrior.t:tree" weight="1.0"/>
@@ -307,6 +310,7 @@
             <connect method="beastfx.app.inputeditor.SiteModelInputEditor.customConnector"/>
 
             <connect srcID='treelog'                          targetID='mcmc' inputName='logger' if='inposterior(Tree.t:tree) and Tree.t:tree/estimate=true'/>
+            <connect srcID='acglog'                           targetID='mcmc' inputName='logger' if='inposterior(Tree.t:tree) and Tree.t:tree/estimate=true'/>
             <connect srcID='RandomTree.t'                     targetID='mcmc' inputName='init'   if='isInitializing'/>
             <connect method="beastfx.app.beauti.StateNodeInitialiserListInputEditor.customConnector"/>
 
