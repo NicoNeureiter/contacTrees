@@ -12,4 +12,5 @@ To use contacTrees, create a BEAST2 file that has separate alignments for differ
 Scripts and data for reproducing a case study using contacTrees is avaialbe at [github.com/NicoNeureiter/contacTrees-IndoEuropean](https://github.com/NicoNeureiter/contacTrees-IndoEuropean)
 
 ## Reference
-> Neureiter N, Ranacher P, Efrat-Kowalsky N, Kaiping G, Weibel R, Widmer P, Bouckaert R R. Detecting Contact In Language Trees: A Bayesian Phylogenetic Model With Horizontal Transfer, 03 February 2022, PREPRINT (Version 1) available at Research Square [https://doi.org/10.21203/rs.3.rs-1262191/v1]
+Neureiter N, Ranacher P, Efrat-Kowalsky N, Kaiping GA, Weibel R, Widmer P, Bouckaert RR. Detecting contact in language trees: a Bayesian phylogenetic model with horizontal transfer. Humanities and Social Sciences Communications. 2022 Jun 17;9(1):1-4.[DOI:10.1057/s41599-022-01211-7](https://doi.org/10.1057/s41599-022-01211-7)
+PREPRINT (Version 1) available at Research Square [https://doi.org/10.21203/rs.3.rs-1262191/v1]
