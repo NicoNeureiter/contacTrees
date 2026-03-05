@@ -3,7 +3,6 @@ package contactrees.operators;
 import contactrees.Conversion;
 import beast.base.core.Description;
 import beast.base.evolution.tree.Node;
-import beast.base.evolution.tree.Tree;
 
 /**
  * @author Nico Neureiter

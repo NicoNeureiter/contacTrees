@@ -4,7 +4,10 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.domain.UnitInterval;
+import beast.base.spec.inference.parameter.RealScalarParam;
+import beast.base.spec.type.RealScalar;
 import contactrees.model.ConversionPrior;
 import contactrees.operators.CFOperator;
 import contactrees.test.ContactreesTest;
@@ -16,8 +19,8 @@ public class CFOperatorTest extends ContactreesTest {
             
 	@Test
 	public void testCollapseExpandSymmetry() {
-		RealParameter cRate = new RealParameter(Double.toString(C_RATE));
-		RealParameter pMove = new RealParameter(Double.toString(P_MOVE));
+		RealScalar<NonNegativeReal> cRate = new RealScalarParam<>(C_RATE, NonNegativeReal.INSTANCE);
+		RealScalar<UnitInterval> pMove = new RealScalarParam<>(P_MOVE, UnitInterval.INSTANCE);
 		ConversionPrior prior = new ConversionPrior();
 		prior.initByName("network", acg, "conversionRate", cRate);
 

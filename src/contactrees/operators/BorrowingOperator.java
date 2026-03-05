@@ -5,8 +5,9 @@ import java.util.List;
 
 import beast.base.core.Input;
 import beast.base.inference.StateNode;
-import beast.base.inference.parameter.RealParameter;
-import beast.base.evolution.likelihood.TreeLikelihood;
+import beast.base.spec.domain.UnitInterval;
+import beast.base.spec.type.RealScalar;
+import beast.base.spec.evolution.likelihood.TreeLikelihood;
 import beast.base.util.Randomizer;
 import contactrees.Block;
 import contactrees.BlockSet;
@@ -27,7 +28,7 @@ public abstract class BorrowingOperator extends ACGOperator {
             "Block of site which are either inherited or passed via a conversion edge.",
             Input.Validate.REQUIRED);
 
-    public Input<RealParameter> pMoveInput = new Input<>(
+    public Input<RealScalar<UnitInterval>> pMoveInput = new Input<>(
             "pMove",
             "Probability for a block to follow a conversion edge.",
             Input.Validate.REQUIRED);
@@ -54,7 +55,7 @@ public abstract class BorrowingOperator extends ACGOperator {
      * @return log Probability density of chosen borrowings.
      */
     public double drawBorrowings(Conversion conv) {
-        double pMove = pMoveInput.get().getValue();
+        double pMove = pMoveInput.get().get();
         double logP = 0;
 
         if (pMove == 0.) {
@@ -81,7 +82,7 @@ public abstract class BorrowingOperator extends ACGOperator {
      * @return log Probability density
      */
     public double getBorrowingsProb(Conversion conv) {
-        double pMove = pMoveInput.get().getValue();
+        double pMove = pMoveInput.get().get();
         int affectedBlockCount = blockSet.getAffectedBlockIDs(conv).size();
         int unaffectedBlockCount = blockSet.getBlockCount() - affectedBlockCount;
 
@@ -107,7 +108,7 @@ public abstract class BorrowingOperator extends ACGOperator {
      * @return Log posterior probability of the borrowings on the given conversion.
      */
     public double calcLogBorrowingPosterior(Conversion conv, TreeLikelihood treeLH, boolean mtreeChanged) {
-        double pMove = pMoveInput.get().getValue();
+        double pMove = pMoveInput.get().get();
         MarginalTree marginalTree = getMarginalTree(treeLH);
         Block block = marginalTree.block;
 

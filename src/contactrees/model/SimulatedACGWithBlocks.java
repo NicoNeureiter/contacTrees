@@ -28,11 +28,9 @@ import contactrees.util.Util;
 import beast.base.core.BEASTObject;
 import beast.base.core.Description;
 import beast.base.core.Input;
-import beast.base.inference.parameter.RealParameter;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.base.util.Binomial;
 import beast.base.util.Randomizer;
 import feast.nexus.NexusBlock;
 import feast.nexus.NexusBuilder;
@@ -46,11 +44,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.math3.distribution.BinomialDistribution;
 
-/**
- * @author Tim Vaughan
- */
 @Description("Simulates an ARG under the full ClonalOrigin model - can be used"
     + " for chain initialization or for sampler validation.")
 public class SimulatedACGWithBlocks extends BEASTObject {

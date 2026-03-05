@@ -116,12 +116,6 @@ public class ACGCladeSystem extends CladeSystem {
             totalGeneFlow.add(cladePair, blockSet.countAffectedBlocks(conv));
         }
 
-        int flowSum = 0;
-        for (Conversion conv : acg.getConversions())  {
-            BitSetPair cladePair = new BitSetPair(conv);
-//            System.out.println(cladePair.hashCode() + ":   " + geneFlowSample.count(cladePair) + " / " + blockSet.size());
-        }
-
         geneFlow.add(geneFlowSample);
 
         acgIndex += 1;

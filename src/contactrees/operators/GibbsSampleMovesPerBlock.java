@@ -4,7 +4,7 @@
 package contactrees.operators;
 
 import beast.base.core.Input;
-import beast.base.evolution.likelihood.TreeLikelihood;
+import beast.base.spec.evolution.likelihood.TreeLikelihood;
 import contactrees.Block;
 import contactrees.Conversion;
 import contactrees.MarginalTree;

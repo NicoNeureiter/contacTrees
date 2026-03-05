@@ -1,11 +1,8 @@
 package contactrees.operators;
 
-import java.util.List;
-
 import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
-import beast.base.inference.StateNode;
 import beast.base.util.Randomizer;
 
 /**
@@ -34,8 +31,6 @@ public class CFWilsonBalding extends CFOperator {
 
     @Override
     public double proposal() {
-    	int nConv = acg.getConvCount();
-
         // Determine whether we can apply this operator:
         if (acg.getLeafNodeCount()<3)
             return Double.NEGATIVE_INFINITY;

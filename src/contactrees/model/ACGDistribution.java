@@ -13,9 +13,11 @@ import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.PoissonDistributionImpl;
 
 import beast.base.inference.Distribution;
+import beast.base.core.BEASTInterface;
 import beast.base.core.Input;
 import beast.base.inference.State;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.type.RealScalar;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.TreeDistribution;
 import beast.base.util.Randomizer;
@@ -40,11 +42,11 @@ public class ACGDistribution extends Distribution {
             "The tree prior of the clonal frame.",
             Input.Validate.REQUIRED);
 
-    final public Input<RealParameter> conversionRateInput = new Input<>(
+    final public Input<RealScalar<NonNegativeReal>> conversionRateInput = new Input<>(
             "conversionRate",
             "The rate at which a pair of lineages will get in contact and form a conversion.");
 
-    final public Input<RealParameter> expectedConversionsInput = new Input<>(
+    final public Input<RealScalar<NonNegativeReal>> expectedConversionsInput = new Input<>(
             "expectedConversions",
             "The expected number of conversions in the whole tree.",
             Input.Validate.XOR, conversionRateInput);
@@ -75,9 +77,9 @@ public class ACGDistribution extends Distribution {
 
     protected double getExpectedConversions() {
         if (expectedConversionsInput.get() != null){
-            return expectedConversionsInput.get().getValue();
+            return expectedConversionsInput.get().get();
         } else {
-            double convRate = conversionRateInput.get().getValue();
+            double convRate = conversionRateInput.get().get();
             if (linearContactGrowthInput.get()) {
                 return convRate * acg.getClonalFrameLength();
             } else {
@@ -88,9 +90,9 @@ public class ACGDistribution extends Distribution {
 
     protected double getConversionRate() {
         if (conversionRateInput.get() != null){
-            return conversionRateInput.get().getValue();
+            return conversionRateInput.get().get();
         } else {
-            double eConv = expectedConversionsInput.get().getValue();
+            double eConv = expectedConversionsInput.get().get();
             if (linearContactGrowthInput.get()) {
                 return eConv / acg.getClonalFrameLength();
             } else {
@@ -187,11 +189,21 @@ public class ACGDistribution extends Distribution {
     public List<String> getConditions() {
         List<String> conditions = new ArrayList<>();
         if (conversionRateInput.get() != null){
-            conditions.add(conversionRateInput.get().getID());
+            maybeAddInputToConditions(conditions, conversionRateInput);
         } else {
-            conditions.add(expectedConversionsInput.get().getID());
+            maybeAddInputToConditions(conditions, expectedConversionsInput);
         }
         return conditions;
+    }
+
+    /**
+     * Add an input to the `conditions` list if it is a BEASTInterface.
+     * Otherwise, we assume it is constant and doesn't need to be sampled.
+     */
+    void maybeAddInputToConditions(List<String> conditions, Input<?> input) {
+        if (input.get() instanceof BEASTInterface beastInterface) {
+            conditions.add(beastInterface.getID());
+        }
     }
 
     @Override

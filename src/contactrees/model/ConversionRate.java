@@ -5,13 +5,15 @@ import org.w3c.dom.Node;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.inference.StateNode;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.inference.parameter.RealScalarParam;
+import beast.base.spec.type.RealScalar;
 import contactrees.ConversionGraph;
 
 
-public class ConversionRate extends RealParameter {
+public class ConversionRate extends RealScalarParam<NonNegativeReal> {
 
-    final public Input<RealParameter> expectedConversionsInput = new Input<>(
+    final public Input<RealScalar<NonNegativeReal>> expectedConversionsInput = new Input<>(
             "expectedConversions",
             "The expected number of conversions in the whole phylogeny.",
             Input.Validate.REQUIRED);
@@ -36,34 +38,16 @@ public class ConversionRate extends RealParameter {
     }
 
     @Override
-    public Double getValue() {
-        double expectedConversions = expectedConversionsInput.get().getValue();
+    public double get() {
+        double expectedConversions = expectedConversionsInput.get().get();
         return expectationToRate(expectedConversions);
     }
 
     @Override
-    public int getDimension() {
-        return getExpectation().getDimension();
-    }
-
-    @Override
-    public double getArrayValue(int dim) {
-        return expectationToRate(getExpectation().getArrayValue(dim));
-    }
-
-    @Override
-    public Double getValue(int i) {
-        return expectationToRate(getExpectation().getValue(i));
-    }
-
-    @Override
-    public void setValue(int i, Double value) {
-        getExpectation().setValue(i, rateToExpectation(value));
-    }
-
-    @Override
-    public void setValue(Double value) {
-        getExpectation().setValue(rateToExpectation(value));
+    public void set(double value) {
+        RealScalar<?> expectedConversions = getExpectation();
+        if (expectedConversions instanceof RealScalarParam expParam)
+            expParam.set(rateToExpectation(value));
     }
 
     @Override
@@ -72,43 +56,8 @@ public class ConversionRate extends RealParameter {
     }
 
     @Override
-    public void setLower(Double lower) {
-        getExpectation().setLower(rateToExpectation(lower));
-    }
-
-    @Override
     public Double getUpper() {
         return expectationToRate(getExpectation().getUpper());
-    }
-
-    @Override
-    public void setUpper(Double upper) {
-        getExpectation().setUpper(rateToExpectation(upper));
-    }
-
-    @Override
-    public Double[] getValues() {
-        return getExpectation().getValues();
-    }
-
-    @Override
-    public int getMinorDimension1() {
-        return getExpectation().getMinorDimension1();
-    }
-
-    @Override
-    public int getMinorDimension2() {
-        return getExpectation().getMinorDimension2();
-    }
-
-    @Override
-    public Double getMatrixValue(int i, int j) {
-        return getExpectation().getMatrixValue(i, j);
-    }
-
-    @Override
-    public void swap(int i, int j) {
-        getExpectation().swap(i, j);
     }
 
     /*
@@ -139,7 +88,7 @@ public class ConversionRate extends RealParameter {
         return networkInput.get().getClonalFrameLength();
     }
 
-    protected RealParameter getExpectation() {
+    protected RealScalar<NonNegativeReal> getExpectation() {
         return expectedConversionsInput.get();
     }
 
@@ -178,7 +127,7 @@ public class ConversionRate extends RealParameter {
 
     @Override
     public String toString() {
-        return Double.toString(getValue());
+        return Double.toString(get());
     }
 
 }

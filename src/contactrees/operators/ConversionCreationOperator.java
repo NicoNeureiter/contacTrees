@@ -5,12 +5,14 @@ import java.util.Set;
 
 import beast.base.core.Input;
 import beast.base.inference.StateNode;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.type.RealScalar;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import contactrees.Conversion;
 import contactrees.model.ACGDistribution;
 import contactrees.model.ConversionPrior;
+import contactrees.model.ConversionRate;
 
 /**
  * Abstract class of ACG operators that add new converted edges
@@ -20,7 +22,7 @@ import contactrees.model.ConversionPrior;
  */
 public abstract class ConversionCreationOperator extends BorrowingOperator {
 
-    public Input<RealParameter> conversionRateInput = new Input<>(
+    public Input<RealScalar<NonNegativeReal>> conversionRateInput = new Input<>(
             "conversionRate",
             "Rate at which conversions happen along pairs of edges on the clonal frame.",
             Input.Validate.REQUIRED);
@@ -123,7 +125,9 @@ public abstract class ConversionCreationOperator extends BorrowingOperator {
     @Override
     public List<StateNode> listStateNodes() {
     	List<StateNode> list = super.listStateNodes(); 
-        list.remove(conversionRateInput.get());
+        RealScalar<?> convRate = conversionRateInput.get();
+        if (convRate instanceof ConversionRate convRateParam)
+                list.remove(convRateParam);
     	return list;
     }
 }

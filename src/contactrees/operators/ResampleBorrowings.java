@@ -4,7 +4,8 @@
 package contactrees.operators;
 
 import beast.base.core.Input;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.UnitInterval;
+import beast.base.spec.type.RealScalar;
 import beast.base.util.Randomizer;
 import contactrees.Block;
 import contactrees.BlockSet;
@@ -24,7 +25,7 @@ public class ResampleBorrowings extends ACGOperator {
             "Block of site which are either inherited or passed via a conversion edge.",
             Input.Validate.REQUIRED);
 
-    public Input<RealParameter> pMoveInput = new Input<>(
+    public Input<RealScalar<UnitInterval>> pMoveInput = new Input<>(
             "pMove",
             "Probability for a block to follow a conversion edge.",
             Input.Validate.REQUIRED);
@@ -60,7 +61,7 @@ public class ResampleBorrowings extends ACGOperator {
      * @return log probability density of chosen attachment.
      */
     public double drawBorrowings(Conversion conv) {
-        double pMove = pMoveInput.get().getValue();
+        double pMove = pMoveInput.get().get();
         double logP = 0;
 
         if (pMove == 0.) {
@@ -92,7 +93,7 @@ public class ResampleBorrowings extends ACGOperator {
      * @return log probability density
      */
     public double getBorrowingsProb(Conversion conv) {
-        double pMove = pMoveInput.get().getValue();
+        double pMove = pMoveInput.get().get();
         int borrowedCount = blockSet.getAffectedBlockIDs(conv).size();
         int nonborrowedCount = blockSet.getBlockCount() - borrowedCount;
 

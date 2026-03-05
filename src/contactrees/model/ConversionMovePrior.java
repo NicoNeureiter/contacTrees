@@ -8,9 +8,11 @@ import java.util.List;
 import java.util.Random;
 
 import beast.base.inference.Distribution;
+import beast.base.core.BEASTInterface;
 import beast.base.core.Input;
 import beast.base.inference.State;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.UnitInterval;
+import beast.base.spec.type.RealScalar;
 import contactrees.Block;
 import contactrees.BlockSet;
 import contactrees.Conversion;
@@ -34,7 +36,7 @@ public class ConversionMovePrior extends Distribution {
             + "move over conversion edges in the network.",
             Input.Validate.REQUIRED);
 
-    final public Input<RealParameter> pMoveInput = new Input<>(
+    final public Input<RealScalar<UnitInterval>> pMoveInput = new Input<>(
             "pMove",
             "The probability of a block moving over (being transferred at) a conversion edge.",
             Input.Validate.REQUIRED);
@@ -52,7 +54,7 @@ public class ConversionMovePrior extends Distribution {
     @Override
     public double calculateLogP() {
         logP = 0.0;
-        double pMove = pMoveInput.get().getValue();
+        double pMove = pMoveInput.get().get();
         int moveCount = blockSet.countMoves();
         int n = acg.getConvCount() * blockSet.getBlockCount();
 
@@ -83,9 +85,19 @@ public class ConversionMovePrior extends Distribution {
     public List<String> getConditions() {
         List<String> conditions = new ArrayList<>();
         conditions.add(networkInput.get().getID());
-        conditions.add(pMoveInput.get().getID());
+        maybeAddInputToConditions(conditions, pMoveInput);
 
         return conditions;
+    }
+
+    /**
+     * Add an input to the `conditions` list if it is a BEASTInterface.
+     * Otherwise, we assume it is constant and doesn't need to be sampled.
+     */
+    void maybeAddInputToConditions(List<String> conditions, Input<?> input) {
+        if (input.get() instanceof BEASTInterface beastInterface) {
+            conditions.add(beastInterface.getID());
+        }
     }
 
     @Override
@@ -99,7 +111,7 @@ public class ConversionMovePrior extends Distribution {
 
         acg = networkInput.get();
         blockSet = blockSetInput.get();
-        double pMove = pMoveInput.get().getValue();
+        double pMove = pMoveInput.get().get();
 
 
         for (Block block : blockSet) {

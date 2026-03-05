@@ -75,7 +75,7 @@ public class ConversionSplit extends ConversionCreationOperator {
 
 
         // Choose which blocks-moves stay on conv and which are moved to convNew
-        double pDoubleMove = pMoveInput.get().getValue();
+        double pDoubleMove = pMoveInput.get().get();
         List<Block> blocksToRemove = new LinkedList<Block>();
         for (Block block : blockSet.getAffectedBlocks(conv)) {
             if (Randomizer.nextDouble() < pDoubleMove) {
@@ -158,7 +158,7 @@ public class ConversionSplit extends ConversionCreationOperator {
 
 
         // Update Hastings ratio with back-probability for sampled block moves
-        double pDoubleMove = pMoveInput.get().getValue();
+        double pDoubleMove = pMoveInput.get().get();
 
         for (Block block : blockSet.getAffectedBlocks(conv1)) {
             if (block.isAffected(conv2)) {

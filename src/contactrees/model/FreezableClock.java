@@ -4,13 +4,13 @@ import java.util.ArrayList;
 
 import beast.base.core.Input;
 import beast.base.evolution.alignment.Taxon;
-import beast.base.evolution.branchratemodel.BranchRateModel;
+import beast.base.spec.evolution.branchratemodel.Base;
 import beast.base.evolution.tree.Node;
 
 
-public class FreezableClock extends BranchRateModel.Base {
+public class FreezableClock extends Base {
 
-    public Input<BranchRateModel.Base> clockInput = new Input<>(
+    public Input<Base> clockInput = new Input<>(
             "clock",
             "The clock model defining the rate along unfrozen branches.",
             Input.Validate.REQUIRED);
@@ -20,7 +20,7 @@ public class FreezableClock extends BranchRateModel.Base {
             "Taxa for which the last branch should have a fixed branch rate of 0.",
             new ArrayList<>());
 
-    BranchRateModel.Base clock;
+    Base clock;
     ArrayList<String> frozenTaxa;
     boolean anythingFrozen;
 
@@ -46,7 +46,7 @@ public class FreezableClock extends BranchRateModel.Base {
 
     @Override
     public boolean requiresRecalculation() {
-        return clock.isDirtyCalculation();
+        return clock.somethingIsDirty();
     }
 
     @Override

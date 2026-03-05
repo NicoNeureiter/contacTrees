@@ -103,11 +103,6 @@ public class Block extends StateNode {
     @Override
     public void close(PrintStream out) {}
 
-    @Override
-    public int getDimension() {
-        return 1;
-    }
-
     /*
      * StateNode implementations
      */
@@ -177,10 +172,9 @@ public class Block extends StateNode {
         assignFrom(other);
     }
 
-    @Override
-    public double getArrayValue(int dim) {
-        return convIDs.size();
-    }
+    // public double getArrayValue(int dim) {
+    //     return convIDs.size();
+    // }
 
     @Override
     public void setEverythingDirty(boolean isDirty) {
@@ -213,11 +207,6 @@ public class Block extends StateNode {
                 convIDs.add(Integer.parseInt(convID));
             }
         }
-    }
-
-    @Override
-    public int scale(double scale) {
-        throw new UnsupportedOperationException("StateNode method scale() not applicable to Block.");
     }
 
     public Block() {

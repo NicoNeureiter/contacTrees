@@ -28,7 +28,6 @@ package contactrees;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,10 +47,13 @@ import beast.base.core.Log;
 import beast.base.evolution.alignment.Alignment;
 import beast.base.evolution.alignment.TaxonSet;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.base.evolution.tree.MRCAPrior;
+import beast.base.spec.domain.Real;
+import beast.base.spec.evolution.tree.MRCAPrior;
+import beast.base.spec.inference.distribution.OffsetReal;
+import beast.base.spec.inference.distribution.ScalarDistribution;
+import beast.base.spec.type.RealScalar;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.TraitSet;
-import beast.base.inference.distribution.ParametricDistribution;
 import beast.base.util.HeapSort;
 import beast.base.util.Randomizer;
 
@@ -90,7 +92,7 @@ public class RandomACG extends ConversionGraph implements StateNodeInitialiser {
     List<Set<String>> taxonSets;
 
     // list of parametric distribution constraining the MRCA of taxon sets, null if not present
-    List<ParametricDistribution> distributions;
+    List<ScalarDistribution<RealScalar<Real>, Double>> distributions;
 
     // hard bound for the set, if any
     List<Bound> m_bounds;
@@ -215,7 +217,7 @@ public class RandomACG extends ConversionGraph implements StateNodeInitialiser {
 	                }
 	                usedTaxa.add(taxonID);
 	            }
-	            final ParametricDistribution distr = prior.distInput.get();
+	            final ScalarDistribution<RealScalar<Real>, Double> distr = prior.distInput.get();
 	            final Bound bounds = new Bound();
 	            if (distr != null) {
 	        		List<BEASTInterface> beastObjects = new ArrayList<>();
@@ -224,8 +226,12 @@ public class RandomACG extends ConversionGraph implements StateNodeInitialiser {
 	        			beastObjects.get(i).initAndValidate();
 	        		}
 	                try {
-						bounds.lower = distr.inverseCumulativeProbability(0.0) + distr.offsetInput.get();
-		                bounds.upper = distr.inverseCumulativeProbability(1.0) + distr.offsetInput.get();
+                        bounds.lower = distr.inverseCumulativeProbability(0.0);
+                        bounds.upper = distr.inverseCumulativeProbability(1.0);
+                        if (distr instanceof OffsetReal offsetDistr){
+                            bounds.lower += offsetDistr.getOffset();
+                            bounds.upper += offsetDistr.getOffset();
+                        }
 					} catch (MathException e) {
 						Log.warning.println("At RandomACG::initStateNodes, bound on MRCAPrior could not be set " + e.getMessage());
 					}

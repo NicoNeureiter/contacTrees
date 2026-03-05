@@ -10,10 +10,12 @@ import java.util.Random;
 import org.apache.commons.math.special.Beta;
 import org.apache.commons.math3.distribution.BetaDistribution;
 
-import beast.base.inference.Distribution;
+import beast.base.core.BEASTInterface;
 import beast.base.core.Input;
+import beast.base.inference.Distribution;
 import beast.base.inference.State;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.type.RealScalar;
 import contactrees.Block;
 import contactrees.BlockSet;
 import contactrees.Conversion;
@@ -37,12 +39,12 @@ public class BetaBinomialMovePrior extends Distribution {
             + "move over conversion edges in the network.",
             Input.Validate.REQUIRED);
 
-    final public Input<RealParameter> alphaInput = new Input<>(
+    final public Input<RealScalar<PositiveReal>> alphaInput = new Input<>(
             "alpha",
             "Alpha parameter of the betaBinomial prior on the number of blocks moving over a conversion edge.",
             Input.Validate.REQUIRED);
 
-    final public Input<RealParameter> betaInput = new Input<>(
+    final public Input<RealScalar<PositiveReal>> betaInput = new Input<>(
             "beta",
             "Beta parameter of the betaBinomial prior on the number of blocks moving over a conversion edge.",
             Input.Validate.REQUIRED);
@@ -60,8 +62,8 @@ public class BetaBinomialMovePrior extends Distribution {
     @Override
     public double calculateLogP() {
         logP = 0.0;
-        double alpha = alphaInput.get().getValue();
-        double beta = betaInput.get().getValue();
+        double alpha = alphaInput.get().get();
+        double beta = betaInput.get().get();
         int n = blockSet.getBlockCount();
         for (Conversion conv : acg.getConversions()) {
             int k = blockSet.countAffectedBlocks(conv);
@@ -86,9 +88,19 @@ public class BetaBinomialMovePrior extends Distribution {
     public List<String> getConditions() {
         List<String> conditions = new ArrayList<>();
         conditions.add(networkInput.get().getID());
-        conditions.add(alphaInput.get().getID());
-        conditions.add(betaInput.get().getID());
+        maybeAddInputToConditions(conditions, alphaInput);
+        maybeAddInputToConditions(conditions, betaInput);
         return conditions;
+    }
+
+    /**
+     * Add an input to the `conditions` list if it is a BEASTInterface.
+     * Otherwise, we assume it is constant and doesn't need to be sampled.
+     */
+    void maybeAddInputToConditions(List<String> conditions, Input<?> input) {
+        if (input.get() instanceof BEASTInterface beastInterface) {
+            conditions.add(beastInterface.getID());
+        }
     }
 
     @Override
@@ -102,8 +114,8 @@ public class BetaBinomialMovePrior extends Distribution {
 
         acg = networkInput.get();
         blockSet = blockSetInput.get();
-        double alpha = alphaInput.get().getValue();
-        double beta = betaInput.get().getValue();
+        double alpha = alphaInput.get().get();
+        double beta = betaInput.get().get();
 
         for (Block block : blockSet) {
             // Remove old conversion moves

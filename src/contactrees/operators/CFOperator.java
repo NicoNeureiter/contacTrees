@@ -5,7 +5,6 @@ import java.util.List;
 
 import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
-import beast.base.inference.StateNode;
 import beast.base.util.Randomizer;
 import contactrees.Conversion;
 
@@ -60,7 +59,7 @@ public abstract class CFOperator extends ConversionCreationOperator {
 
         // Remove degenerated conversions
         double L = 2.0 * (srcNode.getParent().getHeight() - destTime);
-        double Nexp = L * conversionRateInput.get().getValue();
+        double Nexp = L * conversionRateInput.get().get();
         if (Nexp == 0.) {
         	assert toRemove.isEmpty();
         } else {
@@ -133,7 +132,7 @@ public abstract class CFOperator extends ConversionCreationOperator {
 
         // Randomly add edges which would be pruned in a corresponding collapse move
         double L = 2.0*(destTime - parentHeight);
-        double Nexp = L * conversionRateInput.get().getValue();
+        double Nexp = L * conversionRateInput.get().get();
         int N = 0;
         if (Nexp > 0.) {
             // Choose number of new conversions according to Poisson distribution

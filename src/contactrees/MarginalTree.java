@@ -3,15 +3,13 @@ package contactrees;
 import java.util.ArrayList;
 import java.util.List;
 
-import beast.base.core.BEASTInterface;
 import beast.base.core.Input;
 import beast.base.inference.StateNode;
-import beast.base.evolution.branchratemodel.BranchRateModel;
-import beast.base.evolution.branchratemodel.StrictClockModel;
+import beast.base.spec.evolution.branchratemodel.Base;
+import beast.base.spec.evolution.branchratemodel.StrictClockModel;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import contactrees.CFEventList.Event;
-import contactrees.model.likelihood.CTreeLikelihood;
 
 
 /**
@@ -32,7 +30,7 @@ public class MarginalTree extends Tree {
             "block",
             "The block object cinitArraysontaining the moves this marginal tree follows along the conversion graph.",
             Input.Validate.REQUIRED);
-    public Input<BranchRateModel.Base> branchRateModelInput = new Input<>("branchRateModel", "", new StrictClockModel());
+    public Input<Base> branchRateModelInput = new Input<>("branchRateModel", "", new StrictClockModel());
     public Input<ArrayList<String>> frozenTaxaInput = new Input<>(
             "frozenTaxa",
             "Taxa for which the last branch should have a fixed branch rate of 0.",
@@ -40,7 +38,7 @@ public class MarginalTree extends Tree {
 
     public ConversionGraph acg;
     public Block block;
-    protected BranchRateModel.Base branchRateModel;
+    protected Base branchRateModel;
     protected boolean hasBranchRates;
     protected ArrayList<String> frozenTaxa;
 
@@ -58,17 +56,10 @@ public class MarginalTree extends Tree {
         manuallyUpdated = true;
     }
 
-    public void setBranchRateModel(BranchRateModel.Base brm) {
+    public void setBranchRateModel(Base brm) {
         branchRateModelInput.setValue(brm, this);
         branchRateModel = brm;
         hasBranchRates = (branchRateModel != null);
-    }
-
-    private CTreeLikelihood getLikelihood() {
-        for (BEASTInterface beastObject : getOutputs())
-            if (beastObject instanceof CTreeLikelihood)
-                return (CTreeLikelihood) beastObject;
-        throw new RuntimeException("No CTreeLikelihood found in the outputs of the marginal tree.");
     }
 
     @Override
@@ -89,7 +80,7 @@ public class MarginalTree extends Tree {
 
         super.initAndValidate();
         activeCFlineages = new ArrayList<>();
-        for (Node node : acg.getNodesAsArray())
+        for (int i=0; i<acg.getNodeCount(); i++)
             activeCFlineages.add(null);
 
         recalculate();
@@ -140,7 +131,7 @@ public class MarginalTree extends Tree {
         if (block.isAheadOfMarginalTree())
             return true;
 
-        if (branchRateModel.isDirtyCalculation())
+        if (branchRateModel.somethingIsDirty())
             return true;
 
         return outdated;

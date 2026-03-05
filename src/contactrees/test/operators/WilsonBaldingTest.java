@@ -19,17 +19,20 @@ package contactrees.test.operators;
 import beast.base.inference.Logger;
 import beast.base.inference.MCMC;
 import beast.base.inference.State;
-import beast.base.inference.parameter.RealParameter;
 import beast.base.inference.CompoundDistribution;
 import beast.base.inference.Distribution;
 import beast.base.core.BEASTObject;
 import beast.base.core.Input;
 import beast.base.evolution.alignment.Alignment;
 import beast.base.evolution.alignment.Sequence;
-import beast.base.evolution.tree.coalescent.RandomTree;
+import beast.base.spec.evolution.tree.coalescent.RandomTree;
 import beast.base.evolution.tree.Tree;
 import beast.base.evolution.tree.coalescent.Coalescent;
-import beast.base.evolution.tree.coalescent.ConstantPopulation;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.UnitInterval;
+import beast.base.spec.evolution.tree.coalescent.ConstantPopulation;
+import beast.base.spec.inference.parameter.RealScalarParam;
 import beast.base.evolution.tree.TreeIntervals;
 import beast.base.util.Randomizer;
 import beastfx.app.tools.TreeTraceAnalysis;
@@ -116,7 +119,7 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 		// Assemble model:
 		
 		ConstantPopulation constantPop = new ConstantPopulation();
-		constantPop.initByName("popSize", new RealParameter("10.0"));
+		constantPop.initByName("popSize", new RealScalarParam<>(10.0, PositiveReal.INSTANCE));
 
 		List<Object> alignmentInitArgs = new ArrayList<Object>();
 		for (int i=0; i<4; i++) {
@@ -150,9 +153,9 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 
 
 		// Set up operator:
-		RealParameter conversionRate = new RealParameter("0.2");
+		RealScalarParam<?> conversionRate = new RealScalarParam<>(0.2, NonNegativeReal.INSTANCE);
 		conversionRate.setID("conversionRate");
-		RealParameter pMove = new RealParameter("0.05");
+		RealScalarParam<?> pMove = new RealScalarParam<>(0.05, UnitInterval.INSTANCE);
 		pMove.setID("pMove");
 
 		// Set up state:

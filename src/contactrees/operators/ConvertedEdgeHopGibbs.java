@@ -4,7 +4,7 @@ import java.util.HashSet;
 
 import beast.base.core.Description;
 import beast.base.core.Input;
-import beast.base.evolution.likelihood.TreeLikelihood;
+import beast.base.spec.evolution.likelihood.TreeLikelihood;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import contactrees.Conversion;

@@ -160,7 +160,6 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
 
                 if (includeBlockStats) {
                     int affectedBlockCount = blockSet.countAffectedBlocks();
-                    double affectedBlockFraction = affectedBlockCount / (double) blockSet.getBlockCount();
                     meta += String.format(Locale.ENGLISH,
                             ", affectedBlocks=%s",
                             formatList(blockSet.getAffectedBlockNames(event.conv))

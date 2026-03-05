@@ -1,12 +1,12 @@
 <beast version='2.0'
-       namespace='beastfx.app.beauti:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.branchratemodel:beast.base.evolution.speciation:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.evolution:beast.base.inference.distribution'>
+       namespace='beastfx.app.beauti:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.spec.evolution.branchratemodel:beast.base.evolution.speciation:beast.base.spec.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.evolution:beast.base.inference.distribution'>
 
 
     <!-- Clock models -->
     <mergewith point="acgClockModelTemplates">
 
         <!-- Strict clock -->
-        <subtemplate id='StrictClock' class='beast.base.evolution.branchratemodel.StrictClockModel'
+        <subtemplate id='StrictClock' class='StrictClockModel'
                      mainid='StrictClock.c:$(n)'>
             <![CDATA[
                 <branchRateModel spec='StrictClockModel' id='StrictClock.c:$(n)'>

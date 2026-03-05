@@ -43,7 +43,6 @@ public class  ConversionGraphTest extends ContactreesTest {
 
 	@Test
 	public void testRestore() {
-		Node[] nodesBefore;
 		String newickBefore, newickAfter;
 
 		for (ModificationType mod : ModificationType.values()) {

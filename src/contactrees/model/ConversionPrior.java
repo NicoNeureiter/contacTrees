@@ -15,7 +15,8 @@ import beast.base.inference.Distribution;
 import beast.base.core.Input;
 import beast.base.core.Log;
 import beast.base.inference.State;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.type.RealScalar;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import contactrees.CFEventList;
@@ -36,11 +37,11 @@ public class ConversionPrior extends Distribution {
             "The conversion graph containing the conversion edges.",
             Input.Validate.REQUIRED);
 
-    final public Input<RealParameter> conversionRateInput = new Input<>(
+    final public Input<RealScalar<NonNegativeReal>> conversionRateInput = new Input<>(
             "conversionRate",
             "The rate at which a pair of lineages will get in contact and form a conversion.");
 
-    final public Input<RealParameter> expectedConversionsInput = new Input<>(
+    final public Input<RealScalar<NonNegativeReal>> expectedConversionsInput = new Input<>(
             "expectedConversions",
             "The expected number of conversions in the whole tree.",
             Input.Validate.XOR, conversionRateInput);
@@ -81,9 +82,9 @@ public class ConversionPrior extends Distribution {
 
     protected double getExpectedConversions() {
         if (expectedConversionsInput.get() != null){
-            return expectedConversionsInput.get().getValue();
+            return expectedConversionsInput.get().get();
         } else {
-            double convRate = conversionRateInput.get().getValue();
+            double convRate = conversionRateInput.get().get();
             if (linearContactGrowthInput.get()) {
                 return convRate * acg.getClonalFrameLength();
             } else {
@@ -94,9 +95,9 @@ public class ConversionPrior extends Distribution {
 
     protected double getConversionRate() {
         if (conversionRateInput.get() != null){
-            return conversionRateInput.get().getValue();
+            return conversionRateInput.get().get();
         } else {
-            double eConv = expectedConversionsInput.get().getValue();
+            double eConv = expectedConversionsInput.get().get();
             if (linearContactGrowthInput.get()) {
                 return eConv / acg.getClonalFrameLength();
             } else {
@@ -197,23 +198,23 @@ public class ConversionPrior extends Distribution {
         throw new UnsupportedOperationException("For direct simulation, use ACGDistribution.");
     }
 
-    /**
-     * Sample conversion edges according to the current convRate
-     * in the current clonal frame.
-     */
-    private void generateConversions(double expectedConversions) {
-        acg.removeAllConversions();
+    // /**
+    //  * Sample conversion edges according to the current convRate
+    //  * in the current clonal frame.
+    //  */
+    // private void generateConversions(double expectedConversions) {
+    //     acg.removeAllConversions();
 
-        // Draw number of conversions:
-        double nConvMean = expectedConversions;
-        int nConv = (int) Randomizer.nextPoisson(nConvMean);
+    //     // Draw number of conversions:
+    //     double nConvMean = expectedConversions;
+    //     int nConv = (int) Randomizer.nextPoisson(nConvMean);
 
-        // Generate conversions:
-        for (int i=0; i<nConv; i++) {
-            Conversion conv = acg.addNewConversion();
-            attachEdge(conv);
-        }
-    }
+    //     // Generate conversions:
+    //     for (int i=0; i<nConv; i++) {
+    //         Conversion conv = acg.addNewConversion();
+    //         attachEdge(conv);
+    //     }
+    // }
 
     /**
      * Attach the conversion edge at a random point in the clonal

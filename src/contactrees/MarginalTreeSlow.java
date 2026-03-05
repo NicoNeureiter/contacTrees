@@ -7,8 +7,8 @@ import java.util.Map;
 
 import beast.base.core.Input;
 import beast.base.inference.StateNode;
-import beast.base.evolution.branchratemodel.BranchRateModel;
-import beast.base.evolution.branchratemodel.StrictClockModel;
+import beast.base.spec.evolution.branchratemodel.Base;
+import beast.base.spec.evolution.branchratemodel.StrictClockModel;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import contactrees.CFEventList.Event;
@@ -32,13 +32,13 @@ public class MarginalTreeSlow extends Tree {
             "block",
             "The block object cinitArraysontaining the moves this marginal tree follows along the conversion graph.",
             Input.Validate.REQUIRED);
-    public Input<BranchRateModel.Base> branchRateModelInput = new Input<>(
+    public Input<Base> branchRateModelInput = new Input<>(
             "branchRateModel",
             "A model describing the rates on the branches of the clonal frame tree.");
 
     public ConversionGraph acg;
     public Block block;
-    protected BranchRateModel.Base branchRateModel;
+    protected Base branchRateModel;
     private boolean hasBranchRates;
 
     protected boolean outdated;
@@ -116,7 +116,7 @@ public class MarginalTreeSlow extends Tree {
         if (block.isAheadOfMarginalTree())
             return true;
 
-        if (branchRateModel.isDirtyCalculation())
+        if (branchRateModel.somethingIsDirty())
             return true;
 
         return outdated;

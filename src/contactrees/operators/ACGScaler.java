@@ -23,22 +23,19 @@ import java.util.List;
 
 import beast.base.core.Description;
 import beast.base.core.Input;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.inference.Scalable;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import contactrees.Conversion;
 
-/**
- * @author Nico Neureiter
- */
 @Description("Scaling operator for recombination graphs.")
 public class ACGScaler extends ACGOperator {
 
-    public Input<List<RealParameter>> parametersInput = new Input<>(
+    public Input<List<Scalable>> parametersInput = new Input<>(
             "parameter", "Parameter to scale with ARG.",
             new ArrayList<>());
 
-    public Input<List<RealParameter>> parametersInverseInput = new Input<>(
+    public Input<List<Scalable>> parametersInverseInput = new Input<>(
             "parameterInverse", "Parameter to scale inversely with ARG.",
             new ArrayList<>());
 
@@ -133,30 +130,11 @@ public class ACGScaler extends ACGOperator {
 
         // Scale parameters
 
-        for (RealParameter param : parametersInput.get()) {
-            try {
-                param.startEditing(null);
-                param.scale(f);
-            } catch (Exception e) {
-                // Scale throws Exception if param has been scaled outside its
-                // bounds.  Needs to change!
-                return Double.NEGATIVE_INFINITY;
-            }
-
-            count += param.getDimension();
+        for (Scalable param : parametersInput.get()) {
+            count += param.scale(f);
         }
-
-        for (RealParameter paramInv : parametersInverseInput.get()) {
-            try {
-                paramInv.startEditing(null);
-                paramInv.scale(1.0/f);
-            } catch (Exception e) {
-                // Scale throws Exception if param has been scaled outside its
-                // bounds.  Needs to change!
-                return Double.NEGATIVE_INFINITY;
-            }
-
-            count -= paramInv.getDimension();
+        for (Scalable paramInv : parametersInverseInput.get()) {
+            count += paramInv.scale(1.0/f);
         }
 
         assert !acg.isInvalid() : "ACGScaler produced invalid state.";

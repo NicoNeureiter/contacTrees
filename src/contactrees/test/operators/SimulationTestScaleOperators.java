@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import beast.base.evolution.operator.ScaleOperator;
+import beast.base.spec.evolution.operator.ScaleTreeOperator;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.TreeParser;
 
@@ -30,7 +30,7 @@ public class SimulationTestScaleOperators extends TestSingleOperator {
 
         Node [] node = tree.getNodesAsArray();
         
-        ScaleOperator operator = new ScaleOperator();
+        ScaleTreeOperator operator = new ScaleTreeOperator();
         operator.initByName("tree", tree, "weight", 1.0);
         operator.proposal();
         
