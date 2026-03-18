@@ -10,9 +10,9 @@ import beast.base.core.BEASTObject;
 import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.core.Loggable;
-import beast.base.evolution.branchratemodel.BranchRateModel;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
+import beast.base.spec.evolution.branchratemodel.Base;
 
 @Description("Logs conversion graphs annotated with metadata and/or rates")
 public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
@@ -25,7 +25,7 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
             "blockSet",
             "The moves each local tree takes along the conversion graph.",
             Input.Validate.REQUIRED);
-    public Input<BranchRateModel.Base> clockModelInput = new Input<>(
+    public Input<Base> clockModelInput = new Input<>(
             "branchratemodel",
             "The branchratemodel for logging branch rates in node-attributes of the Newick trees.");
 
@@ -89,13 +89,13 @@ public class ACGWithMetaDataLogger extends BEASTObject implements Loggable {
      */
     public String getExtendedNewick(boolean includeSiteStats) {
         Node root = acg.getRoot();
-        BranchRateModel.Base branchRateModel = clockModelInput.get();
+        Base branchRateModel = clockModelInput.get();
         return extendedNewickTraverse(root, includeSiteStats, branchRateModel) + ";";
     }
 
     private String extendedNewickTraverse(Node node,
                                           boolean includeBlockStats,
-                                          BranchRateModel.Base branchRateModel) {
+                                          Base branchRateModel) {
         ConversionList convs = acg.getConversions();
         HashMap<Conversion, List<Integer>> affectedBlocks = blockSet.getAffectedBlockIDs();
 

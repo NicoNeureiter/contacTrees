@@ -30,7 +30,10 @@ public class MarginalTree extends Tree {
             "block",
             "The block object cinitArraysontaining the moves this marginal tree follows along the conversion graph.",
             Input.Validate.REQUIRED);
-    public Input<Base> branchRateModelInput = new Input<>("branchRateModel", "", new StrictClockModel());
+    public Input<Base> branchRateModelInput = new Input<>(
+            "branchRateModel",
+            "The branch rate model for rolling out the branch lengths of the marginal tree (if not given, a strict clock is assumed).",
+            new StrictClockModel());
     public Input<ArrayList<String>> frozenTaxaInput = new Input<>(
             "frozenTaxa",
             "Taxa for which the last branch should have a fixed branch rate of 0.",

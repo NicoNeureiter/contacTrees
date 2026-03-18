@@ -1,41 +1,16 @@
 package contactrees.test;
 
-import contactrees.ACGWithMetaDataLogger;
-import contactrees.Block;
-import contactrees.BlockSet;
-import contactrees.CFEventList;
-import contactrees.Conversion;
-import contactrees.ConversionGraph;
-import contactrees.CFEventList.Event;
-import contactrees.operators.ACGOperator;
-import contactrees.util.Util;
 import beast.base.core.BEASTInterface;
-import beast.base.core.BEASTObject;
 import beast.base.core.Description;
 import beast.base.inference.Distribution;
 import beast.base.core.Input;
 import beast.base.inference.Operator;
 import beast.base.inference.State;
-import beast.base.inference.parameter.RealParameter;
-import beast.base.evolution.tree.Node;
-import beast.base.evolution.tree.Tree;
-import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.base.util.Binomial;
 import beast.base.util.Randomizer;
-import feast.nexus.NexusBlock;
-import feast.nexus.NexusBuilder;
-import feast.nexus.TaxaBlock;
-import feast.nexus.TreesBlock;
 
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
-import org.apache.commons.math3.distribution.BinomialDistribution;
 
 /**
  * @author Nico Neureiter
