@@ -9,8 +9,7 @@ import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.PoissonDistributionImpl;
+import org.apache.commons.statistics.distribution.PoissonDistribution;
 
 import beast.base.inference.Distribution;
 import beast.base.core.BEASTInterface;
@@ -156,15 +155,16 @@ public class ACGDistribution extends Distribution {
         // Correct for probability mass outside the specified bounds on number of conversions.
         if (lowerCCBoundInput.get()>0 || upperCCBoundInput.get()<Integer.MAX_VALUE) {
             double poissonMean = getExpectedConversions();
-            try {
-                logP -= new PoissonDistributionImpl(poissonMean)
-                        .cumulativeProbability(
-                                lowerCCBoundInput.get(),
-                                upperCCBoundInput.get());
-            } catch (MathException e) {
-                throw new RuntimeException("Error computing modification to ARG " +
-                        "prior density required by conversion number constraint.");
+            PoissonDistribution poi = PoissonDistribution.of(poissonMean);
+            int lower = lowerCCBoundInput.get();
+            int upper = upperCCBoundInput.get();
+            double pUpper = poi.cumulativeProbability(upper);
+            double pBelowLower = lower > 0 ? poi.cumulativeProbability(lower - 1) : 0.0;
+            double pInBounds = pUpper - pBelowLower;
+            if (pInBounds <= 0.0) {
+                throw new RuntimeException("Error computing modification to ARG prior density required by conversion number constraint.");
             }
+            logP -= pInBounds;
         }
 
         return logP;

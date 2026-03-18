@@ -35,7 +35,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.apache.commons.math.MathException;
 
 import beast.base.core.BEASTInterface;
 import beast.base.core.Description;
@@ -225,16 +224,12 @@ public class RandomACG extends ConversionGraph implements StateNodeInitialiser {
 	        		for (int i = beastObjects.size() - 1; i >= 0 ; i--) {
 	        			beastObjects.get(i).initAndValidate();
 	        		}
-	                try {
-                        bounds.lower = distr.inverseCumulativeProbability(0.0);
-                        bounds.upper = distr.inverseCumulativeProbability(1.0);
-                        if (distr instanceof OffsetReal offsetDistr){
-                            bounds.lower += offsetDistr.getOffset();
-                            bounds.upper += offsetDistr.getOffset();
-                        }
-					} catch (MathException e) {
-						Log.warning.println("At RandomACG::initStateNodes, bound on MRCAPrior could not be set " + e.getMessage());
-					}
+                    bounds.lower = distr.inverseCumulativeProbability(0.0);
+                    bounds.upper = distr.inverseCumulativeProbability(1.0);
+                    if (distr instanceof OffsetReal offsetDistr){
+                        bounds.lower += offsetDistr.getOffset();
+                        bounds.upper += offsetDistr.getOffset();
+                    }
 	            }
 	
 	            if (prior.isMonophyleticInput.get()) {
