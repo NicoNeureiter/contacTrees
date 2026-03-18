@@ -6,7 +6,7 @@
     <mergewith point="acgClockModelTemplates">
 
         <!-- Strict clock -->
-        <subtemplate id='StrictClock' class='StrictClockModel'
+        <subtemplate id='StrictClock' class='beast.base.spec.evolution.branchratemodel.StrictClockModel'
                      mainid='StrictClock.c:$(n)'>
             <![CDATA[
                 <branchRateModel spec='StrictClockModel' id='StrictClock.c:$(n)'>
@@ -130,9 +130,6 @@
                 <parameter name='alpha' value="0.5396" estimate='false'/> <!-- shape -->
                 <parameter name='beta' value="0.3819" estimate='false'/> <!-- scale -->
             </distr>
-            <!-- <distr spec="beast.base.inference.distribution.Exponential">
-                <parameter name='mean' value="0.3333" estimate='false'/>
-            </distr> -->
         </prior>
 		<log id='rate.c:$(n)' spec='RateStatistic' tree='@Tree.t:tree' branchratemodel='@RelaxedClock.c:$(n)'/>
         <prior id='MeanRatePrior.c:$(n)' x='@ucldMean.c:$(n)'><distr spec="beast.base.inference.distribution.Uniform" upper='Infinity'/></prior>

@@ -41,6 +41,8 @@
         </subtemplate>
 
         <!-- Coalescent for Bayesian skyline -->
+        <!-- BICEPS prior removed for BEAST3 migration baseline. It requires external package class biceps.BICEPS which is not available in BEAST 2.8 yet. -->
+        <!-- 
         <subtemplate id='BICEPS' class='biceps.BICEPS'
                      mainid='BICEPS.t:tree'
                      suppressInputs='biceps.BICEPS.tree,
@@ -65,7 +67,7 @@
             <operator id='BICEPSPopSizesScaler.t:tree' spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" scaleFactor="0.1" weight="5" parameter="@BICEPSPopSize.t:tree"/>
             <operator id='BICEPSGroupSizesDelta.t:tree' spec='DeltaExchangeOperator' delta="1" weight="6" integer="true" intparameter="@BICEPSGroupSizes.t:tree"/>
             
-            <!--
+            <!-
             <operator id="BICEPSEpochTop.t:tree" spec="beast.base.evolution.operator.EpochFlexOperator" tree="@Tree.t:tree" weight="2.0" scaleFactor="0.1"/>
             <operator id="BICEPSEpochAll.t:tree" spec="beast.base.evolution.operator.EpochFlexOperator" tree="@Tree.t:tree" weight="2.0" scaleFactor="0.1" fromOldestTipOnly="false"/>      
             <operator id="BICEPSTreeFlex.t:tree" spec="beast.base.evolution.operator.TreeStretchOperator" scaleFactor="0.01" tree="@Tree.t:tree" weight="2.0"/>
@@ -75,7 +77,7 @@
             <operator id='BICEPSNarrow.t:tree' spec='Exchange' isNarrow='true' weight="15" tree="@Tree.t:tree"/>
             <operator id='BICEPSWide.t:tree' spec='Exchange' isNarrow='false' weight="3" tree="@Tree.t:tree"/>
             <operator id='BICEPSWilsonBalding.t:tree' spec='WilsonBalding' weight="3" tree="@Tree.t:tree"/>
-            -->
+            ->
             
 ]]>
             <connect srcID='BICEPS.t:tree' targetID='prior' inputName='distribution'
@@ -89,7 +91,7 @@
             <connect srcID='BICEPSGroupSizes.t:tree'              targetID='state' inputName='stateNode' if='inposterior(BICEPS.t:tree) and BICEPSGroupSizes.t:tree/estimate=true and BICEPS.t:tree/equalEpochs=false'/>
 
 
-            <!--
+            <!-
             <connect srcID='BICEPSEpochTop.t:tree'                targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:tree) and Tree.t:tree/estimate=true'>Scales all internal nodes for tree t:tree</connect>
             <connect srcID='BICEPSEpochAll.t:tree'                targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:tree) and Tree.t:tree/estimate=true'>Scales all internal nodes for tree t:tree</connect>
             <connect srcID='BICEPSTreeFlex.t:tree'                targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:tree) and Tree.t:tree/estimate=true'>Scales all internal nodes for tree t:tree</connect>
@@ -100,7 +102,7 @@
             <connect srcID='BICEPSNarrow.t:tree'                  targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:tree) and Tree.t:tree/estimate=true'>Narrow exchange performs local rearrangement of tree t:tree</connect>
             <connect srcID='BICEPSWide.t:tree'                    targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:tree) and Tree.t:tree/estimate=true'>Wide exchange performs global rearrangement of tree t:tree</connect>
             <connect srcID='BICEPSWilsonBalding.t:tree'           targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:tree) and Tree.t:tree/estimate=true'>Performs Wilson-Balding global rearrangement of tree t:tree</connect>
-            -->
+            ->
             
             <connect srcID='BICEPSGroupSizesDelta.t:tree'         targetID='mcmc' inputName='operator' if='inposterior(BICEPS.t:tree) and BICEPSGroupSizes.t:tree/estimate=true and BICEPS.t:tree/equalEpochs=false'>Propose group sizes for BICEPS prior on tree t:tree</connect>
             <connect srcID='BICEPSPopSizesScaler.t:tree'          targetID='mcmc' inputName='operator'
@@ -112,7 +114,7 @@
             <connect srcID='BICEPSPopSize.t:tree' targetID='tracelog' inputName='log'
                      if='inposterior(BICEPS.t:tree) and BICEPSPopSize.t:tree/estimate=true'/>
 
-        </subtemplate>
+        </subtemplate> -->
 
 
 

@@ -1,5 +1,5 @@
 <beast version='2.0'
-       namespace='beast.app.beauti:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.branchratemodel:beast.base.evolution.speciation:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.evolution:beast.base.inference.distribution:contactrees:contactrees.model:contactrees.operators:beastfx.app.inputeditor'
+    namespace='beast.app.beauti:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.spec.evolution.branchratemodel:beast.base.evolution.speciation:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.spec.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.spec.evolution.likelihood:beast.evolution:beast.base.inference.distribution:contactrees:contactrees.model:contactrees.operators:beastfx.app.inputeditor'
     templateinfo='template for standard phylogenetic analysis,&lt;br> supporting tip-date analysis and calibrations'>
 
 <map name='connect' reserved='true'>beastfx.app.inputeditor.BeautiConnector</map>
@@ -176,7 +176,7 @@
         <alignmentProvider id="Import Alignment" spec='BeautiAlignmentProvider' template='@StandardPartitionTemplate'/>
 
 
-        <partitiontemplate id='StandardPartitionTemplate' spec='BeautiSubTemplate' class='beast.base.evolution.likelihood.TreeLikelihood' mainid='mcmc'>
+        <partitiontemplate id='StandardPartitionTemplate' spec='BeautiSubTemplate' class='beast.base.spec.evolution.likelihood.TreeLikelihood' mainid='mcmc'>
 <![CDATA[
             <!-- site model                                                              -->
             <plugin spec='beast.base.spec.evolution.sitemodel.SiteModel' id="SiteModel.s:$(n)" gammaCategoryCount='0'>
@@ -191,20 +191,26 @@
             	<tree idref="Tree.t:tree"/>
                 <marginalTree id="MarginalTree.t:$(n)" spec="contactrees.MarginalTree" network="@Tree.t:tree" block="@block.$(n)" />
                 <siteModel idref="SiteModel.s:$(n)"/>
-                <branchRateModel spec='beast.base.spec.evolution.branchratemodel.ClockModel' id='StrictClock.c:clock'>
-                    <clock.rate id='clockRate.c:clock' spec='parameter.RealParameter' value='1.0' estimate='false'/>
+                <branchRateModel spec='beast.base.spec.evolution.branchratemodel.StrictClockModel' id='StrictClock.c:clock'>
+                    <clock.rate id='clockRate.c:clock' spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value='1.0' estimate='false'/>
                 </branchRateModel>
             </plugin>
             
             <stateNode spec='contactrees.BlockSet' id='allBlocks' network='@Tree.t:tree'/>
             <block spec='contactrees.Block' id='block.$(n)'/>
             
-            <plugin id='expectedConversions' spec='parameter.RealParameter' estimate='false' value='0.25'/>
+            <plugin id='expectedConversions' spec='beast.base.spec.inference.parameter.RealScalarParam' domain='NonNegativeReal' estimate='false' value='0.25'/>
             <plugin id='conversionRate' spec='contactrees.model.ConversionRate' expectedConversions='@expectedConversions' network='@Tree.t:tree' linearContactGrowth="true"/>
-            <plugin id='pMove' spec='parameter.RealParameter' estimate='false' value='0.2'/>
+            <plugin id='pMove' spec='beast.base.spec.inference.parameter.RealScalarParam' domain='UnitInterval' estimate='false' value='0.2'/>
 
-            <prior id='ClockPrior.c:clock' x='@clockRate.c:clock'><distr spec='beast.base.inference.distribution.Uniform' upper='Infinity'/></prior>
-            <prior id='MutationRatePrior.s:$(n)' x='@mutationRate.s:$(n)'><distr spec="OneOnX"/></prior>
+            <distribution id='ClockPrior.c:clock' spec='beast.base.spec.inference.distribution.Gamma' param='@clockRate.c:clock'>
+                <alpha spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="0.01" estimate="false"/>
+                <theta spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="100.0" estimate="false"/>
+            </distribution>
+            <distribution id='MutationRatePrior.s:$(n)' spec='beast.base.spec.inference.distribution.Gamma' param='@mutationRate.s:$(n)'>
+                <alpha spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="0.01" estimate="false"/>
+                <theta spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="100.0" estimate="false"/>
+            </distribution>
 
             <!-- tree and its properties -->
             <taxonset id='taxonSet' spec='beast.base.evolution.alignment.TaxonSet' alignment='@$(n)' />
@@ -215,29 +221,25 @@
             <!--plugin spec='beast.base.evolution.tree.coalescent.RandomTree' id='RandomTree.t' estimate='false' initial='@Tree.t:tree'-->
             <plugin spec='contactrees.RandomACG' id='RandomTree.t' estimate='false' initial='@Tree.t:tree'>
                 <taxa idref='data'/>
-                <populationModel id='ConstantPopulation0' spec='ConstantPopulation'>
-                    <popSize id='randomPopSize' spec='parameter.RealParameter' value='1'/>
+                <populationModel id='ConstantPopulation0' spec='beast.base.spec.evolution.tree.coalescent.ConstantPopulation'>
+                    <popSize id='randomPopSize' spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value='1'/>
                 </populationModel>
             </plugin>
 
             <!-- default tree prior -->
-            <plugin id="YuleModel.t:tree" spec="beast.base.evolution.speciation.YuleModel" tree="@Tree.t:tree">
-                <parameter name='birthDiffRate' id="birthRate.t:tree" value='1.0' estimate='true'/>
+            <plugin id="YuleModel.t:tree" spec="beast.base.spec.evolution.speciation.YuleModel" tree="@Tree.t:tree">
+                <parameter name='birthDiffRate' id="birthRate.t:tree" spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value='1.0' estimate='true'/>
             </plugin>
             
             <prior id="ConvPrior.t:tree" spec="contactrees.model.ConversionPrior" network="@Tree.t:tree" conversionRate="@conversionRate" upperConvCountBound="50" linearContactGrowth="true"/>
             <prior id="ConvMovePrior.t:tree" spec="contactrees.model.ConversionMovePrior" network="@Tree.t:tree" blockSet="@allBlocks" pMove="@pMove"/>
-            <prior id="ExpectedConversionsPrior.t:tree" name="distribution" x="@expectedConversions">
-                <distr spec="Exponential" mean="0.1" />
-            </prior>
-            <prior id="pMovePrior.t:tree" name="distribution" x="@pMove">
-                <distr spec="Beta" alpha="2" beta="16" />
-            </prior>
+            <distribution id="ExpectedConversionsPrior.t:tree" spec="beast.base.spec.inference.distribution.Exponential" param="@expectedConversions" mean="0.1"/>
+            <distribution id="pMovePrior.t:tree" spec="beast.base.spec.inference.distribution.Beta" param="@pMove" alpha="2" beta="16"/>
 
-            <plugin id='TreeHeight' spec='beast.base.evolution.tree.TreeHeightLogger' tree='@Tree.t:tree'/>
+            <plugin id='TreeHeight' spec='beast.base.evolution.tree.TreeStatLogger' tree='@Tree.t:tree' logHeight='true' logLength='false'/>
 
             <logger id='treelog' spec='beast.base.inference.Logger' logEvery="1000" fileName="$(tree).cf.trees" mode='tree'>
-                <log id='TreeWithMetaDataLogger' spec='beast.base.evolution.TreeWithMetaDataLogger' tree='@Tree.t:tree'>
+                <log id='TreeWithMetaDataLogger' spec='beast.base.spec.evolution.TreeWithMetaDataLogger' tree='@Tree.t:tree'>
                 </log>
             </logger>
             <logger id="acglog" spec="beast.base.inference.Logger" logEvery="1000" fileName="$(tree).acg.trees" mode="tree">
@@ -266,20 +268,23 @@
             <operator id="ConvertedEdgeHop.source.narrow" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:tree" sourceOnly="true" nClosestRelatives="3" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" conversionPrior="@ConvPrior.t:tree" weight="6.0"/>
             <operator id="ConvertedEdgeHop.narrow" spec="contactrees.operators.ConvertedEdgeHopGibbs" acg="@Tree.t:tree" blockSet="@allBlocks" nClosestRelatives="3" pMove="@pMove" conversionRate="@conversionRate" conversionPrior="@ConvPrior.t:tree" weight="2.0"/>
 
-            <operator id="expectedConversionsScaler" spec="ScaleOperator" parameter="@expectedConversions" scaleFactor="0.3" weight="1.0" />
-            <operator id="pMoveScaler" spec="ScaleOperator" parameter="@pMove" scaleFactor="0.3" weight="1.0" />
+            <operator id="expectedConversionsScaler" spec="beast.base.spec.inference.operator.ScaleOperator" parameter="@expectedConversions" scaleFactor="0.3" weight="1.0" />
+            <operator id="pMoveScaler" spec="beast.base.spec.inference.operator.ScaleOperator" parameter="@pMove" scaleFactor="0.3" weight="1.0" />
 
-            <operator id='proportionInvariantScaler.s:$(n)' spec='ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@proportionInvariant.s:$(n)"/>
-            <operator id='mutationRateScaler.s:$(n)' spec='ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@mutationRate.s:$(n)"/>
-            <operator id='gammaShapeScaler.s:$(n)' spec='ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@gammaShape.s:$(n)"/>
+            <operator id='proportionInvariantScaler.s:$(n)' spec='beast.base.spec.inference.operator.ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@proportionInvariant.s:$(n)"/>
+            <operator id='mutationRateScaler.s:$(n)' spec='beast.base.spec.inference.operator.ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@mutationRate.s:$(n)"/>
+            <operator id='gammaShapeScaler.s:$(n)' spec='beast.base.spec.inference.operator.ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@gammaShape.s:$(n)"/>
             <operator id='allTipDatesRandomWalker' spec='TipDatesRandomWalker' windowSize="1" weight="0" tree="@Tree.t:tree"/>
 
 
-            <prior id='YuleBirthRatePrior.t:tree' x='@birthRate.t:tree'><distr spec="beast.base.inference.distribution.Uniform" lower='0' upper='Infinity'/></prior>
-            <prior id='GammaShapePrior.s:$(n)' x='@gammaShape.s:$(n)'><distr spec="beast.base.inference.distribution.Exponential"><mean spec="parameter.RealParameter" estimate="false" value="1.0"/></distr></prior>
-            <prior id='PropInvariantPrior.s:$(n)' x='@proportionInvariant.s:$(n)'><distr spec="beast.base.inference.distribution.Uniform" lower='0' upper='1'/></prior>
-            <operator id='YuleBirthRateScaler.t:tree' spec='ScaleOperator' scaleFactor="0.75" weight="3" parameter="@birthRate.t:tree"/>
-            <operator id='StrictClockRateScaler.c:clock' spec='ScaleOperator' scaleFactor="0.75" weight="3" parameter='@clockRate.c:clock'/>
+            <distribution id='YuleBirthRatePrior.t:tree' spec='beast.base.spec.inference.distribution.Gamma' param='@birthRate.t:tree'>
+                <alpha spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="0.01" estimate="false"/>
+                <theta spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="100.0" estimate="false"/>
+            </distribution>
+            <distribution id='GammaShapePrior.s:$(n)' spec='beast.base.spec.inference.distribution.Exponential' param='@gammaShape.s:$(n)' mean='1.0'/>
+            <distribution id='PropInvariantPrior.s:$(n)' spec='beast.base.spec.inference.distribution.Uniform' param='@proportionInvariant.s:$(n)' lower='0.0' upper='1.0'/>
+            <operator id='YuleBirthRateScaler.t:tree' spec='beast.base.spec.inference.operator.ScaleOperator' scaleFactor="0.75" weight="3" parameter="@birthRate.t:tree"/>
+            <operator id='StrictClockRateScaler.c:clock' spec='beast.base.spec.inference.operator.ScaleOperator' scaleFactor="0.75" weight="3" parameter='@clockRate.c:clock'/>
 
             <operator id="AVMNOperator.$(n)" spec="beast.base.evolution.operator.kernel.AdaptableVarianceMultivariateNormalOperator" weight="0.1" 
                 coefficient="1.0"
@@ -384,6 +389,7 @@
         </partitiontemplate>
 
         <mergepoint id='substModelTemplates'/>
+
         
         <!-- clock models -->
         <mergepoint id='acgClockModelTemplates'/>
