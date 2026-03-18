@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.commons.math3.util.Pair;
-
 import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
@@ -21,6 +19,8 @@ import contactrees.Conversion;
  */
 @Description("Operator which splits or merges conversions")
 public class ConversionSplit extends ConversionCreationOperator {
+
+    private record ConversionPair(Conversion first, Conversion second) {}
 
     final public Input<Boolean> flipInput = new Input<>(
             "flip",
@@ -114,13 +114,13 @@ public class ConversionSplit extends ConversionCreationOperator {
             return Double.NEGATIVE_INFINITY;
 
         // Get all candidate conversion pairs (with same start/end nodes)
-        ArrayList<Pair<Conversion, Conversion>> convPairs = getConversionPairs();
+        ArrayList<ConversionPair> convPairs = getConversionPairs();
         if (convPairs.isEmpty())
             return Double.NEGATIVE_INFINITY;
 
         int iPair = Randomizer.nextInt(convPairs.size());
-        Conversion conv1 = convPairs.get(iPair).getFirst();
-        Conversion conv2 = convPairs.get(iPair).getSecond();
+        Conversion conv1 = convPairs.get(iPair).first();
+        Conversion conv2 = convPairs.get(iPair).second();
 
         // Update
         logHGF -= Math.log(1.0 / convPairs.size());
@@ -192,7 +192,7 @@ public class ConversionSplit extends ConversionCreationOperator {
         return logHGF;
     }
 
-    private ArrayList<Pair<Conversion, Conversion>> getConversionPairs() {
+    private ArrayList<ConversionPair> getConversionPairs() {
         int n = acg.getNodeCount();
         ArrayList<ArrayList<ArrayList<Conversion>>> convsByNodes = new ArrayList<>(n);
 
@@ -205,7 +205,7 @@ public class ConversionSplit extends ConversionCreationOperator {
             }
         }
 
-        ArrayList<Pair<Conversion, Conversion>> conversionPairs = new ArrayList<>();
+        ArrayList<ConversionPair> conversionPairs = new ArrayList<>();
 
         // Collect all pairs of conversion with same nodes
         for (Conversion conv : acg.getConversions()) {
@@ -220,8 +220,8 @@ public class ConversionSplit extends ConversionCreationOperator {
                 others = convs;
 
             for (Conversion other : others) {
-                conversionPairs.add(new Pair<Conversion, Conversion>(conv, other));
-                conversionPairs.add(new Pair<Conversion, Conversion>(other, conv));
+                conversionPairs.add(new ConversionPair(conv, other));
+                conversionPairs.add(new ConversionPair(other, conv));
             }
 
             convs.add(conv);
