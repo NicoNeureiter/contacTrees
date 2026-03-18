@@ -17,6 +17,7 @@ import beast.base.inference.Logger;
 import beast.base.inference.MCMC;
 import beast.base.evolution.alignment.Alignment;
 import beast.base.evolution.alignment.Sequence;
+import beast.base.evolution.datatype.Nucleotide;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import contactrees.ACGWithMetaDataLogger;
@@ -193,7 +194,9 @@ public class ContactreesTest {
             sequences.add(allSequences.get(i));
         }
 
-        return new Alignment(sequences, "nucleotide");
+        Alignment data = new Alignment();
+        data.initByName("sequence", sequences, "userDataType", new Nucleotide());
+        return data;
     }
 
     /**

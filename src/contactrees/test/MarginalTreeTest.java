@@ -7,14 +7,15 @@ import java.util.List;
 
 import org.junit.Test;
 
-import beast.base.inference.parameter.RealParameter;
 import beast.base.evolution.alignment.Alignment;
-import beast.base.evolution.branchratemodel.UCRelaxedClockModel;
-import beast.base.evolution.likelihood.TreeLikelihood;
-import beast.base.evolution.sitemodel.SiteModel;
-import beast.base.evolution.substitutionmodel.JukesCantor;
+import beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel;
+import beast.base.spec.evolution.likelihood.TreeLikelihood;
+import beast.base.spec.evolution.sitemodel.SiteModel;
+import beast.base.spec.evolution.substitutionmodel.JukesCantor;
 import beast.base.evolution.tree.Tree;
-import beast.base.inference.distribution.Uniform;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.inference.distribution.Uniform;
+import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.evolution.tree.TreeParser;
 import contactrees.Block;
 import contactrees.Conversion;
@@ -192,10 +193,10 @@ public class MarginalTreeTest extends ContactreesTest {
 
     @Test
     public void testBranchRates() throws Exception {
-        Double[] rates = {2., 2., 1., 1.};
+        double[] rates = {2., 2., 1., 1.};
         UCRelaxedClockModel clock = new UCRelaxedClockModel();
         clock.initByName(
-                "rates", new RealParameter(rates),
+                "rates", new RealVectorParam<>(rates, PositiveReal.INSTANCE),
                 "distr", new Uniform(),
                 "tree", acg
                 );
