@@ -101,18 +101,13 @@
                 <version>3.1.2</version>
                 <configuration>
                     <workingDirectory>${project.build.testOutputDirectory}</workingDirectory>
-                    <additionalClasspathElements>
-                        <additionalClasspathElement>${project.basedir}/../beast3/beast-pkgmgmt/target/classes</additionalClasspathElement>
-                        <additionalClasspathElement>${project.basedir}/../beast3/beast-base/target/classes</additionalClasspathElement>
-                        <additionalClasspathElement>${project.basedir}/../beast3/beast-fx/target/classes</additionalClasspathElement>
-                    </additionalClasspathElements>
                     <argLine>
                         --add-reads beast.base=ALL-UNNAMED
                         --add-reads beast.fx=ALL-UNNAMED
                         --add-reads beast.pkgmgmt=ALL-UNNAMED
                     </argLine>
                     <systemPropertyVariables>
-                        <BEAST_PACKAGE_PATH>${project.build.outputDirectory}${path.separator}${project.basedir}/../beast3/beast-base/target/classes${path.separator}${project.basedir}/../beast3/beast-fx/target/classes</BEAST_PACKAGE_PATH>
+                        <BEAST_PACKAGE_PATH>${project.build.outputDirectory}</BEAST_PACKAGE_PATH>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
