@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.commons.math.special.Beta;
+import org.apache.commons.math3.special.Beta;
 import org.apache.commons.math3.distribution.BetaDistribution;
 
 import beast.base.core.BEASTInterface;

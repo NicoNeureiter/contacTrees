@@ -14,7 +14,6 @@ open module contactrees {
     requires java.xml;
 
     requires commons.math3;
-    requires commons.math;
 
     exports contactrees;
     exports contactrees.acgannotator;
