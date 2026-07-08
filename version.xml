@@ -1,8 +1,7 @@
 <package name="contacTrees" version="2.0.0">
     <depends on='BEAST.base' atleast='2.8.0'/>
-    <depends on="BEASTLabs" atleast="2.1.0"/>
 
-    <packageapp class="contactrees.acgannotator.ACGAnnotator" description="ContactreesAnnotator" icon="contactrees/acgannotator/icon.png"/>
+    <packageapp class="contactrees.acgannotator.ACGAnnotator" description="ContactreesAnnotator"/>
 
     <service type="beast.base.core.BEASTInterface">
         <provider classname="contactrees.ACGStatsLogger"/>
