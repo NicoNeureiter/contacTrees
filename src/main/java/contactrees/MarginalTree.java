@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import beast.base.core.Input;
+import beast.base.inference.CalculationNode;
 import beast.base.inference.StateNode;
 import beast.base.spec.evolution.branchratemodel.Base;
 import beast.base.spec.evolution.branchratemodel.StrictClockModel;
+import beast.base.evolution.branchratemodel.BranchRateModel;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import contactrees.CFEventList.Event;
@@ -30,7 +32,7 @@ public class MarginalTree extends Tree {
             "block",
             "The block object cinitArraysontaining the moves this marginal tree follows along the conversion graph.",
             Input.Validate.REQUIRED);
-    public Input<Base> branchRateModelInput = new Input<>(
+    public Input<BranchRateModel> branchRateModelInput = new Input<>(
             "branchRateModel",
             "The branch rate model for rolling out the branch lengths of the marginal tree (if not given, a strict clock is assumed).",
             new StrictClockModel());
@@ -41,7 +43,7 @@ public class MarginalTree extends Tree {
 
     public ConversionGraph acg;
     public Block block;
-    protected Base branchRateModel;
+    protected BranchRateModel branchRateModel;
     protected boolean hasBranchRates;
     protected ArrayList<String> frozenTaxa;
 
@@ -134,8 +136,9 @@ public class MarginalTree extends Tree {
         if (block.isAheadOfMarginalTree())
             return true;
 
-        if (branchRateModel.somethingIsDirty())
+        if (branchRateModel instanceof CalculationNode brm && brm.somethingIsDirty()) {
             return true;
+        }
 
         return outdated;
     }
