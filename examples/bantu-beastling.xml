@@ -30,7 +30,6 @@ analysis using BEASTling and the above configuration may not be valid.
   <map name="Gamma">beast.base.inference.distribution.Gamma</map>
   <map name="Uniform">beast.base.inference.distribution.Uniform</map>
   <map name="LaplaceDistribution">beast.base.inference.distribution.LaplaceDistribution</map>
-  <map name="OneOnX">beast.base.inference.distribution.OneOnX</map>
   <map name="Normal">beast.base.inference.distribution.Normal</map>
   <map name="prior">beast.base.inference.distribution.Prior</map>
   <map name="taxon">beast.base.evolution.alignment.Taxon</map>

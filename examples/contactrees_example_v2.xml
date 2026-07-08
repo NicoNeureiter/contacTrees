@@ -189,7 +189,6 @@
 <map name="LaplaceDistribution" >beast.base.inference.distribution.LaplaceDistribution</map>
 <map name="prior" >beast.base.inference.distribution.Prior</map>
 <map name="InverseGamma" >beast.base.inference.distribution.InverseGamma</map>
-<map name="OneOnX" >beast.base.inference.distribution.OneOnX</map>
         
 
 <distribution id="likelihood_fast" spec="beast.base.inference.CompoundDistribution">

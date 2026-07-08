@@ -6,7 +6,6 @@
 <map name='subtemplate' reserved='true'>beastfx.app.inputeditor.BeautiSubTemplate</map>
 <map name='Uniform'>beast.base.inference.distribution.Uniform</map>
 <map name='Normal'>beast.base.inference.distribution.Normal</map>
-<map name='OneOnX'>beast.base.inference.distribution.OneOnX</map>
 <map name='LogNormal'>beast.base.inference.distribution.LogNormalDistributionModel</map>
 <map name='Exponential'>beast.base.inference.distribution.Exponential</map>
 <map name='Gamma'>beast.base.inference.distribution.Gamma</map>
