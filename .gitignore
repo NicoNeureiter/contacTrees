@@ -28,6 +28,7 @@ hs_err_pid*
 .project
 .settings/
 simulations/
+.DS_Store
 
 # BEAST output files
 *.out.xml
