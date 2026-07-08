@@ -411,6 +411,67 @@ public class ConversionGraph extends Tree {
             cfEventList.makeDirty();
     }
 
+    @Override
+    public double scale(final double scale) {
+        validateConversions();
+
+        Map<Conversion, Double> oldOffsets = new HashMap<>();
+        for (Conversion conv : convs) {
+            oldOffsets.put(conv, conv.getHeight() - getConversionLowerBound(conv));
+        }
+
+        double logJacobian = super.scale(scale);
+        double logScale = Math.log(scale);
+
+        for (Conversion conv : convs) {
+            double newLowerBound = getConversionLowerBound(conv);
+            double newHeight = newLowerBound + scale * oldOffsets.get(conv);
+            conv.setHeight(newHeight);
+
+            if (!conv.isValid()) {
+                throw new IllegalArgumentException(
+                        "scale sets conversion outside its attachment branch");
+            }
+
+            logJacobian += logScale;
+        }
+
+        validateConversions();
+        assert !isInvalid();
+        return logJacobian;
+    }
+
+    @Override
+    public double getScalableValue() {
+        double scalableValue = super.getScalableValue();
+        for (Conversion conv : convs) {
+            scalableValue += conv.getHeight() - getConversionLowerBound(conv);
+        }
+
+        return scalableValue;
+    }
+
+    private double getConversionLowerBound(Conversion conv) {
+        return Math.max(conv.getNode1().getHeight(),
+                        conv.getNode2().getHeight());
+    }
+
+    private double getConversionUpperBound(Conversion conv) {
+        return Math.min(conv.getNode1().getParent().getHeight(),
+                        conv.getNode2().getParent().getHeight());
+    }
+
+    private void validateConversions() {
+        for (Conversion conv : convs) {
+            double lowerBound = getConversionLowerBound(conv);
+            double upperBound = getConversionUpperBound(conv);
+            if (conv.getHeight() < lowerBound || conv.getHeight() > upperBound || !conv.isValid()) {
+                throw new IllegalArgumentException(
+                        "scale sets conversion outside its attachment branch");
+            }
+        }
+    }
+
     /**
      * @return true iff clonal frame is dirty
      */
