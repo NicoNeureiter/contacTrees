@@ -4,27 +4,47 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.compevol</groupId>
+    <groupId>io.github.niconeureiter</groupId>
     <artifactId>contactrees</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>2.0.0</version>
 
     <name>contacTrees</name>
-    <description>Phylogenetic model for language evolution with horizontal transfer in BEAST 2.8/3</description>
+    <description>Phylogenetic model for language evolution with horizontal transfer</description>
 
+    <url>https://github.com/NicoNeureiter/contacTrees</url>
+
+    <licenses>
+        <license>
+            <name>GNU General Public License v3.0</name>
+            <url>https://www.gnu.org/licenses/gpl-3.0.html</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Nico Neureiter</name>
+            <url>https://github.com/NicoNeureiter</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/NicoNeureiter/contacTrees.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:NicoNeureiter/contacTrees.git</developerConnection>
+        <url>https://github.com/NicoNeureiter/contacTrees</url>
+    </scm>
+    
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.release>25</maven.compiler.release>
 
-        <beast.version>2.8.0-beta5</beast.version>
-        <feast.version>11.0.0</feast.version>
+        <beast.version>2.8.0-beta6</beast.version>
         <antlr4.version>4.13.2</antlr4.version>
         <guava.version>33.4.0-jre</guava.version>
         <beagle.version>1.0.0</beagle.version>
 
         <beast.main>beastfx.app.beauti.Beauti</beast.main>
         <beast.args></beast.args>
-        <beast.pkg.version>1.2.0</beast.pkg.version>
     </properties>
 
     <dependencies>
@@ -43,11 +63,6 @@
             <groupId>io.github.compevol</groupId>
             <artifactId>beast-fx</artifactId>
             <version>${beast.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.tgvaughan</groupId>
-            <artifactId>feast</artifactId>
-            <version>${feast.version}</version>
         </dependency>
 
         <!-- BEAGLE -->
@@ -185,7 +200,7 @@
                     <descriptors>
                         <descriptor>src/assembly/beast-package.xml</descriptor>
                     </descriptors>
-                    <finalName>contactrees.v${beast.pkg.version}</finalName>
+                    <finalName>contactrees.v${project.version}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
                 <executions>

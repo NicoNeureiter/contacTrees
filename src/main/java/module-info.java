@@ -1,8 +1,7 @@
 open module contactrees {
     requires beast.pkgmgmt;
-    requires transitive beast.base;
+    requires beast.base;
     requires beast.fx;
-    requires feast;
 
     requires com.google.common;
     requires org.antlr.antlr4.runtime;
