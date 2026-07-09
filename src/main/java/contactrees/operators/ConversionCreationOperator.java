@@ -121,13 +121,4 @@ public abstract class ConversionCreationOperator extends BorrowingOperator {
 
         return logP;
     }
-
-    @Override
-    public List<StateNode> listStateNodes() {
-    	List<StateNode> list = super.listStateNodes(); 
-        RealScalar<?> convRate = conversionRateInput.get();
-        if (convRate instanceof ConversionRate convRateParam)
-                list.remove(convRateParam);
-    	return list;
-    }
 }

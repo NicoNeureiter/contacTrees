@@ -1,17 +1,16 @@
 package contactrees.model;
 
-import org.w3c.dom.Node;
+import java.io.PrintStream;
 
 import beast.base.core.Input;
-import beast.base.core.Input.Validate;
-import beast.base.inference.StateNode;
+import beast.base.core.Loggable;
+import beast.base.inference.CalculationNode;
 import beast.base.spec.domain.NonNegativeReal;
-import beast.base.spec.inference.parameter.RealScalarParam;
 import beast.base.spec.type.RealScalar;
 import contactrees.ConversionGraph;
 
 
-public class ConversionRate extends RealScalarParam<NonNegativeReal> {
+public class ConversionRate extends CalculationNode implements RealScalar<NonNegativeReal>, Loggable {
 
     final public Input<RealScalar<NonNegativeReal>> expectedConversionsInput = new Input<>(
             "expectedConversions",
@@ -27,27 +26,14 @@ public class ConversionRate extends RealScalarParam<NonNegativeReal> {
             "linearContactGrowth",
             "Contact process is applied per lineage, i.e. the expected number of contact edges grows linearly with lineages.",
             false);
-
-    public ConversionRate() {
-        valuesInput.setRule(Validate.OPTIONAL);
-    }
-
     @Override
     public void initAndValidate() {
-//        setInputValue("value", expectationToRate(getExpectation().getValue()));
     }
 
     @Override
     public double get() {
         double expectedConversions = expectedConversionsInput.get().get();
         return expectationToRate(expectedConversions);
-    }
-
-    @Override
-    public void set(double value) {
-        RealScalar<?> expectedConversions = getExpectation();
-        if (expectedConversions instanceof RealScalarParam expParam)
-            expParam.set(rateToExpectation(value));
     }
 
     @Override
@@ -59,10 +45,6 @@ public class ConversionRate extends RealScalarParam<NonNegativeReal> {
     public Double getUpper() {
         return expectationToRate(getExpectation().getUpper());
     }
-
-    /*
-     * Convenience methods.
-     */
 
     protected double expectationToRate(Double expectation) {
         if (linearContactGrowthInput.get()) {
@@ -93,16 +75,6 @@ public class ConversionRate extends RealScalarParam<NonNegativeReal> {
     }
 
 
-    /*
-     * Override Parameter/StateNode methods
-     */
-
-
-    @Override
-    public void setEverythingDirty(final boolean isDirty) {
-        setSomethingIsDirty(isDirty);
-    }
-
     @Override
     public void store() {}
 
@@ -110,24 +82,28 @@ public class ConversionRate extends RealScalarParam<NonNegativeReal> {
     public void restore() {}
 
     @Override
-    public void fromXML(final Node node) {}
-
-    @Override
-    public void assignFromFragile(final StateNode other) {}
-
-    @Override
-    public ConversionRate copy() {
-        try {
-            return (ConversionRate) this.clone();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+    public String toString() {
+        return Double.toString(get());
     }
 
     @Override
-    public String toString() {
-        return Double.toString(get());
+    public NonNegativeReal getDomain() {
+        return NonNegativeReal.INSTANCE;
+    }
+
+    @Override
+    public void init(PrintStream out) {
+        out.print(getID() + "\t");
+    }
+
+    @Override
+    public void log(long sample, PrintStream out) {
+        out.print(get() + "\t");
+    }
+
+    @Override
+    public void close(PrintStream out) {
+        // nothing to do
     }
 
 }
