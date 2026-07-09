@@ -9,20 +9,20 @@
         <subtemplate id='StrictClock' class='beast.base.spec.evolution.branchratemodel.StrictClockModel'
                      mainid='StrictClock.c:$(n)'>
             <![CDATA[
-                <branchRateModel spec='StrictClockModel' id='StrictClock.c:$(n)'>
-                    <clock.rate id='clockRate.c:$(n)' spec='parameter.RealParameter' value='1.0' estimate='false'/>
+                <branchRateModel spec='beast.base.spec.evolution.branchratemodel.StrictClockModel' id='StrictClock.c:$(n)'>
+                    <clock.rate id='clockRate.c:$(n)' spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value='1.0' estimate='false'/>
                 </branchRateModel>
-				<operator id='StrictClockRateScaler.c:$(n)' spec='ScaleOperator' scaleFactor="0.75" weight="3" parameter='@clockRate.c:$(n)'/>
-                <upDownOperator id='strictClockUpDownOperator.c:$(n)' spec='UpDownOperator' scaleFactor="0.75" weight="3">
+				<operator id='StrictClockRateScaler.c:$(n)' spec='beast.base.spec.inference.operator.ScaleOperator' scaleFactor="0.75" weight="3" parameter='@clockRate.c:$(n)'/>
+                <operator id='strictClockUpDownOperator.c:$(n)' spec='beast.base.spec.evolution.operator.UpDownOperator' scaleFactor="0.75" weight="3">
                     <up idref="clockRate.c:$(n)"/>
                     <down idref="Tree.t:tree"/>
-                </upDownOperator>
-                
-		        <prior id='ClockPrior.c:$(n)' x='@clockRate.c:$(n)'><distr spec="beast.base.inference.distribution.Uniform" upper='Infinity'/></prior>
-			]]>
-            <connect srcID='clockRate.c:$(n)' targetID='state' inputName='stateNode'
-                     if='inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true'/>
+                </operator>
 
+		        <distribution id='ClockPrior.c:$(n)' spec='beast.base.spec.inference.distribution.Gamma' param='@clockRate.c:$(n)'>
+		            <alpha spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="0.01" estimate="false"/>
+		            <theta spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="100.0" estimate="false"/>
+		        </distribution>
+			]]>
             <connect srcID='clockRate.c:$(n)' targetID='state' inputName='stateNode'
                      if='inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true'/>
             <connect srcID='ClockPrior.c:$(n)' targetID='prior' inputName='distribution'
@@ -40,27 +40,30 @@
         </subtemplate>
 
         <!-- Relaxed clock exponential -->
-        <subtemplate id='RelaxedClockExponential' class='beast.base.evolution.branchratemodel.UCRelaxedClockModel'
+        <subtemplate id='RelaxedClockExponential' class='beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel'
                      mainid='ExponentialRelaxedClock.c:$(n)'
-                     suppressInputs='beast.base.evolution.branchratemodel.UCRelaxedClockModel.distr,beast.base.evolution.branchratemodel.UCRelaxedClockModel.rateQuantiles,beast.base.evolution.branchratemodel.UCRelaxedClockModel.rates'>
+                     suppressInputs='beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel.distr,beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel.rateQuantiles,beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel.rates,beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel.numberOfDiscreteRates'>
             <![CDATA[
-        <plugin spec='UCRelaxedClockModel' id="ExponentialRelaxedClock.c:$(n)" tree='@Tree.t:tree'>
-			<parameter name='clock.rate' id='ucedMean.c:$(n)' value='1.0' estimate='false'/>
-            <distr id='Exponential.c:$(n)' name='distr' spec="beast.base.inference.distribution.Exponential">
-				<parameter id='UCExpLambda.c:$(n)' name='mean' value='1.0'/>
+        <input spec='beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel' id="ExponentialRelaxedClock.c:$(n)" tree='@Tree.t:tree'>
+			<clock.rate id='ucedMean.c:$(n)' spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value='1.0' estimate='false'/>
+            <distr id='Exponential.c:$(n)' spec="beast.base.spec.inference.distribution.Exponential">
+				<mean id='UCExpLambda.c:$(n)' spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value='1.0' estimate='false'/>
 			</distr>
-            <rateCategories spec='parameter.IntegerParameter' id='expRateCategories.c:$(n)' value="1" dimension='10' estimate='true'/>
-        </plugin>
-        <operator id='ucedMeanScaler.c:$(n)' spec='ScaleOperator' scaleAll='false' scaleFactor="0.5" weight="1" parameter="@ucedMean.c:$(n)"/>
-        <operator id="ExpCategoriesRandomWalk.c:$(n)" spec="IntRandomWalkOperator" windowSize='1' weight="10" parameter="@expRateCategories.c:$(n)"/>
-		<operator id='ExpCategoriesSwapOperator.c:$(n)' spec='SwapOperator' howMany="1" weight="10" intparameter='@expRateCategories.c:$(n)'/>
-		<operator id='ExpCategoriesUniform.c:$(n)' spec='UniformOperator' weight="10" parameter='@expRateCategories.c:$(n)'/>
-		<upDownOperator id='relaxedUpDownOperatorExp.c:$(n)' spec='UpDownOperator' scaleFactor="0.75" weight="3">
+            <rateCategories spec='beast.base.spec.inference.parameter.IntVectorParam' domain='NonNegativeInt' id='expRateCategories.c:$(n)' value="1" dimension='10' estimate='true'/>
+        </input>
+        <operator id='ucedMeanScaler.c:$(n)' spec='beast.base.spec.inference.operator.ScaleOperator' scaleAll='false' scaleFactor="0.5" weight="1" parameter="@ucedMean.c:$(n)"/>
+        <operator id="ExpCategoriesRandomWalk.c:$(n)" spec="beast.base.spec.inference.operator.IntRandomWalkOperator" windowSize='1' weight="10" parameter="@expRateCategories.c:$(n)"/>
+		<operator id='ExpCategoriesSwapOperator.c:$(n)' spec='beast.base.spec.inference.operator.SwapOperator' howMany="1" weight="10" intparameter='@expRateCategories.c:$(n)'/>
+		<operator id='ExpCategoriesUniform.c:$(n)' spec='beast.base.spec.inference.operator.uniform.IntUniformOperator' weight="10" parameter='@expRateCategories.c:$(n)'/>
+		<operator id='relaxedUpDownOperatorExp.c:$(n)' spec='beast.base.spec.evolution.operator.UpDownOperator' scaleFactor="0.75" weight="3">
 			<up idref="ucedMean.c:$(n)"/>
 			<down idref="Tree.t:tree"/>
-		</upDownOperator>
-		<log id='rateStat.c:$(n)' spec='RateStatistic' tree='@Tree.t:tree' branchratemodel='@ExponentialRelaxedClock.c:$(n)'/>
-        <prior id='UCMeanRatePrior.c:$(n)' x='@ucedMean.c:$(n)'><distr spec="beast.base.inference.distribution.Uniform" upper='Infinity'/></prior>
+		</operator>
+		<log id='rateStat.c:$(n)' spec='beast.base.evolution.RateStatistic' tree='@Tree.t:tree' branchratemodel='@ExponentialRelaxedClock.c:$(n)'/>
+        <distribution id='UCMeanRatePrior.c:$(n)' spec='beast.base.spec.inference.distribution.Gamma' param='@ucedMean.c:$(n)'>
+            <alpha spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="0.01" estimate="false"/>
+            <theta spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="100.0" estimate="false"/>
+        </distribution>
 ]]>
             <connect srcID='ucedMean.c:$(n)' targetID='state' inputName='stateNode'
                      if='inlikelihood(ucedMean.c:$(n)) and ucedMean.c:$(n)/estimate=true'/>
@@ -103,36 +106,37 @@
 
 
         <!-- Relaxed clock log normal -->
-        <subtemplate id='RelaxedClockLogNormal' class='beast.base.evolution.branchratemodel.UCRelaxedClockModel'
+        <subtemplate id='RelaxedClockLogNormal' class='beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel'
                      mainid='RelaxedClock.c:$(n)'
-                     suppressInputs='beast.base.evolution.branchratemodel.UCRelaxedClockModel.distr,beast.base.evolution.branchratemodel.UCRelaxedClockModel.rateQuantiles,beast.base.evolution.branchratemodel.UCRelaxedClockModel.rates'>
+                     suppressInputs='beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel.distr,beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel.rateQuantiles,beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel.rates,beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel.numberOfDiscreteRates'>
             <![CDATA[
-        <plugin spec='UCRelaxedClockModel' id="RelaxedClock.c:$(n)" tree='@Tree.t:tree'>
-			<parameter name='clock.rate' id='ucldMean.c:$(n)' value='1.0'/>
-            <distr id='LogNormalDistributionModel.c:$(n)' name='distr' spec="beast.base.inference.distribution.LogNormalDistributionModel" meanInRealSpace='true'>
-                <parameter name='M' value="1.0" estimate='false' lower='0' upper='1'/>
-                <parameter name='S' id='ucldStdev.c:$(n)' value="0.1" lower="0" estimate='true'/>
+        <input spec='beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel' id="RelaxedClock.c:$(n)" tree='@Tree.t:tree'>
+			<clock.rate id='ucldMean.c:$(n)' spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value='1.0'/>
+            <distr id='LogNormalDistributionModel.c:$(n)' spec="beast.base.spec.inference.distribution.LogNormal" meanInRealSpace='true'>
+                <M spec='beast.base.spec.inference.parameter.RealScalarParam' domain='Real' value="1.0" estimate='false'/>
+                <S id='ucldStdev.c:$(n)' spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value="0.1" estimate='true'/>
             </distr>
-            <rateCategories spec='parameter.IntegerParameter' id='rateCategories.c:$(n)' value="1" dimension='10' estimate='true'/>
-        </plugin>
-        <operator id='ucldMeanScaler.c:$(n)' spec='ScaleOperator' scaleAll='false' scaleFactor="0.5" weight="1" parameter="@ucldMean.c:$(n)"/>
-        <operator id='ucldStdevScaler.c:$(n)' spec='ScaleOperator' scaleAll='false' scaleFactor="0.5" weight="3" parameter="@ucldStdev.c:$(n)"/>
-        <operator id="CategoriesRandomWalk.c:$(n)" spec="IntRandomWalkOperator" windowSize='1' weight="10" parameter="@rateCategories.c:$(n)"/>
-		<operator id='CategoriesSwapOperator.c:$(n)' spec='SwapOperator' howMany="1" weight="10" intparameter='@rateCategories.c:$(n)'/>
-		<operator id='CategoriesUniform.c:$(n)' spec='UniformOperator' weight="10" parameter='@rateCategories.c:$(n)'/>
-		<upDownOperator id='relaxedUpDownOperator.c:$(n)' spec='UpDownOperator' scaleFactor="0.75" weight="3">
+            <rateCategories spec='beast.base.spec.inference.parameter.IntVectorParam' domain='NonNegativeInt' id='rateCategories.c:$(n)' value="1" dimension='10' estimate='true'/>
+        </input>
+        <operator id='ucldMeanScaler.c:$(n)' spec='beast.base.spec.inference.operator.ScaleOperator' scaleAll='false' scaleFactor="0.5" weight="1" parameter="@ucldMean.c:$(n)"/>
+        <operator id='ucldStdevScaler.c:$(n)' spec='beast.base.spec.inference.operator.ScaleOperator' scaleAll='false' scaleFactor="0.5" weight="3" parameter="@ucldStdev.c:$(n)"/>
+        <operator id="CategoriesRandomWalk.c:$(n)" spec="beast.base.spec.inference.operator.IntRandomWalkOperator" windowSize='1' weight="10" parameter="@rateCategories.c:$(n)"/>
+		<operator id='CategoriesSwapOperator.c:$(n)' spec='beast.base.spec.inference.operator.SwapOperator' howMany="1" weight="10" intparameter='@rateCategories.c:$(n)'/>
+		<operator id='CategoriesUniform.c:$(n)' spec='beast.base.spec.inference.operator.uniform.IntUniformOperator' weight="10" parameter='@rateCategories.c:$(n)'/>
+		<operator id='relaxedUpDownOperator.c:$(n)' spec='beast.base.spec.evolution.operator.UpDownOperator' scaleFactor="0.75" weight="3">
 			<up idref="ucldMean.c:$(n)"/>
 			<down idref="Tree.t:tree"/>
-		</upDownOperator>
-        <prior id='ucldStdevPrior.c:$(n)' x='@ucldStdev.c:$(n)'>
-            <!-- this prior has a median of 0.1 and 97.5% of its probability is below S=1 -->
-            <distr spec="beast.base.inference.distribution.Gamma">
-                <parameter name='alpha' value="0.5396" estimate='false'/> <!-- shape -->
-                <parameter name='beta' value="0.3819" estimate='false'/> <!-- scale -->
-            </distr>
-        </prior>
-		<log id='rate.c:$(n)' spec='RateStatistic' tree='@Tree.t:tree' branchratemodel='@RelaxedClock.c:$(n)'/>
-        <prior id='MeanRatePrior.c:$(n)' x='@ucldMean.c:$(n)'><distr spec="beast.base.inference.distribution.Uniform" upper='Infinity'/></prior>
+		</operator>
+        <!-- this prior has a median of 0.1 and 97.5% of its probability is below S=1 -->
+        <distribution id='ucldStdevPrior.c:$(n)' spec="beast.base.spec.inference.distribution.Gamma" param='@ucldStdev.c:$(n)'>
+            <alpha spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value="0.5396" estimate='false'/> <!-- shape -->
+            <theta spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value="0.3819" estimate='false'/> <!-- scale -->
+        </distribution>
+		<log id='rate.c:$(n)' spec='beast.base.evolution.RateStatistic' tree='@Tree.t:tree' branchratemodel='@RelaxedClock.c:$(n)'/>
+        <distribution id='MeanRatePrior.c:$(n)' spec="beast.base.spec.inference.distribution.Gamma" param='@ucldMean.c:$(n)'>
+            <alpha spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value="0.01" estimate='false'/>
+            <theta spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value="100.0" estimate='false'/>
+        </distribution>
 ]]>
             <connect srcID='ucldMean.c:$(n)' targetID='state' inputName='stateNode'
                      if='inlikelihood(ucldMean.c:$(n)) and ucldMean.c:$(n)/estimate=true'/>
@@ -183,39 +187,39 @@
 
 
         <!-- Random local clock -->
-        <subtemplate id='RandomLocalClock' class='beast.base.evolution.branchratemodel.RandomLocalClockModel'
+        <subtemplate id='RandomLocalClock' class='beast.base.spec.evolution.branchratemodel.RandomLocalClockModel'
                      mainid='RandomLocalClock.c:$(n)'
-                     suppressInputs='beast.base.evolution.branchratemodel.RandomLocalClockModel.rates'>
+                     suppressInputs='beast.base.spec.evolution.branchratemodel.RandomLocalClockModel.rates,
+                     beast.base.spec.evolution.branchratemodel.RandomLocalClockModel.indicators,
+                     beast.base.spec.evolution.branchratemodel.RandomLocalClockModel.tree'>
             <![CDATA[
-        <input spec='RandomLocalClockModel' id="RandomLocalClock.c:$(n)" ratesAreMultipliers="false" tree='@Tree.t:tree'>
-            <clock.rate id='meanclockRate.c:$(n)' spec='parameter.RealParameter' value='1.0' estimate='false'/>
-            <parameter spec='parameter.BooleanParameter' name='indicators' id='Indicators.c:$(n)' value="0"/>
-            <parameter name='rates' id='clockrates.c:$(n)' value="1" lower="1e-9"/>
+        <input spec='beast.base.spec.evolution.branchratemodel.RandomLocalClockModel' id="RandomLocalClock.c:$(n)" ratesAreMultipliers="false" tree='@Tree.t:tree'>
+            <clock.rate id='meanClockRate.c:$(n)' spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value='1.0' estimate='false'/>
+            <parameter spec='beast.base.spec.inference.parameter.BoolVectorParam' name='indicators' id='Indicators.c:$(n)' value="0"/>
+            <parameter spec='beast.base.spec.inference.parameter.RealVectorParam' domain='PositiveReal' name='rates' id='clockrates.c:$(n)' value="1"/>
         </input>
-        <operator id="IndicatorsBitFlip.c:$(n)" spec="BitFlipOperator" weight="15" parameter="@Indicators.c:$(n)"/>
+        <operator id="IndicatorsBitFlip.c:$(n)" spec="beast.base.spec.inference.operator.BitFlipOperator" weight="15" parameter="@Indicators.c:$(n)"/>
 <!-- this should probably be a DeltaExchange instead of scale operator to keep mean rate to 1 -->
-        <operator id='ClockRateScaler.c:$(n)' spec='ScaleOperator' scaleAll='false' scaleFactor="0.5" weight="15" parameter="@clockrates.c:$(n)"/>
-        <operator id='randomClockScaler.c:$(n)' spec='ScaleOperator' scaleAll='false' scaleFactor="0.5" weight="1" parameter="@meanclockRate.c:$(n)"/>
-		<upDownOperator id='randomClockUpDownOperator.c:$(n)' spec='UpDownOperator' scaleFactor="0.75" weight="3">
-			<up idref="meanclockRate.c:$(n)"/>
+        <operator id='ClockRateScaler.c:$(n)' spec='beast.base.spec.inference.operator.ScaleOperator' scaleAll='false' scaleFactor="0.5" weight="15" parameter="@clockrates.c:$(n)"/>
+        <operator id='randomClockScaler.c:$(n)' spec='beast.base.spec.inference.operator.ScaleOperator' scaleAll='false' scaleFactor="0.5" weight="1" parameter="@meanClockRate.c:$(n)"/>
+		<operator id='randomClockUpDownOperator.c:$(n)' spec='beast.base.spec.evolution.operator.UpDownOperator' scaleFactor="0.75" weight="3">
+			<up idref="meanClockRate.c:$(n)"/>
 			<down idref="Tree.t:tree"/>
-		</upDownOperator>
+		</operator>
 		<distribution idref="prior">
 			<if cond='inlikelihood(RandomLocalClock.c:$(n))'>
 				<!-- prior on rates -->
-			    <prior id='RRatesPrior.c:sSpecies' name="distribution" x='@clockrates.c:$(n)'>
-			        <Gamma id="Gamma.0" name="distr">
-			            <parameter estimate="false" name="alpha">0.5</parameter>
-			            <parameter estimate="false" name="beta">2.0</parameter>
-			        </Gamma>
-				</prior>
+			    <distribution id='RRatesPrior.c:$(n)' spec='beast.base.spec.inference.distribution.IID' param='@clockrates.c:$(n)'>
+			        <distr spec="beast.base.spec.inference.distribution.Gamma">
+			            <alpha spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value="0.5" estimate="false"/>
+			            <theta spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value="2.0" estimate="false"/>
+			        </distr>
+				</distribution>
 				<!-- prior on number of changes -->
-				<prior id="RRateChangesPrior.c:$(n)" name="distribution">
-					<x id="RRateChanges.c:$(n)" spec="beast.base.evolution.Sum" arg="@Indicators.c:$(n)"/>
-                    <distr spec='beast.base.inference.distribution.Poisson'>
-                          <lambda spec='parameter.RealParameter' estimate='false' value='0.6931471805599453'/>
-                    </distr>
-				</prior>
+				<distribution id="RRateChangesPrior.c:$(n)" spec='beast.base.spec.inference.distribution.Poisson'>
+					<param id="RRateChanges.c:$(n)" spec="beast.base.spec.evolution.IntSum" arg="@Indicators.c:$(n)"/>
+                    <lambda spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' estimate='false' value='0.6931471805599453'/>
+				</distribution>
 			</if>
 		</distribution>
 		<logger idref="tracelog">
@@ -223,11 +227,14 @@
 				<log idref="RRateChanges.c:$(n)"/>
 			</if>
 		</logger>
-        <prior id='MeanRRatePrior.c:sSpecies' x='@meanclockRate.c:$(n)'><distr spec="beast.base.inference.distribution.Uniform" upper='Infinity'/></prior>
+        <distribution id='MeanRRatePrior.c:$(n)' spec="beast.base.spec.inference.distribution.Gamma" param='@meanClockRate.c:$(n)'>
+            <alpha spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value="0.01" estimate="false"/>
+            <theta spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value="100.0" estimate="false"/>
+        </distribution>
 ]]>
             <connect srcID='Indicators.c:$(n)' targetID='state' inputName='stateNode'
                      if='inlikelihood(Indicators.c:$(n))'/>
-            <connect srcID='meanclockRate.c:$(n)' targetID='state' inputName='stateNode'
+            <connect srcID='meanClockRate.c:$(n)' targetID='state' inputName='stateNode'
                      if='inlikelihood(meanClockRate.c:$(n)) and meanClockRate.c:$(n)/estimate=true'/>
             <connect srcID='clockrates.c:$(n)' targetID='state' inputName='stateNode'
                      if='inlikelihood(clockrates.c:$(n))'/>

@@ -1,19 +1,19 @@
 <beast version='2.0'
-       namespace='beast.app.beauti:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.spec.evolution.branchratemodel:beast.base.evolution.speciation:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.evolution:beast.base.inference.distribution'>
+       namespace='beastfx.app.beauti:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.spec.evolution.branchratemodel:beast.base.spec.evolution.speciation:beast.base.evolution.speciation:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.evolution:beast.base.inference.distribution'>
 
 
  <!-- tree priors -->
     <mergewith point='acgTreePriorTemplates'>
 
-        <subtemplate id='YuleModel' class='beast.base.evolution.speciation.YuleModel' mainid='YuleModel.t:tree'>
+        <subtemplate id='YuleModel' class='beast.base.spec.evolution.speciation.YuleModel' mainid='YuleModel.t:tree'>
             <![CDATA[
-            <plugin spec='YuleModel' id="YuleModel.t:tree" tree='@Tree.t:tree'>
-                <parameter name='birthDiffRate' id="birthRate.t:tree" value='1.0'/>
+            <plugin spec='beast.base.spec.evolution.speciation.YuleModel' id="YuleModel.t:tree" tree='@Tree.t:tree'>
+                <parameter name='birthDiffRate' id="birthRate.t:tree" spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value='1.0'/>
             </plugin>
 
-            <prior id='YuleBirthRatePrior.t:tree' x='@birthRate.t:tree'><distr spec="beast.base.inference.distribution.Uniform" lower='0' upper='1000'/></prior>
+            <distribution id='YuleBirthRatePrior.t:tree' spec='beast.base.spec.inference.distribution.Uniform' param='@birthRate.t:tree' lower='0' upper='1000'/>
 
-  		    <scale id='YuleBirthRateScaler.t:tree' spec='ScaleOperator' scaleFactor="0.75" weight="3" parameter="@birthRate.t:tree"/>
+  		    <operator id='YuleBirthRateScaler.t:tree' spec='beast.base.spec.inference.operator.ScaleOperator' scaleFactor="0.75" weight="3" parameter="@birthRate.t:tree"/>
 			]]>
 
             <connect srcID='YuleModel.t:tree' targetID='prior' inputName='distribution'

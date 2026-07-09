@@ -185,7 +185,6 @@
                 <shape               spec='beast.base.spec.inference.parameter.RealScalarParam' id='gammaShape.s:$(n)' domain='PositiveReal' value='1.0'         estimate='false'/>
             </plugin>
             
-
             <plugin spec='contactrees.model.likelihood.CTreeLikelihood' id="treeLikelihood.$(n)" data="@data">
             	<tree idref="Tree.t:tree"/>
                 <marginalTree id="MarginalTree.t:$(n)" spec="contactrees.MarginalTree" network="@Tree.t:tree" block="@block.$(n)" />
@@ -395,7 +394,7 @@
         
         <!-- tree priors -->
         <mergepoint id='acgTreePriorTemplates'/>
-        
+
         <mergepoint id='parametricDistributions'/>
 
         <subtemplate id='DefaultOperatorSchedule' class='beast.base.inference.OperatorSchedule' mainid='OperatorSchedule'
