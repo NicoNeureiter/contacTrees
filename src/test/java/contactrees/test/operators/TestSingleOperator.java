@@ -11,14 +11,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.TreeSet;
-
-import org.apache.commons.math3.distribution.KolmogorovSmirnovDistribution;
-import org.apache.commons.math3.distribution.RealDistribution;
-import org.apache.commons.math3.distribution.UniformRealDistribution;
-import org.apache.commons.math3.exception.MathInternalError;
-import org.apache.commons.math3.stat.descriptive.rank.Median;
-import org.apache.commons.math3.util.MathArrays;
 
 import beastfx.app.beast.BeastMCMC;
 import beast.base.util.Randomizer;
@@ -131,9 +125,9 @@ public abstract class TestSingleOperator {
 		System.out.println();
 		System.out.println(String.format("KS-test %s: %.4f", statName, ksStatistic));
 		System.out.println(String.format("MCMC %s: %.2f  \t   %.3f\t+/- %.2f", statName,
-									     (new Median()).evaluate(xMCMC), mean(xMCMC), std(xMCMC)));
+									     median(xMCMC), mean(xMCMC), std(xMCMC)));
 		System.out.println(String.format("Simu %s: %.2f  \t   %.3f\t+/- %.2f", statName,
-										 (new Median()).evaluate(xSimu), mean(xSimu), std(xSimu)));
+										 median(xSimu), mean(xSimu), std(xSimu)));
 
 		// We test whether a bootstrap sample of the KS-Statistic averages out to 0.5 (as it should)-
 		assertTrue(ksStatistic > KS_THRESHOLD);
@@ -268,15 +262,14 @@ public abstract class TestSingleOperator {
         double[] xa = null;
         double[] ya = null;
         if (lengthProduct < LARGE_SAMPLE_PRODUCT && hasTies(x,y)) {
-            xa = MathArrays.copyOf(x);
-            ya = MathArrays.copyOf(y);
+            xa = x.clone();
+            ya = y.clone();
             fixTies(xa, ya);
         } else {
             xa = x;
             ya = y;
         }
-        KolmogorovSmirnovDistribution ksDistr = new KolmogorovSmirnovDistribution(x.length);
-        return ksDistr.cdf(kolmogorovSmirnovStatistic(x, y));
+        return ksCdf(x.length, kolmogorovSmirnovStatistic(x, y));
     }
 
     public double kolmogorovSmirnovStatistic(double[] x, double[] y) {
@@ -285,8 +278,8 @@ public abstract class TestSingleOperator {
 
     private long integralKolmogorovSmirnovStatistic(double[] x, double[] y) {
         // Copy and sort the sample arrays
-        final double[] sx = MathArrays.copyOf(x);
-        final double[] sy = MathArrays.copyOf(y);
+        final double[] sx = x.clone();
+        final double[] sy = y.clone();
         Arrays.sort(sx);
         Arrays.sort(sy);
         final int n = sx.length;
@@ -350,28 +343,26 @@ public abstract class TestSingleOperator {
           prev = values[i];
        }
        minDelta /= 2;
-       // Add jitter using a fixed seed (so same arguments always give same results),
-       // low-initialization-overhead generator
-       final RealDistribution dist =
-               new UniformRealDistribution(-minDelta, minDelta);
+       // Add jitter using a fixed seed (so same arguments always give same results).
+       final Random rng = new Random(0);
        // It is theoretically possible that jitter does not break ties, so repeat
-       // until all ties are gone.  Bound the loop and throw MIE if bound is exceeded.
+       // until all ties are gone.  Bound the loop and throw if bound is exceeded.
        int ct = 0;
        boolean ties = true;
        do {
-           jitter(x, dist);
-           jitter(y, dist);
+           jitter(x, minDelta, rng);
+           jitter(y, minDelta, rng);
            ties = hasTies(x, y);
            ct++;
        } while (ties && ct < 1000);
        if (ties) {
-           throw new MathInternalError(); // Should never happen
+           throw new RuntimeException("Unable to break ties by jittering"); // Should never happen
        }
     }
 
-    private static void jitter(double[] data, RealDistribution dist) {
+    private static void jitter(double[] data, double minDelta, Random rng) {
         for (int i = 0; i < data.length; i++) {
-            data[i] += dist.sample();
+            data[i] += (rng.nextDouble() * 2.0 - 1.0) * minDelta;
         }
     }
 
@@ -404,6 +395,41 @@ public abstract class TestSingleOperator {
            out[count - ++i] = iterator.next();
        }
        return out;
+   }
+
+   /** Sample median (average of the two middle values for even length). */
+   private static double median(double[] data) {
+       if (data.length == 0)
+           return Double.NaN;
+       final double[] sorted = data.clone();
+       Arrays.sort(sorted);
+       final int n = sorted.length;
+       if (n % 2 == 1)
+           return sorted[n / 2];
+       return 0.5 * (sorted[n / 2 - 1] + sorted[n / 2]);
+   }
+
+   /**
+    * CDF P(D_n < d) of the one-sample Kolmogorov-Smirnov statistic, via the
+    * asymptotic Kolmogorov distribution K(sqrt(n)*d). Accurate for the large n
+    * used here and more than sufficient for the loose KS_THRESHOLD check.
+    * Replaces commons-math3 KolmogorovSmirnovDistribution.cdf.
+    */
+   private static double ksCdf(int n, double d) {
+       final double t = Math.sqrt(n) * d;
+       if (t <= 0.0)
+           return 0.0;
+       // K(t) = 1 - 2 * sum_{k=1}^inf (-1)^(k-1) exp(-2 k^2 t^2)
+       double sum = 0.0;
+       double sign = 1.0;
+       for (int k = 1; k <= 100; k++) {
+           final double term = Math.exp(-2.0 * k * k * t * t);
+           sum += sign * term;
+           sign = -sign;
+           if (term < 1e-12)
+               break;
+       }
+       return Math.max(0.0, Math.min(1.0, 1.0 - 2.0 * sum));
    }
 
 }

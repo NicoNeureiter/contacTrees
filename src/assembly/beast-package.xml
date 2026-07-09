@@ -12,6 +12,12 @@
             <source>${project.basedir}/version.xml</source>
             <outputDirectory>/</outputDirectory>
         </file>
+        <!-- Source JAR at top level (BEAST convention: PKG_NAME.src.jar) -->
+        <file>
+            <source>${project.build.directory}/${project.build.finalName}-sources.jar</source>
+            <destName>${beast.pkg.name}.src.jar</destName>
+            <outputDirectory>/</outputDirectory>
+        </file>
     </files>
 
     <dependencySets>
@@ -19,11 +25,11 @@
             <outputDirectory>/lib</outputDirectory>
             <useProjectArtifact>true</useProjectArtifact>
             <scope>runtime</scope>
-            <excludes>
-                <exclude>io.github.compevol:beast-base</exclude>
-                <exclude>io.github.compevol:beast-fx</exclude>
-                <exclude>io.github.compevol:beast-pkgmgmt</exclude>
-            </excludes>
+            <includes>
+                <include>io.github.niconeureiter:contactrees</include>
+                <include>com.google.guava:guava</include>
+                <include>org.antlr:antlr4-runtime</include>
+            </includes>
         </dependencySet>
     </dependencySets>
 
@@ -38,9 +44,6 @@
         <fileSet>
             <directory>${project.basedir}/examples</directory>
             <outputDirectory>/examples</outputDirectory>
-            <includes>
-                <include>**/*</include>
-            </includes>
         </fileSet>
     </fileSets>
 </assembly>

@@ -7,8 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.commons.math3.special.Beta;
-import org.apache.commons.math3.distribution.BetaDistribution;
+import org.apache.commons.numbers.gamma.LogBeta;
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.simple.RandomSource;
+import org.apache.commons.statistics.distribution.BetaDistribution;
+import org.apache.commons.statistics.distribution.ContinuousDistribution;
 
 import beast.base.core.BEASTInterface;
 import beast.base.core.Input;
@@ -67,7 +70,7 @@ public class BetaBinomialMovePrior extends Distribution {
         int n = blockSet.getBlockCount();
         for (Conversion conv : acg.getConversions()) {
             int k = blockSet.countAffectedBlocks(conv);
-            logP += Beta.logBeta(alpha + k, beta + n - k) - Beta.logBeta(alpha, beta);
+            logP += LogBeta.value(alpha + k, beta + n - k) - LogBeta.value(alpha, beta);
         }
         return logP;
     }
@@ -121,8 +124,9 @@ public class BetaBinomialMovePrior extends Distribution {
             // Remove old conversion moves
             block.removeAllMoves();
         }
-        // Sample new conversion moves
-        BetaDistribution pMovePrior = new BetaDistribution(alpha, beta);
+        // Sample new conversion moves (RNG seeded from the passed Random for reproducibility)
+        UniformRandomProvider rng = RandomSource.XO_RO_SHI_RO_128_PP.create(random.nextLong());
+        ContinuousDistribution.Sampler pMovePrior = BetaDistribution.of(alpha, beta).createSampler(rng);
         for (Conversion conv : acg.getConversions()) {
             double pMove = pMovePrior.sample();
             for (Block block : blockSet) {

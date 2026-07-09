@@ -6,13 +6,14 @@ open module contactrees {
     requires com.google.common;
     requires org.antlr.antlr4.runtime;
     requires org.apache.commons.statistics.distribution;
+    requires org.apache.commons.numbers.gamma;
+    requires org.apache.commons.rng.simple;
+    requires org.apache.commons.rng.api;
 
     requires java.desktop;
     requires java.management;
     requires java.naming;
     requires java.xml;
-
-    requires commons.math3;
 
     exports contactrees;
     exports contactrees.acgannotator;
