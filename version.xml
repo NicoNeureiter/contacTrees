@@ -1,5 +1,6 @@
-<package name="contacTrees" version="2.0.0-beta1">
+<package name="contacTrees" version="2.0.0">
     <depends on='BEAST.base' atleast='2.8.0'/>
+    <depends on='BEAST.app' atleast='2.8.0'/>
 
     <packageapp class="contactrees.acgannotator.ACGAnnotator" description="ContactreesAnnotator"/>
 
