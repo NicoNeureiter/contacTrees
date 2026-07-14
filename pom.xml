@@ -6,7 +6,7 @@
 
     <groupId>io.github.niconeureiter</groupId>
     <artifactId>contactrees</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.0-SNAPSHOT</version>
 
     <name>contacTrees</name>
     <description>Phylogenetic model for language evolution with horizontal transfer</description>
