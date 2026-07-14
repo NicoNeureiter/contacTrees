@@ -45,6 +45,11 @@
 
         <beast.main>beastfx.app.beauti.Beauti</beast.main>
         <beast.args></beast.args>
+
+        <!-- BEAST package ZIP name. The version defaults to the Maven version but is
+             overridden by release.sh with the value from version.xml (-Dbeast.pkg.version). -->
+        <beast.pkg.name>contacTrees</beast.pkg.name>
+        <beast.pkg.version>${project.version}</beast.pkg.version>
     </properties>
 
     <dependencies>
@@ -208,7 +213,7 @@
                     <descriptors>
                         <descriptor>src/assembly/beast-package.xml</descriptor>
                     </descriptors>
-                    <finalName>contactrees.v${project.version}</finalName>
+                    <finalName>${beast.pkg.name}.v${beast.pkg.version}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
                 <executions>
