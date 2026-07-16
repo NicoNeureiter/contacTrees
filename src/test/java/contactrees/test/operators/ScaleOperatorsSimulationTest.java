@@ -8,7 +8,7 @@ import beast.base.spec.evolution.operator.ScaleTreeOperator;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.TreeParser;
 
-public class SimulationTestScaleOperators extends TestSingleOperator {
+public class ScaleOperatorsSimulationTest extends TestSingleOperator {
 	
     final static double EPSILON = 1e-10;
 
