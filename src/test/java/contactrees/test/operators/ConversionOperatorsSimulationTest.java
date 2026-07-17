@@ -2,7 +2,7 @@ package contactrees.test.operators;
 
 import org.junit.Test;
 
-public class ConversionOperatorsSimulationTest extends TestSingleOperator {
+public class ConversionOperatorsSimulationTest extends SingleOperatorTest {
   
     @Test
     public void testAddRemoveConversion() throws Exception {
