@@ -1,9 +1,0 @@
-{
-    "nSims": 250,
-    "chainLength": 25000,
-    "logInterval": 100,
-
-    "convRate": 50.0,
-    "pMove": 0.2,
-    "birthRate": 1.0
-}

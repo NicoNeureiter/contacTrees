@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beast version="2.8"
+       namespace="beast.core:beast.core.util:beast.evolution.alignment:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.tree.coalescent:beast.base.core:beast.base.evolution.alignment:beast.base.evolution.likelihood:beast.base.evolution.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.inference:beast.base.inference.operator:beast.base.inference.util:beast.pkgmgmt:contactrees:contactrees.model:contactrees.util:contactrees.operators">
+
+<data id="data:nodata" name="alignment">
+    <sequence id="seq_A" taxon="A" totalcount="4" value="ACGT"/>
+    <sequence id="seq_B" taxon="B" totalcount="4" value="ACGT"/>
+    <sequence id="seq_C" taxon="C" totalcount="4" value="ACGT"/>
+    <sequence id="seq_D" taxon="D" totalcount="4" value="ACGT"/>
+    <sequence id="seq_E" taxon="E" totalcount="4" value="ACGT"/>
+    <sequence id="seq_F" taxon="F" totalcount="4" value="ACGT"/>
+    <sequence id="seq_G" taxon="G" totalcount="4" value="ACGT"/>
+    <sequence id="seq_H" taxon="H" totalcount="4" value="ACGT"/>
+    <sequence id="seq_I" taxon="I" totalcount="4" value="ACGT"/>
+    <sequence id="seq_J" taxon="J" totalcount="4" value="ACGT"/>
+</data>
+
+<stateNode spec="BlockSet" id="allBlocks" network="@acg">
+    <plate var="n" range="0,1,2,3,4,5,6,7,8,9">
+        <block spec="Block" id="block.$(n)"/>
+    </plate>
+</stateNode>
+
+<run id="mcmc" spec="MCMC" chainLength="$(chainLength)">
+
+    <state id="state" storeEvery="$(logInterval)">
+        <!-- Define the conversion graph -->
+        <stateNode id="acg" spec="ConversionGraph">
+            <taxonset id="taxa" spec="TaxonSet" alignment="@data:nodata"/>
+        </stateNode>
+        
+        <plate var="n" range="0,1,2,3,4,5,6,7,8,9">
+            <stateNode idref="block.$(n)"/>
+        </plate>
+        
+        <stateNode id="pMove" estimate="false" value="$(pMove)" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+        <stateNode id="conversionRate" estimate="false" value="$(convRate)" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+        <stateNode id="birthRate" estimate="false" value="$(birthRate)" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+    </state>
+
+    <distribution id="prior" spec="beast.base.inference.CompoundDistribution">
+        <distribution id="ACGYulePrior.t" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
+            <cfModel id="YuleModel" spec="beast.base.spec.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
+        </distribution>
+        <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
+        <!-- 
+        <distribution id="convRatePrior" spec="Prior" x="@conversionRate">
+            <distr id="LogNormalDistr.convRatePrior" spec="LogNormalDistributionModel" meanInRealSpace="true" M="$(convRate)" S="1.0"/>
+        </distribution>
+        <distribution id="pMovePrior" spec="Prior" x="@pMove">
+            <distr id="BetaDistr.pMovePrior" spec="Beta" alpha="30.0" beta="70.0"/>
+        </distribution>
+         -->
+    </distribution>
+
+    <operatorschedule id="schedule" spec="contactrees.test.StationarityTestSchedule" logInterval="$(logInterval)">
+        <simulatorOperator id="SimumlaterOperator" spec="contactrees.test.SimulatorOperator" distribution="@prior" state="@state" weight="1"/>
+        <operator id="ACGscale.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="1"/> 
+    </operatorschedule>
+    
+    <logger id="screenlog" logEvery="$(logInterval)">
+        <log idref="prior"/>
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="pMove"/>
+        <log idref="conversionRate"/>
+    </logger>
+
+    <logger logEvery="$(logInterval)" fileName="$(filebase).stats">
+        <log idref="prior"/>
+        <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
+        <log idref="pMove"/>
+        <log idref="conversionRate"/>
+    </logger>
+
+    <logger logEvery="$(logInterval)" fileName="$(filebase).trees">
+        <log spec="ACGWithMetaDataLogger" network="@acg" blockSet="@allBlocks"/>
+    </logger>
+</run>
+  
+</beast>

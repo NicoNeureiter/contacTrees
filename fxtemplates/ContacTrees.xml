@@ -215,8 +215,8 @@
             <taxonset id='TaxonSet.$(n)' spec='beast.base.evolution.alignment.TaxonSet' alignment='@$(n)' />
             <plugin spec='contactrees.ConversionGraph' id='Tree.t:tree' taxonset='@taxonSet'/>
             
-            <!--plugin spec='beast.base.evolution.tree.coalescent.RandomTree' id='RandomTree.t' estimate='false' trait='@datetrait.$(n)' initial='@Tree.t:tree'-->
-            <!--plugin spec='beast.base.evolution.tree.coalescent.RandomTree' id='RandomTree.t' estimate='false' initial='@Tree.t:tree'-->
+            <!--plugin spec='beast.base.spec.evolution.tree.coalescent.RandomTree' id='RandomTree.t' estimate='false' trait='@datetrait.$(n)' initial='@Tree.t:tree'-->
+            <!--plugin spec='beast.base.spec.evolution.tree.coalescent.RandomTree' id='RandomTree.t' estimate='false' initial='@Tree.t:tree'-->
             <plugin spec='contactrees.RandomACG' id='RandomTree.t' estimate='false' initial='@Tree.t:tree'>
                 <taxa idref='data'/>
                 <populationModel id='ConstantPopulation0' spec='beast.base.spec.evolution.tree.coalescent.ConstantPopulation'>

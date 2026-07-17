@@ -2,7 +2,7 @@ package contactrees.test.operators;
 
 import org.junit.Test;
 
-public class CFOperatorsSimulationTest extends TestSingleOperator {
+public class CFOperatorsSimulationTest extends SingleOperatorTest {
 	
     @Test
     public void testWilsonBalding() throws Exception {
