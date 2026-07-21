@@ -12,7 +12,6 @@
 <map name='Beta'>beast.base.spec.inference.distribution.Beta</map>
 <map name='LaplaceDistribution'>beast.base.spec.inference.distribution.LaplaceDistribution</map>
 <map name='InverseGamma'>beast.base.spec.inference.distribution.InverseGamma</map>
-<map name='prior'>beast.base.spec.inference.distribution.Prior</map>
 
     <beauticonfig spec='BeautiConfig'
         inputLabelMap='beast.base.inference.MCMC.operator=Operators,
