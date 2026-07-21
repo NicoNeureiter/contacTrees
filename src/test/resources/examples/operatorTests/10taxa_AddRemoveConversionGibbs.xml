@@ -27,7 +27,9 @@
 	    <branchRateModel spec="beast.base.spec.evolution.branchratemodel.StrictClockModel" clock.rate="1.0"/>
 	    <siteModel spec="beast.base.spec.evolution.sitemodel.SiteModel">
 	        <substModel spec="beast.base.spec.evolution.substitutionmodel.GeneralSubstitutionModel" rates="1.0 1.0">
-	            <frequencies spec="beast.base.spec.evolution.substitutionmodel.Frequencies" frequencies="0.5 0.5"/>
+	            <frequencies spec="beast.base.spec.evolution.substitutionmodel.Frequencies">
+				<frequencies spec="beast.base.spec.inference.parameter.SimplexParam" value="0.5 0.5"/>
+			</frequencies>
 	        </substModel> 
 	    </siteModel>
 	</distribution>
