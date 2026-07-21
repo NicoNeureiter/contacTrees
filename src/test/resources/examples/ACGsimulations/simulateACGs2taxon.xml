@@ -25,14 +25,6 @@
             <cfModel id="YuleModel" spec="beast.base.spec.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
         </distribution>
         <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
-        <!-- 
-        <distribution id="convRatePrior" spec="Prior" x="@conversionRate">
-            <distr id="LogNormalDistr.convRatePrior" spec="LogNormalDistributionModel" meanInRealSpace="true" M="$(convRate)" S="1.0"/>
-        </distribution>
-        <distribution id="pMovePrior" spec="Prior" x="@pMove">
-            <distr id="BetaDistr.pMovePrior" spec="Beta" alpha="30.0" beta="70.0"/>
-        </distribution>
-        -->
     </distribution>
     
     <logger logEvery="1" fileName="$(filebase).stats">

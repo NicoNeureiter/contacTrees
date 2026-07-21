@@ -112,7 +112,7 @@
             <![CDATA[
         <input spec='beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel' id="RelaxedClock.c:$(n)" tree='@Tree.t:tree'>
 			<clock.rate id='ucldMean.c:$(n)' spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value='1.0'/>
-            <distr id='LogNormalDistributionModel.c:$(n)' spec="beast.base.spec.inference.distribution.LogNormal" meanInRealSpace='true'>
+            <distr id='LogNormal.c:$(n)' spec="beast.base.spec.inference.distribution.LogNormal" meanInRealSpace='true'>
                 <M spec='beast.base.spec.inference.parameter.RealScalarParam' domain='Real' value="1.0" estimate='false'/>
                 <S id='ucldStdev.c:$(n)' spec='beast.base.spec.inference.parameter.RealScalarParam' domain='PositiveReal' value="0.1" estimate='true'/>
             </distr>
