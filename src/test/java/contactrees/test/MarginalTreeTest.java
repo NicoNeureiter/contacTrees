@@ -1,5 +1,6 @@
 package contactrees.test;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -12,13 +13,16 @@ import beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel;
 import beast.base.spec.evolution.likelihood.TreeLikelihood;
 import beast.base.spec.evolution.sitemodel.SiteModel;
 import beast.base.spec.evolution.substitutionmodel.JukesCantor;
+import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import beast.base.spec.domain.PositiveReal;
 import beast.base.spec.inference.distribution.Uniform;
 import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.evolution.tree.TreeParser;
 import contactrees.Block;
+import contactrees.BlockSet;
 import contactrees.Conversion;
+import contactrees.ConversionGraph;
 import contactrees.MarginalNode;
 import contactrees.MarginalTree;
 
@@ -235,6 +239,71 @@ public class MarginalTreeTest extends ContactreesTest {
             assertTrue(treesEquivalentShifted(marginalTree, correctTree, 1e-15));
             equalLikelihood(correctTree, marginalTree);
         }
+    }
+
+    /**
+     * A conversion sitting exactly at the height of a CF coalescence must be processed
+     * below that coalescence, i.e. give the same marginal tree as one placed just below it.
+     */
+    @Test
+    public void testConversionAtCoalescenceHeightMatchesLimitFromBelow() throws Exception {
+        String newick = "((1:1.0,2:1.0)4:1.5,3:2.5)5:0.5;";
+
+        MarginalTree exactMarginalTree = marginalTreeWithSingleConversion(newick, 0.0);
+        MarginalTree belowMarginalTree = marginalTreeWithSingleConversion(newick, -1e-12);
+
+        assertTrue(treesEquivalent(exactMarginalTree, belowMarginalTree, 1e-8));
+    }
+
+    /**
+     * Build a marginal tree over a single block whose only conversion attaches node3 to node2
+     * at the height of node4, offset by the given amount.
+     */
+    private MarginalTree marginalTreeWithSingleConversion(String newick, double heightOffset) {
+        ConversionGraph localAcg = getACGFromNewick(newick);
+        BlockSet localBlockSet = getBlockSet(1, localAcg);
+
+        Node localRoot = localAcg.getRoot();
+        Node localNode4 = localRoot.getLeft();
+        Node localNode3 = localRoot.getRight();
+        Node localNode2 = localNode4.getRight();
+
+        Conversion conv = new Conversion(localNode3, localNode2, localNode4.getHeight() + heightOffset, localAcg, 1);
+        localAcg.addConversion(conv);
+        localBlockSet.getBlocks().get(0).addMove(conv);
+
+        MarginalTree marginalTree = new MarginalTree();
+        marginalTree.initByName(
+                "network", localAcg,
+                "block", localBlockSet.getBlocks().get(0),
+                "nodetype", MarginalNode.class.getName());
+        return marginalTree;
+    }
+
+    /**
+     * A block referring to a degenerate (self-loop) conversion must fail with a clear error
+     * rather than silently producing a broken marginal tree.
+     */
+    @Test
+    public void testDegenerateLoopConversionThrowsClearError() throws Exception {
+        String newick = "((1:1.0,2:1.0)4:1.5,3:2.5)5:0.5;";
+
+        ConversionGraph loopAcg = getACGFromNewick(newick);
+        BlockSet loopBlockSet = getBlockSet(1, loopAcg);
+        Node loopNode4 = loopAcg.getRoot().getLeft();
+        Conversion loopConversion = new Conversion(loopNode4, loopNode4, 2.0, loopAcg, 1);
+        loopAcg.addConversion(loopConversion);
+        loopBlockSet.getBlocks().get(0).addMove(loopConversion);
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            MarginalTree loopMarginalTree = new MarginalTree();
+            loopMarginalTree.initByName(
+                    "network", loopAcg,
+                    "block", loopBlockSet.getBlocks().get(0),
+                    "nodetype", MarginalNode.class.getName());
+        });
+
+        assertTrue(exception.getMessage().contains("invalid conversion"));
     }
 
     public boolean equalLikelihood(Tree correctTree, MarginalTree derivedTree) {
