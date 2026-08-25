@@ -173,20 +173,25 @@ public abstract class CFOperator extends ConversionCreationOperator {
     double collapseConversion(Conversion conv, Node node, Node srcNode, List<Conversion> toRemove) {
         double logP = 0.0;
 
-        if (conv.getNode1() == srcNode)
+        boolean moveNode1 = conv.getNode1() == srcNode;
+        boolean moveNode2 = conv.getNode2() == srcNode;
+
+        if ((moveNode1 && conv.getNode2() == node) || (moveNode2 && conv.getNode1() == node)) {
+            // Moving the endpoint would degenerate the conversion to a loop -> remove it
+            // before it is mutated, so that no invalid conversion is ever visible.
+            toRemove.add(conv);
+            return 0.0;
+        }
+
+        if (moveNode1)
             conv.setNode1(node);
 
-        if (conv.getNode2() == srcNode)
+        if (moveNode2)
             conv.setNode2(node);
 
-
-        if (conv.getNode1() == conv.getNode2())
-            // Conversion degenerated to a loop -> remove and adjust logP later on
-            toRemove.add(conv);
-        else {
-            if ((conv.getNode1() == node) || (conv.getNode2() == node))
-                // No loop, but an edge could have been moved -> adjust logP
-                logP += Math.log(0.5);
+        if ((conv.getNode1() == node) || (conv.getNode2() == node)) {
+            // No loop, but an edge could have been moved -> adjust logP
+            logP += Math.log(0.5);
         }
         return logP;
     }
