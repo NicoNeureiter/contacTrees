@@ -321,6 +321,9 @@ public class MarginalTree extends Tree {
         MarginalNode newLeft = activeCFlineages.get(left.getNr());
         MarginalNode newRight = activeCFlineages.get(right.getNr());
 
+        ensureBinaryMergeCapacity(nodeNr, newLeft, newRight,
+            "coalescence at node " + node.getNr() + " height=" + height);
+
         // Take the old marginal node from the given index
         MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
         Node oldLeft = marginalNode.getLeft();
@@ -362,6 +365,10 @@ public class MarginalTree extends Tree {
         MarginalNode marginalLeft = activeCFlineages.get(left.getNr());
         MarginalNode marginalRight = activeCFlineages.get(right.getNr());
 
+        ensureBinaryMergeCapacity(nodeNr, marginalLeft, marginalRight,
+            "conversion " + conv.getID() + " at height=" + height
+                + " between nodes " + left.getNr() + " and " + right.getNr());
+
         // Take the old marginal node from the given index
         MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
 
@@ -392,6 +399,23 @@ public class MarginalTree extends Tree {
 //        marginalNode.makeDirty(Tree.IS_FILTHY);
 
         return marginalNode;
+    }
+
+    /**
+     * Fail with a descriptive error when a merge would write past the end of the node array,
+     * instead of letting it surface as an ArrayIndexOutOfBoundsException.
+     */
+    private void ensureBinaryMergeCapacity(int nodeNr, MarginalNode left, MarginalNode right, String context) {
+        if (nodeNr < m_nodes.length) {
+            return;
+        }
+
+        String leftId = left == null ? "null" : Integer.toString(left.getNr());
+        String rightId = right == null ? "null" : Integer.toString(right.getNr());
+        throw new IllegalStateException("MarginalTree exceeded node capacity while registering " + context
+                + "; nodeNr=" + nodeNr + ", capacity=" + m_nodes.length
+                + ", leftMarginal=" + leftId + ", rightMarginal=" + rightId
+                + ", sameLineage=" + (left != null && left == right));
     }
 
     void updateTimeLength(double parentHeight, Node child, MarginalNode marginalChild) {
@@ -479,11 +503,26 @@ public class MarginalTree extends Tree {
 
         for (int i=0; i < cIDs.size(); i++) {
             Conversion c = convList.get(cIDs.get(i));
-            assert c != null;
+            validateConversionRef(c);
             _blockConvs.add(c);
         }
 
         return _blockConvs;
+    }
+
+    /**
+     * Reject conversions that a block refers to but that are missing or degenerate.
+     */
+    private void validateConversionRef(Conversion conversion) {
+        if (conversion == null) {
+            throw new IllegalStateException(
+                    "MarginalTree encountered a missing conversion referenced by block " + block.getID());
+        }
+
+        if (!conversion.isValid()) {
+            throw new IllegalStateException("MarginalTree encountered invalid conversion " + conversion.getID()
+                    + " referenced by block " + block.getID());
+        }
     }
 
     /**

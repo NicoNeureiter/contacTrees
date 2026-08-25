@@ -131,9 +131,6 @@ public class MarginalTreeSlow extends Tree {
         List<Event> cfEvents = acg.getCFEvents();
         Map<Node, MarginalNodeSlow> activeCFlineages = new HashMap<>();
         ArrayList<Conversion> convs = getBlockConversions();
-        for (Conversion c : convs) {
-            assert c != null;
-        }
         convs.sort((c1, c2) -> {
             if (c1.height < c2.height)
                 return -1;
@@ -402,11 +399,26 @@ public class MarginalTreeSlow extends Tree {
 
         for (int cID : block.getConversionIDs()) {
             Conversion c = convList.get(cID);
-            assert c != null;
+            validateConversionRef(c);
             blockConvs.add(c);
         }
 
         return blockConvs;
+    }
+
+    /**
+     * Reject conversions that a block refers to but that are missing or degenerate.
+     */
+    private void validateConversionRef(Conversion conversion) {
+        if (conversion == null) {
+            throw new IllegalStateException(
+                    "MarginalTreeSlow encountered a missing conversion referenced by block " + block.getID());
+        }
+
+        if (!conversion.isValid()) {
+            throw new IllegalStateException("MarginalTreeSlow encountered invalid conversion " + conversion.getID()
+                    + " referenced by block " + block.getID());
+        }
     }
 
     /**
