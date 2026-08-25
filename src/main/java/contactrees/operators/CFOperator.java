@@ -15,7 +15,7 @@ public abstract class CFOperator extends ConversionCreationOperator {
 
     public Input<Boolean> gibbsSampleBlockMovesInput = new Input<Boolean>("gibbsSampleBlockMoves",
             "Sample block-moves via added conversions using Gibbs sampling ().",
-            Boolean.FALSE);
+            false);
 
 
     /**
@@ -56,6 +56,8 @@ public abstract class CFOperator extends ConversionCreationOperator {
 
             node = node.getParent();
         }
+
+        assert assertAllConversionsValid("after collapsing attachments");
 
         // Remove degenerated conversions
         double L = 2.0 * (srcNode.getParent().getHeight() - destTime);
@@ -189,6 +191,13 @@ public abstract class CFOperator extends ConversionCreationOperator {
         return logP;
     }
 
+    protected boolean assertAllConversionsValid(String phase) {
+        for (Conversion conv : acg.getConversions()) {
+            assert conv.isValid() : "Invalid conversion during " + phase + ": id=" + conv.getID();
+        }
+        return true;
+    }
+    
     double maybeMoveConversion(Conversion conv, Node node, Node srcNode) {
         double logP = 0.0;
         if (conv.getNode1() == node) {

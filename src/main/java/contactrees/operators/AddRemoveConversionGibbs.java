@@ -32,7 +32,7 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
             Conversion conv = chooseConversion();
 
             // Calculate HGF
-            logHGF += getConversionProb(conv);
+            logHGF += getConversionLogProb(conv);
             logHGF -= Math.log(1.0/acg.getConvCount());
 
             // Remove conversion
@@ -72,7 +72,7 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
      * @param conv conversion
      * @return log of proposal density
      */
-    public double getConversionProb(Conversion conv) {
+    public double getConversionLogProb(Conversion conv) {
         double logP = 0;
         logP = getEdgeAttachmentProb(conv);
 
@@ -107,7 +107,7 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
                 return Double.NEGATIVE_INFINITY;
 
             // Calculate HGF
-            logHGF += getConversionProb(conv);
+            logHGF += getConversionLogProb(conv);
             logHGF -= Math.log(1.0/acg.getConvCount());
             assert acg.getConvCount() == 1;
 
