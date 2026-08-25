@@ -114,7 +114,7 @@ public class MarginalNode extends Node {
     }
 
     public boolean equalsNode(Node node) {
-        assert node.getID() == getID();
+        assert node.getID().equals(getID());
         if (node.getHeight() != height) return false;
 //        if (node.getLength() != getLength()) return false;
         if (!node.isLeaf()) {
