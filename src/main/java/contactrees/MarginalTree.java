@@ -12,6 +12,7 @@ import beast.base.evolution.branchratemodel.BranchRateModel;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import contactrees.CFEventList.Event;
+import contactrees.CFEventList.EventType;
 
 
 /**
@@ -229,7 +230,7 @@ public class MarginalTree extends Tree {
 
             // Process all conversion below the next CF-event
             while (iConv < convs.size() &&
-                    (event.node.isRoot() || convs.get(iConv).height < cfEvents.get(iEvent + 1).getHeight())) {
+                    (event.node.isRoot() || isBelowNextCFEvent(convs.get(iConv), cfEvents.get(iEvent + 1)))) {
 
                 Conversion conv = convs.get(iConv++);
                 Node node1 = conv.getNode1();
@@ -273,6 +274,29 @@ public class MarginalTree extends Tree {
 //        block.updatedMarginalTree();
 //        lastBlockState = block.toString();
 
+    }
+
+    /**
+     * Decide whether a conversion should still be processed before the next CF event.
+     *
+     * A conversion exactly at the height of the next CF event only belongs below that event
+     * if the event is the coalescence of one of the conversion's own lineages.
+     */
+    private boolean isBelowNextCFEvent(Conversion conv, Event nextEvent) {
+        double convHeight = conv.getHeight();
+        double nextHeight = nextEvent.getHeight();
+
+        if (convHeight < nextHeight)
+            return true;
+
+        if (convHeight > nextHeight)
+            return false;
+
+        if (nextEvent.getType() != EventType.COALESCENCE)
+            return false;
+
+        Node nextNode = nextEvent.getNode();
+        return conv.getNode1().getParent() == nextNode || conv.getNode2().getParent() == nextNode;
     }
 
     public MarginalNode registerLeafNode(Node node) {
