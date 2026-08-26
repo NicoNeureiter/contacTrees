@@ -16,6 +16,8 @@
  */
 package contactrees.operators;
 
+import java.text.DecimalFormat;
+
 import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
@@ -31,6 +33,17 @@ public class CFSubtreeSlide extends CFOperator {
     public Input<Double> scaleFactorInput = new Input<>("scaleFactor",
             "Node height will be scaled by a factor between [scaleFactor,1/scaleFactor].",
             0.8);
+    public Input<Boolean> optimiseInput = new Input<>("optimise",
+            "Automatically adjust the scale factor to achieve a good acceptance rate.",
+            true);
+
+    protected double scaleFactor;
+
+    @Override
+    public void initAndValidate() {
+        super.initAndValidate();
+        scaleFactor = scaleFactorInput.get();
+    }
 
     @Override
     public double proposal() {
@@ -44,7 +57,7 @@ public class CFSubtreeSlide extends CFOperator {
         Node srcNodeP = srcNode.getParent();
         Node srcNodeS = getSibling(srcNode);
 
-        double fMin = Math.min(scaleFactorInput.get(), 1.0 / scaleFactorInput.get());
+        double fMin = Math.min(scaleFactor, 1.0 / scaleFactor);
         double f = fMin + Randomizer.nextDouble()*(1.0/fMin - fMin);
         logHGF += -Math.log(f);
 
@@ -107,5 +120,45 @@ public class CFSubtreeSlide extends CFOperator {
         else
             return parent;
     }
-    
+
+    /**
+     * automatic parameter tuning *
+     */
+    @Override
+    public void optimize(final double logAlpha) {
+        if (optimiseInput.get()) {
+            double delta = calcDelta(logAlpha);
+            delta += Math.log(scaleFactor);
+            setCoercableParameterValue(Math.exp(delta));
+        }
+    }
+
+    @Override
+    public double getCoercableParameterValue() {
+        return scaleFactor;
+    }
+
+    @Override
+    public void setCoercableParameterValue(final double value) {
+        // Only values in (0,1) are meaningful: the proposal is symmetric under f <-> 1/f.
+        scaleFactor = Math.max(Math.min(value, 1.0 - 1e-8), 1e-8);
+    }
+
+    @Override
+    public String getPerformanceSuggestion() {
+        final double prob = m_nNrAccepted / (m_nNrAccepted + m_nNrRejected + 0.0);
+        final double targetProb = getTargetAcceptanceProbability();
+
+        double ratio = prob / targetProb;
+        if (ratio > 2.0) ratio = 2.0;
+        if (ratio < 0.5) ratio = 0.5;
+
+        final double sf = Math.pow(scaleFactor, ratio);
+
+        final DecimalFormat formatter = new DecimalFormat("#.###");
+        if (prob < 0.10 || prob > 0.40) {
+            return "Try setting scaleFactor to about " + formatter.format(sf);
+        } else return "";
+    }
+
 }
