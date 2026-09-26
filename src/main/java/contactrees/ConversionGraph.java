@@ -322,6 +322,15 @@ public class ConversionGraph extends Tree {
         else
             super.assignFrom(other);
 
+        syncAfterClonalFrameAssignment(other);
+    }
+
+    /**
+     * Adopt the other graph's conversions and discard anything cached off the clonal frame.
+     * The CF events are invalidated whatever the source type: assigning a plain tree replaces
+     * the clonal frame too, so events cached from the previous one no longer describe it.
+     */
+    private void syncAfterClonalFrameAssignment(StateNode other) {
         if (other instanceof ConversionGraph) {
             ConversionGraph acg = (ConversionGraph)other;
 
@@ -335,12 +344,12 @@ public class ConversionGraph extends Tree {
                 convCopy.setNode2(m_nodes[conv.getNode2().getNr()]);
                 convs.convs.put(convCopy.getID(), convCopy);
             }
-
-            if (cfEventList == null)
-                cfEventList = new CFEventList(this);
-            else
-                cfEventList.makeDirty();
         }
+
+        if (cfEventList == null)
+            cfEventList = new CFEventList(this);
+        else
+            cfEventList.makeDirty();
 
 //        nodeCount = m_nodes.length;
 //        initArrays();
@@ -361,6 +370,16 @@ public class ConversionGraph extends Tree {
     @Override
     public void assignFromFragile(StateNode other) {
         generalAssignFrom(other, true);
+    }
+
+    /**
+     * StateNodeInitialisers (e.g. ClusterTree) push their starting tree in through this one,
+     * so it has to invalidate the CF events like the other assignFrom variants do.
+     */
+    @Override
+    public void assignFromWithoutID(StateNode other) {
+        super.assignFromWithoutID(other);
+        syncAfterClonalFrameAssignment(other);
     }
 
     /*

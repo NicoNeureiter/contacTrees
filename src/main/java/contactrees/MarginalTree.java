@@ -321,8 +321,10 @@ public class MarginalTree extends Tree {
         MarginalNode newLeft = activeCFlineages.get(left.getNr());
         MarginalNode newRight = activeCFlineages.get(right.getNr());
 
-        ensureBinaryMergeCapacity(nodeNr, newLeft, newRight,
-            "coalescence at node " + node.getNr() + " height=" + height);
+        if (nodeNr >= m_nodes.length) {
+            throw binaryMergeCapacityError(nodeNr, newLeft, newRight,
+                "coalescence at node " + node.getNr() + " height=" + height);
+        }
 
         // Take the old marginal node from the given index
         MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
@@ -365,9 +367,11 @@ public class MarginalTree extends Tree {
         MarginalNode marginalLeft = activeCFlineages.get(left.getNr());
         MarginalNode marginalRight = activeCFlineages.get(right.getNr());
 
-        ensureBinaryMergeCapacity(nodeNr, marginalLeft, marginalRight,
-            "conversion " + conv.getID() + " at height=" + height
-                + " between nodes " + left.getNr() + " and " + right.getNr());
+        if (nodeNr >= m_nodes.length) {
+            throw binaryMergeCapacityError(nodeNr, marginalLeft, marginalRight,
+                "conversion " + conv.getID() + " at height=" + height
+                    + " between nodes " + left.getNr() + " and " + right.getNr());
+        }
 
         // Take the old marginal node from the given index
         MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
@@ -402,17 +406,15 @@ public class MarginalTree extends Tree {
     }
 
     /**
-     * Fail with a descriptive error when a merge would write past the end of the node array,
-     * instead of letting it surface as an ArrayIndexOutOfBoundsException.
+     * Build a descriptive error for a merge that would write past the end of the node array,
+     * instead of letting it surface as an ArrayIndexOutOfBoundsException. Callers check the
+     * capacity themselves so this (and the context string) is only ever built on the failure
+     * path, not on every registerNode() call.
      */
-    private void ensureBinaryMergeCapacity(int nodeNr, MarginalNode left, MarginalNode right, String context) {
-        if (nodeNr < m_nodes.length) {
-            return;
-        }
-
+    private IllegalStateException binaryMergeCapacityError(int nodeNr, MarginalNode left, MarginalNode right, String context) {
         String leftId = left == null ? "null" : Integer.toString(left.getNr());
         String rightId = right == null ? "null" : Integer.toString(right.getNr());
-        throw new IllegalStateException("MarginalTree exceeded node capacity while registering " + context
+        return new IllegalStateException("MarginalTree exceeded node capacity while registering " + context
                 + "; nodeNr=" + nodeNr + ", capacity=" + m_nodes.length
                 + ", leftMarginal=" + leftId + ", rightMarginal=" + rightId
                 + ", sameLineage=" + (left != null && left == right));

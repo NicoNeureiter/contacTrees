@@ -70,6 +70,16 @@
             <version>${beast.version}</version>
         </dependency>
 
+        <!-- BEASTLabs: provides ConstrainedClusterTree, which CalibratedClusterTree extends.
+             Not bundled in lib/ (see src/assembly/beast-package.xml) - it's a separate BEAST
+             package the analysis XML declares as required, not shipped with contacTrees. -->
+        <dependency>
+            <groupId>io.github.beast2-dev</groupId>
+            <artifactId>beast-labs</artifactId>
+            <version>2.1.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- BEAGLE -->
         <dependency>
             <groupId>io.github.beagle-dev</groupId>

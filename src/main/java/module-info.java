@@ -2,6 +2,7 @@ open module contactrees {
     requires beast.pkgmgmt;
     requires beast.base;
     requires beast.fx;
+    requires beast.labs;
 
     requires com.google.common;
     requires org.antlr.antlr4.runtime;
@@ -60,6 +61,7 @@ open module contactrees {
         contactrees.operators.GibbsSampleMovesPerConversion,
         contactrees.operators.ResampleBorrowings,
         contactrees.RandomACG,
+        contactrees.util.CalibratedClusterTree,
         contactrees.test.SimulatorOperator,
         contactrees.test.StationarityTestSchedule;
 }
