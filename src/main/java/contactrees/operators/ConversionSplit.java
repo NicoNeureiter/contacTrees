@@ -29,7 +29,7 @@ public class ConversionSplit extends ConversionCreationOperator {
             );
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
 
         if (Randomizer.nextBoolean())
             return splitProposal();

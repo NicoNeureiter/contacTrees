@@ -13,7 +13,7 @@ public class AddRemoveConversion extends ConversionCreationOperator {
     public AddRemoveConversion() { }
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
         double logHGF = 0;
 
         if (Randomizer.nextBoolean()) {

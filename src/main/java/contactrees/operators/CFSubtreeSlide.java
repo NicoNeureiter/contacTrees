@@ -46,7 +46,7 @@ public class CFSubtreeSlide extends CFOperator {
     }
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
 
         double logHGF = 0.0;
         double logHalf = Math.log(0.5);

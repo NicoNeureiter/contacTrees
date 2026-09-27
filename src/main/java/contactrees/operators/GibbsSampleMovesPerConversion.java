@@ -24,7 +24,7 @@ public class GibbsSampleMovesPerConversion extends BorrowingOperator {
     protected List<MarginalTree> marginalTrees;
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
         double logHGF = 0;
 
         if (acg.getConvCount() == 0)

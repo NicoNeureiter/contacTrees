@@ -30,7 +30,7 @@ public class CFWilsonBalding extends CFOperator {
     }
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
         // Determine whether we can apply this operator:
         if (acg.getLeafNodeCount()<3)
             return Double.NEGATIVE_INFINITY;

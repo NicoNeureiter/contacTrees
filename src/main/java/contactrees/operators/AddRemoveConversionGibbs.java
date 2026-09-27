@@ -15,7 +15,7 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
     boolean activateSanityChecks = false;
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
         double logHGF = 0;
 
         if (Randomizer.nextBoolean()) {

@@ -25,7 +25,7 @@ public class ConvertedEdgeSlide extends ACGOperator {
     }
     
     @Override
-    public double proposal() {
+    protected double doProposal() {
         
         double logHR = 0.0;
         

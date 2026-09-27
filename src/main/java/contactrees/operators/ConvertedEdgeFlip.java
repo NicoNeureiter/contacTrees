@@ -12,7 +12,7 @@ import beast.base.evolution.tree.Node;
 public class ConvertedEdgeFlip extends ACGOperator {
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
 
         if (acg.getConvCount()==0)
             return Double.NEGATIVE_INFINITY;

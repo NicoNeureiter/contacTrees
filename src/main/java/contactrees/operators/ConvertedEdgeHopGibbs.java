@@ -32,7 +32,7 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
     public ConvertedEdgeHopGibbs() { }
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
         double logHGF = 0.;
 
         if (acg.getConvCount() == 0)
@@ -40,7 +40,6 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
 
         for (TreeLikelihood tLH : treeLHsInput.get()) {
             tLH.store();
-            ((MarginalTree) tLH.treeInput.get()).store();
         }
 
         // Select recombination at random
@@ -109,7 +108,7 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
 
         for (TreeLikelihood tLH : treeLHsInput.get()) {
             tLH.restore();
-            ((MarginalTree) tLH.treeInput.get()).restore();
+            ((MarginalTree) tLH.treeInput.get()).refresh();
         }
 
         return logHGF;

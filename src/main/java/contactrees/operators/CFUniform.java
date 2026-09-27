@@ -20,7 +20,7 @@ public class CFUniform extends CFOperator {
             "Root height proposal parameter.", 0.8);
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
 
         double logHGF = 0.0;
 

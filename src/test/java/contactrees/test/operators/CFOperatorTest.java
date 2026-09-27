@@ -64,7 +64,7 @@ public class CFOperatorTest extends ContactreesTest {
 
 	public class CollapseExpandOperator extends CFOperator {
 		@Override
-		public double proposal() {
+		protected double doProposal() {
 			double logHGF = 0.0;
 			
 			int nConvs = acg.getConvCount();
@@ -105,7 +105,7 @@ public class CFOperatorTest extends ContactreesTest {
         boolean checkedBorrowingState = false;
 
         @Override
-        public double proposal() {
+        protected double doProposal() {
             return collapseConversions(node1, node2, 0.2);
         }
 

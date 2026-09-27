@@ -17,7 +17,7 @@ public class CFSubtreeExchange extends CFOperator {
     int count = 0;
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
         double logHGF = 0.0;
 
         if (acg.getLeafNodeCount()<3)

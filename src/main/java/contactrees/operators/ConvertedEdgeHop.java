@@ -17,7 +17,7 @@ public class ConvertedEdgeHop extends ACGOperator {
     public ConvertedEdgeHop() { }
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
 
         if (acg.getConvCount() == 0)
             return Double.NEGATIVE_INFINITY;

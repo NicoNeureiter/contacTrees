@@ -28,7 +28,7 @@ public class CFConversionSwap extends CFOperator {
     }
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
         double logHGF = 0.0;
 
         // Determine whether we can apply this operator:

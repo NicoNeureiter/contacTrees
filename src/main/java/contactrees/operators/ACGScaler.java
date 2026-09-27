@@ -67,7 +67,7 @@ public class ACGScaler extends ACGOperator {
     }
 
     @Override
-    public double proposal() {
+    protected double doProposal() {
 
         // Keep track of number of positively scaled elements minus
         // negatively scaled elements.
