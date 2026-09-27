@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import beast.base.core.Input;
+import beast.base.core.ProgramStatus;
 import beast.base.inference.CalculationNode;
 import beast.base.inference.StateNode;
 import beast.base.spec.evolution.branchratemodel.Base;
@@ -41,12 +42,15 @@ public class MarginalTree extends Tree {
             "frozenTaxa",
             "Taxa for which the last branch should have a fixed branch rate of 0.",
             new ArrayList<>());
+    public Input<Integer> validationLevelInput = new Input<>("validationLevel",
+            "0 = off; 1 = check this marginal tree against a fresh rebuild after every proposal.", 0);
 
     public ConversionGraph acg;
     public Block block;
     protected BranchRateModel branchRateModel;
     protected boolean hasBranchRates;
     protected ArrayList<String> frozenTaxa;
+    protected int validationLevel;
 
     protected boolean outdated;
     protected boolean manuallyUpdated = false;
@@ -56,10 +60,35 @@ public class MarginalTree extends Tree {
     protected int nextNonLeafNr;
     ArrayList<MarginalNode> activeCFlineages = new ArrayList<>();
 
-    protected boolean customdebug = false;
-
     public void setManuallyUpdated() {
         manuallyUpdated = true;
+    }
+
+    boolean isInBeauti() {
+        return ProgramStatus.name.equals("BEAUti");
+    }
+
+    // Diagnostics for single-threaded benchmark runs; not synchronized.
+    public static long nRecalculate = 0;
+    public static long nFilthyNodesMarked = 0;
+    public static long nRestore = 0;
+    public static long nOutdatedChecks = 0;
+    public static long nOutdatedTrue = 0;
+
+    public static void resetCounters() {
+        nRecalculate = 0;
+        nFilthyNodesMarked = 0;
+        nRestore = 0;
+        nOutdatedChecks = 0;
+        nOutdatedTrue = 0;
+    }
+
+    public static String counterSummary() {
+        return "MarginalTree counters: recalculate=" + nRecalculate
+                + ", filthyNodesMarked=" + nFilthyNodesMarked
+                + ", restore=" + nRestore
+                + ", outdatedChecks=" + nOutdatedChecks
+                + ", outdatedTrue=" + nOutdatedTrue;
     }
 
     public void setBranchRateModel(Base brm) {
@@ -72,8 +101,11 @@ public class MarginalTree extends Tree {
     public void initAndValidate() {
 
         acg = networkInput.get();
+        if (!isInBeauti())
+            acg.registerMarginalTree(this);
         block = blockInput.get();
         frozenTaxa = frozenTaxaInput.get();
+        validationLevel = validationLevelInput.get();
 
         branchRateModel = branchRateModelInput.get();
 //        hasBranchRates = !(branchRateModel instanceof StrictClockModel);
@@ -109,14 +141,66 @@ public class MarginalTree extends Tree {
 
 
         } else {
-            if (customdebug) {
-                String oldNewick = root.toNewick();
-                recalculate();
-                String newNewick = root.toNewick();
-                assert oldNewick == newNewick;
-            }
             return false;
         }
+    }
+
+    public boolean isValidating() {
+        return validationLevel > 0;
+    }
+
+    /**
+     * Verify that this marginal tree matches a rebuild from the current ACG and block state.
+     * A mismatch means the tree was stale, i.e. the dirty-tracking logic failed to invalidate it.
+     *
+     * Calls {@link #recalculate()}, which mutates the tree into the correct state as a side
+     * effect; that self-healing is intentional, not a bug.
+     *
+     * @param phase description of the calling context, used in the failure message
+     */
+    public void assertConsistent(String phase) {
+        int n = getNodeCount();
+        String oldNewick = getRoot().toSortedNewick(new int[1], false);
+        double[] oldHeights = new double[n];
+        double[] oldTimeLengths = new double[n];
+        for (int i = 0; i < n; i++) {
+            Node node = getNode(i);
+            oldHeights[i] = node.getHeight();
+            oldTimeLengths[i] = ((MarginalNode) node).timeLength;
+        }
+
+        recalculate();
+
+        String newNewick = getRoot().toSortedNewick(new int[1], false);
+        if (!oldNewick.equals(newNewick)) {
+            throw new IllegalStateException("MarginalTree.assertConsistent(" + phase + "): stale tree detected"
+                    + " for marginal tree " + getID() + " (block " + block.getID() + "):"
+                    + " sorted Newick mismatch."
+                    + " before=" + truncate(oldNewick) + " after=" + truncate(newNewick));
+        }
+
+        for (int i = 0; i < n; i++) {
+            Node node = getNode(i);
+            double newHeight = node.getHeight();
+            if (Math.abs(oldHeights[i] - newHeight) > 1e-12) {
+                throw new IllegalStateException("MarginalTree.assertConsistent(" + phase + "): stale tree detected"
+                        + " for marginal tree " + getID() + " (block " + block.getID() + "):"
+                        + " height mismatch at node " + i
+                        + " before=" + oldHeights[i] + " after=" + newHeight);
+            }
+
+            double newTimeLength = ((MarginalNode) node).timeLength;
+            if (Math.abs(oldTimeLengths[i] - newTimeLength) > 1e-12) {
+                throw new IllegalStateException("MarginalTree.assertConsistent(" + phase + "): stale tree detected"
+                        + " for marginal tree " + getID() + " (block " + block.getID() + "):"
+                        + " timeLength mismatch at node " + i
+                        + " before=" + oldTimeLengths[i] + " after=" + newTimeLength);
+            }
+        }
+    }
+
+    private static String truncate(String s) {
+        return s.length() > 500 ? s.substring(0, 500) + "..." : s;
     }
 
     public void makeOutdated() {
@@ -131,17 +215,17 @@ public class MarginalTree extends Tree {
     }
 
     public boolean checkOutdated() {
-        if (acg.somethingIsDirty())
-            return true;
+        nOutdatedChecks++;
 
-        if (block.isAheadOfMarginalTree())
-            return true;
+        boolean result = acg.somethingIsDirty()
+                || block.isAheadOfMarginalTree()
+                || (branchRateModel instanceof CalculationNode brm && brm.somethingIsDirty())
+                || outdated;
 
-        if (branchRateModel instanceof CalculationNode brm && brm.somethingIsDirty()) {
-            return true;
-        }
+        if (result)
+            nOutdatedTrue++;
 
-        return outdated;
+        return result;
     }
 
 
@@ -158,8 +242,8 @@ public class MarginalTree extends Tree {
     }
 
     public void recalculate() {
+        nRecalculate++;
         startEditing(null);
-        if (customdebug) System.out.print("*");
 
         List<Event> cfEvents = acg.getCFEvents();
         activeCFlineages.replaceAll((oldNode) -> {
@@ -305,6 +389,7 @@ public class MarginalTree extends Tree {
 //        else if (marginalNode.getLength() != node.getLength()) marginalNode.makeDirty(Tree.IS_FILTHY);
         if ((!marginalNode.equalsNode(node))) {
             marginalNode.setHeight(node.getHeight());
+            nFilthyNodesMarked++;
             marginalNode.makeDirty(Tree.IS_FILTHY);
         }
         marginalNode.lastEventHeight = node.getHeight();
@@ -332,18 +417,29 @@ public class MarginalTree extends Tree {
         Node oldRight = marginalNode.getRight();
 
         // Mark the node as filthy if one of the children changed
-        if (oldLeft.getNr() != newLeft.getNr())
+        if (oldLeft.getNr() != newLeft.getNr()) {
+            nFilthyNodesMarked++;
             marginalNode.makeDirty(Tree.IS_FILTHY);
+        }
 
-        if (oldRight.getNr() != newRight.getNr())
+        if (oldRight.getNr() != newRight.getNr()) {
+            nFilthyNodesMarked++;
             marginalNode.makeDirty(Tree.IS_FILTHY);
+        }
 
         // Mark the node and children as dirty if the height changed
         if (marginalNode.getHeight() != node.getHeight()) {
+            nFilthyNodesMarked++;
             marginalNode.makeDirty(Tree.IS_FILTHY);
             List<Node> children = marginalNode.getChildren();
-            if (children.size() > 0) children.get(0).makeDirty(Tree.IS_FILTHY);
-            if (children.size() > 1) children.get(1).makeDirty(Tree.IS_FILTHY);
+            if (children.size() > 0) {
+                nFilthyNodesMarked++;
+                children.get(0).makeDirty(Tree.IS_FILTHY);
+            }
+            if (children.size() > 1) {
+                nFilthyNodesMarked++;
+                children.get(1).makeDirty(Tree.IS_FILTHY);
+            }
         }
 
         // Update the marginal node and meta information
@@ -377,17 +473,28 @@ public class MarginalTree extends Tree {
         MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
 
         // Mark the node as filthy if one of the children changed
-        if (marginalNode.getLeft().getNr() != marginalLeft.getNr())
+        if (marginalNode.getLeft().getNr() != marginalLeft.getNr()) {
+            nFilthyNodesMarked++;
             marginalNode.makeDirty(Tree.IS_FILTHY);
-        if (marginalNode.getRight().getNr() != marginalRight.getNr())
+        }
+        if (marginalNode.getRight().getNr() != marginalRight.getNr()) {
+            nFilthyNodesMarked++;
             marginalNode.makeDirty(Tree.IS_FILTHY);
+        }
 
         // Mark the node and children as dirty if the height changed
         if (marginalNode.getHeight() != conv.getHeight()) {
+            nFilthyNodesMarked++;
             marginalNode.makeDirty(Tree.IS_FILTHY);
             List<Node> children = marginalNode.getChildren();
-            if (children.size() > 0) children.get(0).makeDirty(Tree.IS_FILTHY);
-            if (children.size() > 1) children.get(1).makeDirty(Tree.IS_FILTHY);
+            if (children.size() > 0) {
+                nFilthyNodesMarked++;
+                children.get(0).makeDirty(Tree.IS_FILTHY);
+            }
+            if (children.size() > 1) {
+                nFilthyNodesMarked++;
+                children.get(1).makeDirty(Tree.IS_FILTHY);
+            }
         }
 
         marginalNode.update(height, marginalLeft, marginalRight);
@@ -464,10 +571,20 @@ public class MarginalTree extends Tree {
 
     @Override
     public void restore() {
+        nRestore++;
+        refresh();
+    }
+
+    /**
+     * Rebuild this marginal tree against the current ACG and block state.
+     *
+     * This is NOT an undo: use it from operators that mutate the ACG mid-proposal and need the
+     * derived tree brought up to date.
+     */
+    public void refresh() {
         postCache = null;
 
         manuallyUpdated = false;
-        if (customdebug) System.out.print("r");
         recalculate();
 //        setEverythingDirty(false);
     }

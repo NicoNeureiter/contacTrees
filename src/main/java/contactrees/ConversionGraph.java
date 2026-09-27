@@ -5,6 +5,7 @@ package contactrees;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +52,14 @@ public class ConversionGraph extends Tree {
      * Clonal frame event list.
      */
     protected CFEventList cfEventList;
+
+    /**
+     * Marginal trees derived from this ACG, one per block.
+     *
+     * Deliberately not an Input: marginal trees consume the ACG, so an Input here would
+     * invert the calculation-node ordering. They register themselves instead.
+     */
+    private final List<MarginalTree> marginalTrees = new ArrayList<>();
 
     @Override
     public void initAndValidate() {
@@ -163,6 +172,27 @@ public class ConversionGraph extends Tree {
     public CFEventList getCFEventList() {
     	cfEventList.updateEvents();
         return cfEventList;
+    }
+
+    /**
+     * Register a marginal tree derived from this ACG. Idempotent.
+     *
+     * Marginal trees register themselves in initAndValidate, which is why this is not an
+     * Input: an Input would make the trees inputs of the ACG they consume.
+     */
+    public void registerMarginalTree(MarginalTree marginalTree) {
+        for (MarginalTree registered : marginalTrees) {
+            if (registered == marginalTree)
+                return;
+        }
+        marginalTrees.add(marginalTree);
+    }
+
+    /**
+     * @return the marginal trees derived from this ACG (one per block).
+     */
+    public List<MarginalTree> getMarginalTrees() {
+        return Collections.unmodifiableList(marginalTrees);
     }
 
     /**

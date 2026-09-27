@@ -7,6 +7,7 @@ import beast.base.inference.Operator;
 import beast.base.evolution.tree.Node;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
+import contactrees.MarginalTree;
 
 /**
  * Abstract class of operators which act on the ConversionGraph state.
@@ -26,6 +27,21 @@ public abstract class ACGOperator extends Operator {
     public void initAndValidate() {
         acg = acgInput.get();
     }
+
+    @Override
+    public final double proposal() {
+        double logHGF = doProposal();
+        if (logHGF > Double.NEGATIVE_INFINITY) {
+            for (MarginalTree marginalTree : acg.getMarginalTrees()) {
+                if (marginalTree.isValidating())
+                    marginalTree.assertConsistent(getID());
+            }
+        }
+        return logHGF;
+    }
+
+    /** Perform the actual proposal. See {@link #proposal()}. */
+    protected abstract double doProposal();
 
     /**
      * Return sister of node.
