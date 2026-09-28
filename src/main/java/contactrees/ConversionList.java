@@ -3,6 +3,8 @@
  */
 package contactrees;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
@@ -13,7 +15,6 @@ import java.util.Set;
 
 import javax.naming.directory.InvalidAttributesException;
 
-import beast.base.util.Randomizer;
 import contactrees.util.Util;
 
 /**
@@ -29,6 +30,17 @@ public class ConversionList implements Iterable<Conversion> {
     Deque<Conversion> trashCan;
     static int MAX_TRASH_CAN_SIZE = 100;
 
+    /** Dense, run-local slot index (see {@link Conversion#getSlot()}) for O(1) access by callers
+     *  that already hold a Conversion object; never serialized. */
+    private final ArrayList<Conversion> bySlot = new ArrayList<>();
+    private final Deque<Integer> freeSlots = new ArrayDeque<>();
+
+    /** Monotonically increasing, never reused for the life of this ConversionGraph -- closes a
+     *  silent id-rebind hazard the old random-then-escalate scheme had (it only checked
+     *  collisions against LIVE keys, so a Block holding a stale id could, after enough churn, be
+     *  silently rebound to an unrelated conversion instead of failing loudly). */
+    protected int nextConversionId = 1;
+
     public ConversionList(ConversionGraph acg) {
         this.convs = new HashMap<>();
         this.acg = acg;
@@ -36,15 +48,48 @@ public class ConversionList implements Iterable<Conversion> {
     }
 
     /**
-     * Find a free hash-code/conversion ID.
+     * Find a free conversion ID.
      * @return The chosen conversion ID.
      */
     private Integer getFreeKey() {
-        int key = Randomizer.nextInt(10000);
-        while (convs.containsKey(key)) {
-            key = Randomizer.nextInt(Integer.MAX_VALUE);
+        return nextConversionId++;
+    }
+
+    /**
+     * Claim a slot for a conversion that doesn't have one yet: reuse a freed slot if one is
+     * available, otherwise extend the dense array.
+     */
+    private int allocateSlot(Conversion conv) {
+        int slot;
+        if (!freeSlots.isEmpty()) {
+            slot = freeSlots.pop();
+            bySlot.set(slot, conv);
+        } else {
+            slot = bySlot.size();
+            bySlot.add(conv);
         }
-        return key;
+        conv.setSlot(slot);
+        return slot;
+    }
+
+    /** Release a conversion's slot back to the free list. No-op if it has none. */
+    private void releaseSlot(Conversion conv) {
+        int slot = conv.getSlot();
+        if (slot < 0)
+            return;
+        bySlot.set(slot, null);
+        freeSlots.push(slot);
+        conv.setSlot(-1);
+    }
+
+    /**
+     * Obtain the conversion at the given slot -- O(1) dense array access, for callers that
+     * already hold a Conversion object (and hence its slot) rather than a bare id.
+     * @param slot
+     * @return The requested conversion.
+     */
+    public Conversion getBySlot(int slot) {
+        return bySlot.get(slot);
     }
 
     /**
@@ -85,13 +130,21 @@ public class ConversionList implements Iterable<Conversion> {
     public void add(Conversion conv) {
         startEditing();
 
-        if (conv.id == 0)
+        if (conv.id == 0) {
             conv.setID(getFreeKey());
+        } else if (conv.id >= nextConversionId) {
+            // A caller assigned an explicit id (Newick parsing, test fixtures, ...), bypassing
+            // getFreeKey() entirely -- push the counter past it so a later auto-generated id can
+            // never collide with it.
+            nextConversionId = conv.id + 1;
+        }
 
         if (convs.containsKey(conv.id))
             throw new RuntimeException("Conversion " + conv.id + " is already in the ConversionList.");
 
         convs.put(conv.id, conv);
+        if (conv.getSlot() < 0)
+            allocateSlot(conv);
         _lastAdded = conv;
     }
 
@@ -109,8 +162,10 @@ public class ConversionList implements Iterable<Conversion> {
         Conversion newConv= getNewOrRecycledConversion(conv.id);
         conv.copyTo(newConv);
 
-        // Assign a new ID and add the copied conversion to the list
+        // Assign a new ID and slot (copyTo copied the original's, which add() would otherwise
+        // keep as-is) and add the copied conversion to the list
         newConv.setID(getFreeKey());
+        newConv.setSlot(-1);
         add(newConv);
 
         return newConv;
@@ -131,8 +186,11 @@ public class ConversionList implements Iterable<Conversion> {
 	 */
 	public void remove(Integer key) {
 		startEditing();
+		Conversion conv = convs.get(key);
+		if (conv != null)
+		    releaseSlot(conv);
 		if (trashCan.size() < MAX_TRASH_CAN_SIZE)
-		    trashCan.add(convs.get(key));
+		    trashCan.add(conv);
 		convs.remove(key);
 	}
 
@@ -187,6 +245,8 @@ public class ConversionList implements Iterable<Conversion> {
 		    trashCan.add(conv);
 		}
 		convs.clear();
+		bySlot.clear();
+		freeSlots.clear();
 	}
 
 	/**
@@ -209,10 +269,27 @@ public class ConversionList implements Iterable<Conversion> {
     }
 
     public void copyTo(ConversionList other) {
+        other.nextConversionId = Math.max(other.nextConversionId, this.nextConversionId);
+
         for (Conversion conv : convs.values()) {
             Conversion convCopy = getNewOrRecycledConversion(conv.getID());
             conv.copyTo(convCopy);
             other.convs.put(convCopy.getID(), convCopy);
+
+            int slot = convCopy.getSlot();
+            while (other.bySlot.size() <= slot)
+                other.bySlot.add(null);
+            other.bySlot.set(slot, convCopy);
+        }
+
+        // Derive the free-slot list from occupancy rather than mirroring this list's free-list
+        // order -- HashMap iteration order isn't meaningful, and this is simpler and just as
+        // correct. (other.bySlot/freeSlots must already be empty here: copyTo() is only ever
+        // called right after other.clear().)
+        other.freeSlots.clear();
+        for (int i = 0; i < other.bySlot.size(); i++) {
+            if (other.bySlot.get(i) == null)
+                other.freeSlots.push(i);
         }
     }
 

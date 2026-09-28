@@ -3,7 +3,10 @@
  */
 package contactrees.operators;
 
+import java.util.List;
+
 import beast.base.core.Input;
+import beast.base.inference.StateNode;
 import beast.base.spec.domain.UnitInterval;
 import beast.base.spec.type.RealScalar;
 import beast.base.util.Randomizer;
@@ -103,6 +106,22 @@ public class ResampleBorrowings extends ACGOperator {
         }
 
         return borrowedCount*Math.log(pMove) + nonborrowedCount*Math.log(1-pMove);
+    }
+
+    /**
+     * Include all block StateNodes in the list of affected state nodes. This does not work
+     * automatically, since blocks are only indirect inputs through the blockSet. Without this,
+     * the Blocks this operator mutates escape MCMC's state sanity check and validateReject()'s
+     * checksum coverage. Mirrors BorrowingOperator.listStateNodes(), which this class doesn't
+     * inherit (it extends ACGOperator directly, not BorrowingOperator).
+     */
+    @Override
+    public List<StateNode> listStateNodes() {
+        final List<StateNode> list = super.listStateNodes();
+        for (Block block : blockSet.getBlocks()) {
+            list.add(block);
+        }
+        return list;
     }
 
 }

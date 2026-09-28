@@ -6,7 +6,9 @@ package contactrees;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.w3c.dom.Node;
 
@@ -22,8 +24,15 @@ import contactrees.util.Util;
 @Description("A block which is affected by a marginal tree and defined through a set of conversions wihtin a network.")
 public class Block extends StateNode {
 
-    // The indices (in the ConversionList) of the conversions affecting this block.
+    // The indices (in the ConversionList) of the conversions affecting this block. Authoritative
+    // and serialized (see toString()/fromXML()) -- this is what actually persists across a
+    // .state resume.
     List<Integer> convIDs, convIDsStored;
+
+    // O(1) mirror of convIDs, maintained in lockstep at every mutation site below, purely for
+    // fast isAffected(). Not serialized, not authoritative -- always rebuildable from convIDs.
+    Set<Integer> convIDSet;
+
     protected boolean aheadOfMTree;
     protected long moveSetVersion = 0;
 
@@ -33,6 +42,7 @@ public class Block extends StateNode {
     public void initAndValidate() {
         convIDs = new ArrayList<Integer>();
         convIDsStored = new ArrayList<>();
+        convIDSet = new HashSet<>();
     }
 
     /**
@@ -46,6 +56,7 @@ public class Block extends StateNode {
         assert !convIDs.contains(conv.getID());
 
         convIDs.add(conv.getID());
+        convIDSet.add(conv.getID());
     }
 
 
@@ -57,6 +68,7 @@ public class Block extends StateNode {
         startEditing(null);
         Integer cID = conv.getID();
         convIDs.remove(cID);
+        convIDSet.remove(cID);
         assert !convIDs.contains(cID);
     }
 
@@ -66,6 +78,7 @@ public class Block extends StateNode {
     public void removeAllMoves() {
         startEditing(null);
         convIDs.clear();
+        convIDSet.clear();
     }
 
     /**
@@ -74,7 +87,7 @@ public class Block extends StateNode {
      * @return "true" iff the block moved over the conversion.
      */
     public boolean isAffected(Conversion conv) {
-        return convIDs.contains(conv.getID());
+        return convIDSet.contains(conv.getID());
     }
 
     public int countMoves() {
@@ -116,6 +129,7 @@ public class Block extends StateNode {
         copy.setID(getID());
         copy.convIDs = Util.deepCopyIntegers(convIDs);
         copy.convIDsStored = Util.deepCopyIntegers(convIDsStored);
+        copy.convIDSet = new HashSet<>(copy.convIDs);
 
         return copy;
     }
@@ -126,6 +140,7 @@ public class Block extends StateNode {
         block.setID(getID());
         block.convIDs = Util.deepCopyIntegers(convIDs);
         block.convIDsStored = Util.deepCopyIntegers(convIDsStored);
+        block.convIDSet = new HashSet<>(block.convIDs);
     }
 
     @Override
@@ -136,6 +151,7 @@ public class Block extends StateNode {
         setID(block.getID());
         convIDs = Util.deepCopyIntegers(block.convIDs);
         convIDsStored = Util.deepCopyIntegers(block.convIDsStored);
+        convIDSet = new HashSet<>(convIDs);
     }
 
     @Override
@@ -151,6 +167,7 @@ public class Block extends StateNode {
         List<Integer> tmp = convIDs;
         convIDs = convIDsStored;
         convIDsStored = tmp;
+        convIDSet = new HashSet<>(convIDs);
 
         // Marginal trees are not stored/restored
         //  => restore leads to out-dated MTree
@@ -214,6 +231,8 @@ public class Block extends StateNode {
                 convIDs.add(Integer.parseInt(convID));
             }
         }
+
+        convIDSet = new HashSet<>(convIDs);
     }
 
     public Block() {

@@ -43,6 +43,16 @@ public class Conversion implements Comparable<Conversion> {
 
     public long getVersion() { return version; }
 
+    /** Dense, run-local index into ConversionList's bySlot array; -1 if unassigned. Bookkeeping
+     *  only, never serialized (meaningless across a restart) -- unlike id, which is. */
+    protected int slot = -1;
+
+    public int getSlot() { return slot; }
+
+    /** Package-private: only ConversionList manages slot assignment. Not a "scientific" edit to
+     *  the conversion (unlike setHeight/setNode1/etc.), so no startEditing() call. */
+    void setSlot(int slot) { this.slot = slot; }
+
     /**
      * Used by ACGAnnotator to keep track of which conversions belong to which
      * ACGs. (The acg reference can't be used, as ACGAnnotator avoids keeping
@@ -80,6 +90,7 @@ public class Conversion implements Comparable<Conversion> {
         newickMetaDataMiddle = null;
         newickMetaDataTop = null;
         version = 0;
+        slot = -1;
     }
 
     /**
@@ -224,6 +235,7 @@ public class Conversion implements Comparable<Conversion> {
         copy.height = height;
         copy.acg = acg;
         copy.version = version;
+        copy.slot = slot;
 
         copy.newickMetaDataBottom = newickMetaDataBottom;
         copy.newickMetaDataMiddle = newickMetaDataMiddle;

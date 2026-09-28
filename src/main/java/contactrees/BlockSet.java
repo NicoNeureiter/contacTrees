@@ -73,6 +73,26 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 
 	}
 
+	/**
+	 * Check that no live Block references a conversion that no longer exists in the ACG.
+	 *
+	 * ConversionGraph.isInvalid() cannot check this itself: ConversionGraph deliberately has no
+	 * reference to BlockSet/Block (see contactrees-block-separation-is-deliberate.md), so this
+	 * cross-object invariant belongs here, on the side that already holds both references.
+	 *
+	 * @return true iff some Block references a conversion id not present in the ACG.
+	 */
+	public boolean isInvalid() {
+		assert acg != null;
+		for (Block block : blocks) {
+			for (int convId : block.getConversionIDs()) {
+				if (acg.getConversions().get(convId) == null)
+					return true;
+			}
+		}
+		return false;
+	}
+
 	public void addBlockMove(Conversion conv, Block block) {
 		block.addMove(conv);
 	}
