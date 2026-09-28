@@ -362,6 +362,62 @@ public class MarginalTreeTest extends ContactreesTest {
         assertFalse(marginalTree.checkOutdated());
     }
 
+    /**
+     * Regression test for a bug found 2026-09-28 via a live posterior-recomputation mismatch
+     * ("Likelihood incorrectly calculated") in a real analysis.
+     *
+     * BorrowingOperator's Gibbs-sampling code (calcLogBorrowingPosterior) calls
+     * marginalTree.recalculate() DIRECTLY, bypassing requiresRecalculation(). That correctly
+     * updates the tree's data, but TreeLikelihood learns about a MarginalTree's dirtiness
+     * ENTIRELY through somethingIsDirty() (the "changed" field) -- it never re-derives
+     * dirtiness itself (see beast.base.spec.evolution.likelihood.TreeLikelihood
+     * .requiresRecalculation(), which returns treeInput.get().somethingIsDirty()). If
+     * requiresRecalculation() later runs (as BEAST's own machinery does, once per proposal)
+     * and checkOutdated() legitimately finds nothing NEW has changed since that direct call,
+     * overwriting "changed" with that fresh (false) result would silently erase the earlier,
+     * still-unconsumed "true" -- and TreeLikelihood would keep reusing a stale cached logP.
+     *
+     * This was always latently present, but was masked before the precise per-block dirty
+     * gating (checkOutdated() comparing version counters) replaced the old, coarse
+     * acg.somethingIsDirty() check, which was unconditionally true for the whole rest of any
+     * proposal that touched the ACG at all -- so it forced somethingIsDirty()=true regardless
+     * of any direct recalculate() call in between.
+     *
+     * accept() (protected, not reachable from this test) is what later clears the signal once
+     * BEAST's own machinery has had a chance to consume it, one proposal cycle at a time.
+     */
+    @Test
+    public void testDirectRecalculateSignalsChangedThroughLaterRequiresRecalculation() throws Exception {
+        List<Block> blocks = blockSet.getBlocks();
+        Block block1 = blocks.get(1);
+
+        MarginalTree marginalTree = new MarginalTree();
+        marginalTree.initByName("network", acg, "block", block1, "nodetype", MarginalNode.class.getName());
+        // recalculate() always sets somethingIsDirty()=true (any recalculation is a potential
+        // real change; only accept() -- unreachable from here, protected -- clears it), so
+        // there is no "clean" baseline to assert here. Go straight to the regression scenario.
+        marginalTree.recalculate();
+
+        // Simulate what BorrowingOperator's Gibbs code does: mutate the block directly, then
+        // call recalculate() directly instead of going through requiresRecalculation().
+        block1.addMove(conv1);
+        marginalTree.recalculate();
+
+        // The direct call must signal a change...
+        assertTrue(marginalTree.somethingIsDirty());
+
+        // ...and that signal must survive a later requiresRecalculation() call that finds
+        // nothing NEW has happened since (checkOutdated() correctly returns false here, since
+        // the direct recalculate() already synced everything) -- this is exactly the call
+        // BEAST's own machinery makes once per proposal, and exactly where the bug was.
+        assertFalse(marginalTree.checkOutdated());
+        marginalTree.requiresRecalculation();
+        assertTrue("A direct recalculate() call must remain visible to TreeLikelihood "
+                + "(via somethingIsDirty()) even after a later requiresRecalculation() finds "
+                + "nothing further changed",
+                marginalTree.somethingIsDirty());
+    }
+
     public boolean equalLikelihood(Tree correctTree, MarginalTree derivedTree) {
         Alignment alignment = getAlignment(correctTree.getLeafNodeCount());
 

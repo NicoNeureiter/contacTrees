@@ -131,7 +131,12 @@ public class MarginalTree extends Tree {
     @Override
     public boolean requiresRecalculation() {
         outdated = checkOutdated();
-        changed = outdated;
+        // OR in, don't overwrite: a direct recalculate() call earlier this proposal (the
+        // Gibbs-sampling code in BorrowingOperator calls it directly, bypassing this method)
+        // may already have set changed=true to signal a real change to TreeLikelihood, which
+        // reads only somethingIsDirty()/changed, never re-derives dirtiness itself. Overwriting
+        // that with a fresh (possibly false) checkOutdated() result here would hide the change.
+        changed = changed || outdated;
 
         if (outdated) {
             recalculate();
@@ -384,6 +389,15 @@ public class MarginalTree extends Tree {
         seenCfVersion = acg.getCFVersion();
         seenConvVersion = acg.getConvVersion();
         seenBlockVersion = block.getMoveSetVersion();
+
+        // Some operators (the Gibbs-sampling borrowing code in BorrowingOperator) call
+        // recalculate() directly, bypassing requiresRecalculation(). somethingIsDirty() is
+        // the ONLY way TreeLikelihood learns this tree changed (its own requiresRecalculation()
+        // reads treeInput.get().somethingIsDirty(), never re-derives it), so a direct call must
+        // still flip it -- otherwise the change is invisible to TreeLikelihood and it silently
+        // keeps a stale cached logP. Always safe: the next requiresRecalculation() call
+        // overwrites this with a fresh checkOutdated() result regardless.
+        changed = true;
 //        block.updatedMarginalTree();
 //        lastBlockState = block.toString();
 
@@ -593,6 +607,9 @@ public class MarginalTree extends Tree {
     protected void accept() {
         super.accept();
         setEverythingDirty(false);
+        // Reset the sticky "changed" signal (see requiresRecalculation()) now that this
+        // whole proposal cycle -- and any TreeLikelihood read of it -- is done.
+        changed = false;
     }
 
     @Override
