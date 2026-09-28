@@ -57,12 +57,11 @@ public class BlockSet extends CalculationNode implements Iterable<Block> {
 
 	@Override
     protected boolean requiresRecalculation() {
-        return true;
-//        for (Block block : this) {
-//            if (block.somethingIsDirty())
-//                return true;
-//        }
-//        return false;
+        for (Block block : this) {
+            if (block.somethingIsDirty())
+                return true;
+        }
+        return false;
     }
 
 	public void removeConversion(Conversion conv) {
