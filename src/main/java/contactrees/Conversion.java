@@ -37,6 +37,12 @@ public class Conversion implements Comparable<Conversion> {
      */
     protected boolean hasStartedEditing = false;
 
+    /** Version stamped from the owning ACG's convVersion counter each time this conversion
+     *  is edited; lets MarginalTree tell whether THIS conversion changed since it last checked. */
+    protected long version = 0;
+
+    public long getVersion() { return version; }
+
     /**
      * Used by ACGAnnotator to keep track of which conversions belong to which
      * ACGs. (The acg reference can't be used, as ACGAnnotator avoids keeping
@@ -73,6 +79,7 @@ public class Conversion implements Comparable<Conversion> {
         newickMetaDataBottom = null;
         newickMetaDataMiddle = null;
         newickMetaDataTop = null;
+        version = 0;
     }
 
     /**
@@ -193,9 +200,8 @@ public class Conversion implements Comparable<Conversion> {
      * Mark ARG statenode as dirty if available.
      */
     public void startEditing() {
-        // TODO: hasStartedEditing = true
         if (acg != null)
-            acg.startEditing(null);
+            version = acg.startEditingConversion();
     }
 
     /**
@@ -217,6 +223,7 @@ public class Conversion implements Comparable<Conversion> {
         copy.node2 = node2;
         copy.height = height;
         copy.acg = acg;
+        copy.version = version;
 
         copy.newickMetaDataBottom = newickMetaDataBottom;
         copy.newickMetaDataMiddle = newickMetaDataMiddle;

@@ -53,6 +53,9 @@ public class MarginalTree extends Tree {
     protected int validationLevel;
 
     protected boolean outdated;
+    protected long seenCfVersion = -1;
+    protected long seenConvVersion = -1;
+    protected long seenBlockVersion = -1;
     protected boolean manuallyUpdated = false;
     protected String lastBlockState;
     protected boolean changed = true;
@@ -217,10 +220,33 @@ public class MarginalTree extends Tree {
     public boolean checkOutdated() {
         nOutdatedChecks++;
 
-        boolean result = acg.somethingIsDirty()
-                || block.isAheadOfMarginalTree()
-                || (branchRateModel instanceof CalculationNode brm && brm.somethingIsDirty())
-                || outdated;
+        boolean result;
+        if (outdated) {
+            result = true;
+        } else if (branchRateModel instanceof CalculationNode brm && brm.somethingIsDirty()) {
+            result = true;
+        } else if (acg.getCFVersion() != seenCfVersion) {
+            result = true;
+        } else if (block.getMoveSetVersion() != seenBlockVersion) {
+            result = true;
+        } else if (acg.getConvVersion() != seenConvVersion) {
+            // Some conversion changed somewhere in the ACG; check precisely whether it was
+            // one of THIS block's own conversions before concluding we're outdated.
+            result = false;
+            for (Conversion conv : getBlockConversions()) {
+                if (conv.getVersion() > seenConvVersion) {
+                    result = true;
+                    break;
+                }
+            }
+            if (!result) {
+                // Nothing relevant changed -- re-baseline so we don't re-scan on every
+                // subsequent check until convVersion moves again.
+                seenConvVersion = acg.getConvVersion();
+            }
+        } else {
+            result = false;
+        }
 
         if (result)
             nOutdatedTrue++;
@@ -355,6 +381,9 @@ public class MarginalTree extends Tree {
         }
 
         outdated = false;
+        seenCfVersion = acg.getCFVersion();
+        seenConvVersion = acg.getConvVersion();
+        seenBlockVersion = block.getMoveSetVersion();
 //        block.updatedMarginalTree();
 //        lastBlockState = block.toString();
 

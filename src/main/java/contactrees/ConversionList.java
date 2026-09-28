@@ -230,7 +230,7 @@ public class ConversionList implements Iterable<Conversion> {
      */
     public void startEditing() {
         if (acg != null)
-            acg.startEditing(null);
+            acg.startEditingConversion();
     }
 
     /**

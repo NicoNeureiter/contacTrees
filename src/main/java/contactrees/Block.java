@@ -25,6 +25,9 @@ public class Block extends StateNode {
     // The indices (in the ConversionList) of the conversions affecting this block.
     List<Integer> convIDs, convIDsStored;
     protected boolean aheadOfMTree;
+    protected long moveSetVersion = 0;
+
+    public long getMoveSetVersion() { return moveSetVersion; }
 
     @Override
     public void initAndValidate() {
@@ -128,6 +131,7 @@ public class Block extends StateNode {
     @Override
     public void assignFrom(StateNode other) {
         aheadOfMTree = true;
+        moveSetVersion++;
         final Block block = (Block) other;
         setID(block.getID());
         convIDs = Util.deepCopyIntegers(block.convIDs);
@@ -151,11 +155,13 @@ public class Block extends StateNode {
         // Marginal trees are not stored/restored
         //  => restore leads to out-dated MTree
         aheadOfMTree = true;
+        moveSetVersion++;
     }
 
     @Override
     public void startEditing(Operator operator) {
         aheadOfMTree = true;
+        moveSetVersion++;
         super.startEditing(operator);
     }
 
@@ -184,6 +190,7 @@ public class Block extends StateNode {
     @Override
     public void setSomethingIsDirty(final boolean isDirty) {
         aheadOfMTree = true;
+        moveSetVersion++;
         super.setSomethingIsDirty(isDirty);
     }
 

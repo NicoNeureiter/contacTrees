@@ -53,6 +53,16 @@ public class ConversionGraph extends Tree {
      */
     protected CFEventList cfEventList;
 
+    /** Bumped only by genuine clonal-frame (topology/height) changes. */
+    protected long cfVersion = 0;
+    /** Bumped by any conversion-only change (an individual conversion's fields, or the
+     *  conversion set's membership). Individual Conversions stamp their own version from
+     *  this counter -- see Conversion.version. */
+    protected long convVersion = 0;
+
+    public long getCFVersion() { return cfVersion; }
+    public long getConvVersion() { return convVersion; }
+
     /**
      * Marginal trees derived from this ACG, one per block.
      *
@@ -83,7 +93,7 @@ public class ConversionGraph extends Tree {
      * @param conv conversion events to add
      */
     public void addConversion(Conversion conv) {
-        startEditing(null);
+        startEditingConversion();
 
         conv.setConversionGraph(this);
         convs.add(conv);
@@ -95,7 +105,7 @@ public class ConversionGraph extends Tree {
      * @return The newly created conversion
      */
     public Conversion addNewConversion() {
-        startEditing(null);
+        startEditingConversion();
 
         Conversion conv = convs.addNewConversion();
         conv.setConversionGraph(this);
@@ -108,7 +118,7 @@ public class ConversionGraph extends Tree {
      * @return The newly created conversion
      */
     public Conversion addDuplicateConversion(Conversion original) {
-        startEditing(null);
+        startEditingConversion();
 
         Conversion copy = convs.duplicateConversion(original);
         copy.setConversionGraph(this);
@@ -121,7 +131,7 @@ public class ConversionGraph extends Tree {
      * @param conv conversion to remove.
      */
     public void removeConversion(Conversion conv) {
-        startEditing(null);
+        startEditingConversion();
         convs.remove(conv);
     }
 
@@ -139,7 +149,7 @@ public class ConversionGraph extends Tree {
      * Remove all conversion edges from the graph.
      */
     public void removeAllConversions() {
-        startEditing(null);
+        startEditingConversion();
         convs.clear();
     }
 
@@ -383,6 +393,12 @@ public class ConversionGraph extends Tree {
 
 //        nodeCount = m_nodes.length;
 //        initArrays();
+
+        // Safety net for state construction / checkpoint resume, where objects may be built
+        // without going through the normal per-field setters.
+        cfVersion++;
+        convVersion++;
+
         assert !isInvalid();
     }
 
@@ -433,6 +449,7 @@ public class ConversionGraph extends Tree {
             conv.newickMetaDataBottom = original.newickMetaDataBottom;
             conv.newickMetaDataMiddle = original.newickMetaDataMiddle;
             conv.newickMetaDataTop = original.newickMetaDataTop;
+            conv.version = original.version;
         }
 
     }
@@ -448,6 +465,14 @@ public class ConversionGraph extends Tree {
 
         cfEventList.makeDirty();
 
+        // cfVersion/convVersion are plain scalars, not part of the convs/storedConvs swap above,
+        // so they are not rolled back by it. Bumping both here is conservative but currently free,
+        // since MarginalTree.restore() still unconditionally recalculates every time (a later
+        // stage will change that; when it does, the version stamps will need to be
+        // snapshotted/restored alongside the node arrays instead of just bumped).
+        cfVersion++;
+        convVersion++;
+
         assert !isInvalid();
     }
 
@@ -458,6 +483,23 @@ public class ConversionGraph extends Tree {
 
         if (cfEventList != null)
             cfEventList.makeDirty();
+
+        cfVersion++;
+    }
+
+    /**
+     * Editing entry point for conversion-only changes: an individual conversion's fields, or
+     * the conversion set's membership. These never touch the clonal frame, so they bump
+     * convVersion, not cfVersion -- that's what lets MarginalTree.checkOutdated() tell whether
+     * a change is relevant to one block's conversions without treating every ACG edit as "the
+     * clonal frame changed, rebuild everything."
+     */
+    protected long startEditingConversion() {
+        if (state != null)
+            super.startEditing(null);
+        if (cfEventList != null)
+            cfEventList.makeDirty();
+        return ++convVersion;
     }
 
     @Override
@@ -764,6 +806,10 @@ public class ConversionGraph extends Tree {
             for (Conversion conv : convIDMap.values())
                 addConversion(conv);
         }
+
+        // Safety net for state resume from a saved .state file / initial XML parse.
+        cfVersion++;
+        convVersion++;
     }
 
     public int _getNodeCount() {

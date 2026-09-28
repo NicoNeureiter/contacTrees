@@ -1,5 +1,6 @@
 package contactrees.test;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -304,6 +305,61 @@ public class MarginalTreeTest extends ContactreesTest {
         });
 
         assertTrue(exception.getMessage().contains("invalid conversion"));
+    }
+
+    /**
+     * Verifies the precise version-based dirty gating in MarginalTree.checkOutdated():
+     * a block-level or conversion-level edit should only invalidate marginal trees whose own
+     * block actually carries the touched conversion(s), not every marginal tree derived from
+     * the same ACG.
+     */
+    @Test
+    public void testCheckOutdatedPrecision() throws Exception {
+        List<Block> blocks = blockSet.getBlocks();
+        Block block1 = blocks.get(1);
+        block1.addMove(conv1);
+
+        MarginalTree marginalTree = new MarginalTree();
+        marginalTree.initByName("network", acg, "block", block1, "nodetype", MarginalNode.class.getName());
+
+        // initAndValidate() ends with recalculate(); makeOutdated();  -- the makeOutdated() call
+        // deliberately forces outdated=true so the first requiresRecalculation() primes any
+        // downstream CalculationNode as dirty. That's independent of version tracking, so
+        // establish the up-to-date baseline explicitly before exercising the version logic.
+        marginalTree.recalculate();
+
+        // 1. A freshly recalculated marginal tree is up to date.
+        assertFalse(marginalTree.checkOutdated());
+
+        // 2. A block-level edit to a DIFFERENT block, whose conversions this marginal tree does
+        // not carry, must not falsely invalidate this marginal tree -- this is the case the old
+        // globally-scoped aheadOfMTree flag got wrong.
+        Block block2 = blocks.get(2);
+        block2.addMove(conv2);
+        assertFalse(marginalTree.checkOutdated());
+        block2.removeMove(conv2);
+        assertFalse(marginalTree.checkOutdated());
+
+        // A genuine edit to THIS marginal tree's own block does invalidate it, and recalculate()
+        // brings it back up to date.
+        block1.addMove(conv2);
+        assertTrue(marginalTree.checkOutdated());
+        marginalTree.recalculate();
+        assertFalse(marginalTree.checkOutdated());
+        block1.removeMove(conv2);
+        assertTrue(marginalTree.checkOutdated());
+        marginalTree.recalculate();
+        assertFalse(marginalTree.checkOutdated());
+
+        // 3. Editing a conversion this block does NOT carry (conv2) leaves it up to date;
+        // editing a conversion this block DOES carry (conv1) invalidates it.
+        conv2.setHeight(conv2.getHeight() + 0.01);
+        assertFalse(marginalTree.checkOutdated());
+
+        conv1.setHeight(conv1.getHeight() + 0.01);
+        assertTrue(marginalTree.checkOutdated());
+        marginalTree.recalculate();
+        assertFalse(marginalTree.checkOutdated());
     }
 
     public boolean equalLikelihood(Tree correctTree, MarginalTree derivedTree) {
