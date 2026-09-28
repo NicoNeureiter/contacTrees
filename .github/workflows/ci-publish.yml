@@ -40,6 +40,10 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           VERSION=${GITHUB_REF_NAME#v}
+          if [[ "$VERSION" == *SNAPSHOT* ]]; then
+            echo "::error::Refusing to publish a SNAPSHOT version ($VERSION) to Maven Central. Check the tag name."
+            exit 1
+          fi
           echo "Publishing version: $VERSION"
           mvn versions:set -DnewVersion=$VERSION -DgenerateBackupPoms=false
 
