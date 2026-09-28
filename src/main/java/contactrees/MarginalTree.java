@@ -1,7 +1,10 @@
 package contactrees;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import beast.base.core.Input;
 import beast.base.core.ProgramStatus;
@@ -43,7 +46,7 @@ public class MarginalTree extends Tree {
             "Taxa for which the last branch should have a fixed branch rate of 0.",
             new ArrayList<>());
     public Input<Integer> validationLevelInput = new Input<>("validationLevel",
-            "0 = off; 1 = check this marginal tree against a fresh rebuild after every proposal.", 0);
+            "0 = off; 1 = check this marginal tree against a fresh rebuild after every proposal; 2 = also check the CF/conversion <-> marginal-node mapping.", 0);
 
     public ConversionGraph acg;
     public Block block;
@@ -59,9 +62,43 @@ public class MarginalTree extends Tree {
     protected boolean manuallyUpdated = false;
     protected String lastBlockState;
     protected boolean changed = true;
-    protected boolean[] isFree;
     protected int nextNonLeafNr;
     ArrayList<MarginalNode> activeCFlineages = new ArrayList<>();
+
+    /*
+     * Stable marginal-node numbering and the CF/conversion <-> marginal-node mapping.
+     *
+     * Internal marginal-node numbers used to be reassigned in height/event order on every
+     * rebuild (a fresh nextNonLeafNr counter reset each recalculate()), so the same physical
+     * "creator" -- a CF coalescence or a conversion -- got a different Nr almost every time.
+     * That made any cross-rebuild comparison keyed on Nr (e.g. "did this node's children
+     * change?") unreliable. Below, each creator keeps a persistent Nr across rebuilds via
+     * mark-and-sweep: claimed once, kept as long as it keeps producing a marginal coalescence,
+     * released back to a free list the moment it stops (overshadowed CF node, or a conversion
+     * with no effect), and reused by the next creator that needs a slot.
+     *
+     * Leaves are unaffected: they are already identity-mapped to the CF leaf Nr.
+     */
+
+    /** Creator kinds for {@link #creatorKind}. */
+    public static final int CREATOR_LEAF = 0;
+    public static final int CREATOR_CF_COALESCENCE = 1;
+    public static final int CREATOR_CONVERSION = 2;
+
+    /** CF node Nr -> marginal Nr, for CF nodes that currently coalesce in this marginal tree. */
+    protected int[] cfCoalescenceNr;
+    /** Conversion id -> marginal Nr, for conversions that currently coalesce in this marginal tree. */
+    protected Map<Integer, Integer> convMarginalNr;
+    /** Internal marginal Nrs released by a creator that stopped producing a coalescence. */
+    protected int[] freeNrStack;
+    protected int freeNrTop;
+    /** Inverse mapping: marginal Nr -> creator kind / creator key (CF node Nr or conversion id). */
+    protected int[] creatorKind;
+    protected int[] creatorKey;
+    /** CF node Nr -> the marginal Nr currently governing that point in the CF, or -1. */
+    protected int[] cfBranchOccupant;
+    /** Bumped every recalculate(); lets external caches know the mapping may have changed. */
+    protected long mappingVersion = 0;
 
     public void setManuallyUpdated() {
         manuallyUpdated = true;
@@ -124,8 +161,25 @@ public class MarginalTree extends Tree {
         for (int i=0; i<acg.getNodeCount(); i++)
             activeCFlineages.add(null);
 
+        // One-time setup of the stable-numbering state, now that m_nodes/nodeCount are known.
+        int nLeafs = acg.getLeafNodeCount();
+        nextNonLeafNr = nLeafs;
+        cfCoalescenceNr = newIntArrayFilled(acg.getNodeCount(), -1);
+        cfBranchOccupant = newIntArrayFilled(acg.getNodeCount(), -1);
+        convMarginalNr = new HashMap<>();
+        freeNrStack = new int[Math.max(nLeafs - 1, 0)];
+        freeNrTop = 0;
+        creatorKind = new int[m_nodes.length];
+        creatorKey = new int[m_nodes.length];
+
         recalculate();
         makeOutdated();
+    }
+
+    private static int[] newIntArrayFilled(int size, int fillValue) {
+        int[] arr = new int[size];
+        Arrays.fill(arr, fillValue);
+        return arr;
     }
 
     @Override
@@ -205,6 +259,61 @@ public class MarginalTree extends Tree {
                         + " before=" + oldTimeLengths[i] + " after=" + newTimeLength);
             }
         }
+
+        if (validationLevel >= 2) {
+            assertMappingConsistent(phase);
+        }
+    }
+
+    /**
+     * Verify the stable-numbering invariants (validationLevel &gt;= 2): every internal Nr is
+     * occupied exactly once by either a claimed creator or the free stack, and the forward/
+     * inverse mapping round-trips in both directions.
+     */
+    public void assertMappingConsistent(String phase) {
+        int nLeafs = acg.getLeafNodeCount();
+        int nInternal = Math.max(nLeafs - 1, 0);
+        boolean[] seen = new boolean[nInternal];
+
+        for (int cfNr = 0; cfNr < cfCoalescenceNr.length; cfNr++) {
+            int nr = cfCoalescenceNr[cfNr];
+            if (nr < 0)
+                continue;
+            markOccupied(seen, nr, nLeafs, phase, "cfCoalescenceNr[" + cfNr + "]");
+            if (creatorKind[nr] != CREATOR_CF_COALESCENCE || creatorKey[nr] != cfNr) {
+                throw new IllegalStateException("MarginalTree.assertConsistent(" + phase + "): "
+                        + "creator round-trip failed for CF node " + cfNr + " -> marginal Nr " + nr);
+            }
+        }
+
+        for (Map.Entry<Integer, Integer> e : convMarginalNr.entrySet()) {
+            int nr = e.getValue();
+            markOccupied(seen, nr, nLeafs, phase, "convMarginalNr[" + e.getKey() + "]");
+            if (creatorKind[nr] != CREATOR_CONVERSION || creatorKey[nr] != e.getKey()) {
+                throw new IllegalStateException("MarginalTree.assertConsistent(" + phase + "): "
+                        + "creator round-trip failed for conversion " + e.getKey() + " -> marginal Nr " + nr);
+            }
+        }
+
+        for (int i = 0; i < freeNrTop; i++) {
+            markOccupied(seen, freeNrStack[i], nLeafs, phase, "freeNrStack[" + i + "]");
+        }
+
+        for (int i = 0; i < nInternal; i++) {
+            if (!seen[i]) {
+                throw new IllegalStateException("MarginalTree.assertConsistent(" + phase + "): "
+                        + "internal Nr " + (i + nLeafs) + " is neither claimed nor free");
+            }
+        }
+    }
+
+    private void markOccupied(boolean[] seen, int nr, int nLeafs, String phase, String source) {
+        int idx = nr - nLeafs;
+        if (idx < 0 || idx >= seen.length || seen[idx]) {
+            throw new IllegalStateException("MarginalTree.assertConsistent(" + phase + "): "
+                    + "internal Nr " + nr + " (from " + source + ") is out of range or double-claimed");
+        }
+        seen[idx] = true;
     }
 
     private static String truncate(String s) {
@@ -260,21 +369,99 @@ public class MarginalTree extends Tree {
     }
 
 
-    public int getNextFreeIndex() {
-        // Skip all indices that have been used
-        while (!isFree[nextNonLeafNr])
-            nextNonLeafNr += 1;
+    /**
+     * Claim a stable marginal Nr for a creator (a CF node or a conversion) that does not
+     * currently have one: reuse a freed slot if one is available, otherwise extend the range.
+     */
+    private int claimMarginalNr(int kind, int key) {
+        int nr = (freeNrTop > 0) ? freeNrStack[--freeNrTop] : nextNonLeafNr++;
+        if (nr >= m_nodes.length) {
+            throw new IllegalStateException("MarginalTree exceeded node capacity while claiming a new"
+                    + " internal node number; nr=" + nr + ", capacity=" + m_nodes.length);
+        }
+        creatorKind[nr] = kind;
+        creatorKey[nr] = key;
+        return nr;
+    }
 
-        // Once we return the index, it will be marked as used up
-        isFree[nextNonLeafNr] = false;
+    /**
+     * Record the active lineage at a CF node and mirror it into {@link #cfBranchOccupant}, so
+     * the coverage map ("which CF nodes does this marginal Nr currently govern?") comes for
+     * free from the existing bookkeeping.
+     */
+    private void setActiveLineage(int cfNodeNr, MarginalNode marginalNode) {
+        activeCFlineages.set(cfNodeNr, marginalNode);
+        cfBranchOccupant[cfNodeNr] = (marginalNode == null) ? -1 : marginalNode.getNr();
+    }
 
-        // Return the index
-        return nextNonLeafNr;
+    /**
+     * Determine, without touching any MarginalNode, exactly which CF nodes and conversions will
+     * produce a marginal coalescence in the upcoming rebuild.
+     *
+     * This mirrors the active-lineage transitions of the real walk below using plain booleans
+     * (keep the two in sync). It exists because claims and releases cannot safely be interleaved
+     * with the real walk: a conversion that suppresses a CF node's coalescence is processed
+     * BEFORE that CF node's own event (conversions are inserted into the walk by height, and a
+     * suppressing conversion is necessarily below the CF node it suppresses), so if release were
+     * deferred until the CF node's event was reached, a transient third slot would be needed even
+     * though the final tree never has more than n-1 internal nodes at once -- overflowing the
+     * fixed 2n-1 node capacity. Precomputing the firing set lets recalculate() reconcile all
+     * releases before any new claims, so capacity is never transiently exceeded.
+     */
+    private void computeFiringSets(List<Event> cfEvents, List<Conversion> convs,
+            java.util.Set<Integer> firingCfNodes, java.util.Set<Integer> firingConvIds) {
+        boolean[] active = new boolean[acg.getNodeCount()];
+        int iConv = 0;
+        for (int iEvent = 0; iEvent < cfEvents.size(); iEvent++) {
+            Event event = cfEvents.get(iEvent);
+            Node node = event.getNode();
+
+            if (event.getType() == EventType.SAMPLE) {
+                active[node.getNr()] = true;
+            } else {
+                Node left = node.getChild(0);
+                Node right = node.getChild(1);
+                if (active[left.getNr()] && active[right.getNr()]) {
+                    firingCfNodes.add(node.getNr());
+                    active[left.getNr()] = false;
+                    active[right.getNr()] = false;
+                    active[node.getNr()] = true;
+                } else if (active[left.getNr()]) {
+                    active[left.getNr()] = false;
+                    active[node.getNr()] = true;
+                } else if (active[right.getNr()]) {
+                    active[right.getNr()] = false;
+                    active[node.getNr()] = true;
+                }
+            }
+
+            while (iConv < convs.size() &&
+                    (event.node.isRoot() || isBelowNextCFEvent(convs.get(iConv), cfEvents.get(iEvent + 1)))) {
+                Conversion conv = convs.get(iConv++);
+                Node node1 = conv.getNode1();
+                Node node2 = conv.getNode2();
+                if (active[node1.getNr()] && active[node2.getNr()]) {
+                    firingConvIds.add(conv.getID());
+                    active[node1.getNr()] = false;
+                    active[node2.getNr()] = false;
+                    active[node2.getNr()] = true;
+                } else if (active[node1.getNr()]) {
+                    active[node1.getNr()] = false;
+                    active[node2.getNr()] = true;
+                }
+            }
+        }
     }
 
     public void recalculate() {
         nRecalculate++;
         startEditing(null);
+
+        if (cfCoalescenceNr.length != acg.getNodeCount()) {
+            throw new IllegalStateException("MarginalTree: CF node count changed between rebuilds ("
+                    + cfCoalescenceNr.length + " -> " + acg.getNodeCount()
+                    + "); the stable marginal-node numbering assumes it is fixed for the life of the run.");
+        }
 
         List<Event> cfEvents = acg.getCFEvents();
         activeCFlineages.replaceAll((oldNode) -> {
@@ -291,10 +478,35 @@ public class MarginalTree extends Tree {
             return 0;
         });
 
-        int iConv = 0;
-        int nLeafs = acg.getLeafNodeCount();
+        // Precompute which creators fire this round, then reconcile ALL releases before ANY
+        // new claim -- see computeFiringSets() for why that order matters.
+        java.util.Set<Integer> firingCfNodes = new java.util.HashSet<>();
+        java.util.Set<Integer> firingConvIds = new java.util.HashSet<>();
+        computeFiringSets(cfEvents, convs, firingCfNodes, firingConvIds);
 
-        nextNonLeafNr = nLeafs;
+        for (int cfNr = 0; cfNr < cfCoalescenceNr.length; cfNr++) {
+            if (cfCoalescenceNr[cfNr] >= 0 && !firingCfNodes.contains(cfNr)) {
+                freeNrStack[freeNrTop++] = cfCoalescenceNr[cfNr];
+                cfCoalescenceNr[cfNr] = -1;
+            }
+        }
+        convMarginalNr.entrySet().removeIf(entry -> {
+            if (!firingConvIds.contains(entry.getKey())) {
+                freeNrStack[freeNrTop++] = entry.getValue();
+                return true;
+            }
+            return false;
+        });
+        for (int cfNr : firingCfNodes) {
+            if (cfCoalescenceNr[cfNr] < 0) {
+                cfCoalescenceNr[cfNr] = claimMarginalNr(CREATOR_CF_COALESCENCE, cfNr);
+            }
+        }
+        for (int convId : firingConvIds) {
+            convMarginalNr.computeIfAbsent(convId, id -> claimMarginalNr(CREATOR_CONVERSION, id));
+        }
+
+        int iConv = 0;
 
         for (int iEvent = 0; iEvent < cfEvents.size(); iEvent++) {
             Event event = cfEvents.get(iEvent);
@@ -304,7 +516,7 @@ public class MarginalTree extends Tree {
             switch (event.getType()) {
                 case SAMPLE:
                     MarginalNode marginalLeaf = registerLeafNode(node);
-                    activeCFlineages.set(node.getNr(), marginalLeaf);
+                    setActiveLineage(node.getNr(), marginalLeaf);
                     break;
 
                 case COALESCENCE:
@@ -312,13 +524,15 @@ public class MarginalTree extends Tree {
                     Node right = node.getChild(1);
 
                     if (activeCFlineages.get(left.getNr()) != null && activeCFlineages.get(right.getNr()) != null) {
-                        // Create a new marginal node at the coalescence event
-                        MarginalNode marginalNode = registerNode(node, activeCFlineages, nextNonLeafNr++);
+                        // Create a new marginal node at the coalescence event, using the stable
+                        // marginal Nr already reconciled for this CF node above.
+                        int nr = cfCoalescenceNr[node.getNr()];
+                        MarginalNode marginalNode = registerNode(node, activeCFlineages, nr);
 
                         // Remove the old and add the new marginal node to the active lineages.
-                        activeCFlineages.set(left.getNr(), null);
-                        activeCFlineages.set(right.getNr(), null);
-                        activeCFlineages.set(node.getNr(), marginalNode);
+                        setActiveLineage(left.getNr(), null);
+                        setActiveLineage(right.getNr(), null);
+                        setActiveLineage(node.getNr(), marginalNode);
                     } else {
                         // Only one side is active -> no coalescence in marginal tree (i.e. no marginal node)
 
@@ -326,8 +540,8 @@ public class MarginalTree extends Tree {
                             MarginalNode marginalLeft = activeCFlineages.get(left.getNr());
                             updateTimeLength(node.getHeight(), left, marginalLeft);
 
-                            activeCFlineages.set(left.getNr(), null);
-                            activeCFlineages.set(node.getNr(), marginalLeft);
+                            setActiveLineage(left.getNr(), null);
+                            setActiveLineage(node.getNr(), marginalLeft);
                             break;
                         }
 
@@ -335,8 +549,8 @@ public class MarginalTree extends Tree {
                             MarginalNode marginalRight = activeCFlineages.get(right.getNr());
                             updateTimeLength(node.getHeight(), right, marginalRight);
 
-                            activeCFlineages.set(right.getNr(), null);
-                            activeCFlineages.set(node.getNr(), marginalRight);
+                            setActiveLineage(right.getNr(), null);
+                            setActiveLineage(node.getNr(), marginalRight);
                             break;
                         }
                     }
@@ -354,13 +568,15 @@ public class MarginalTree extends Tree {
                 if ((activeCFlineages.get(node1.getNr()) != null) && (activeCFlineages.get(node2.getNr()) != null)) {
                     // Both lineages at the conversion are active --> coalescence in the marginal tree
 
-                    // Create a MarginalNode at the point of the conversion and add it as a new lineage
-                    MarginalNode convNode = registerNode(conv, activeCFlineages, nextNonLeafNr++);
+                    // Create a MarginalNode at the point of the conversion, using the stable
+                    // marginal Nr already reconciled for this conversion above.
+                    int nr = convMarginalNr.get(conv.getID());
+                    MarginalNode convNode = registerNode(conv, activeCFlineages, nr);
 
                     // Remove child lineages and add new one
-                    activeCFlineages.set(node1.getNr(), null);
-                    activeCFlineages.set(node2.getNr(), null);
-                    activeCFlineages.set(node2.getNr(), convNode);
+                    setActiveLineage(node1.getNr(), null);
+                    setActiveLineage(node2.getNr(), null);
+                    setActiveLineage(node2.getNr(), convNode);
                 } else {
                     // node1 or node2 already moved away (overshadowed by another conversion)
 
@@ -369,8 +585,8 @@ public class MarginalTree extends Tree {
                         MarginalNode margNode1 = activeCFlineages.get(node1.getNr());
                         updateTimeLength(conv.getHeight(), node1, margNode1);
 
-                        activeCFlineages.set(node1.getNr(), null);
-                        activeCFlineages.set(node2.getNr(), margNode1);
+                        setActiveLineage(node1.getNr(), null);
+                        setActiveLineage(node2.getNr(), margNode1);
                     }
                     // else: node1 already branched away --> conversion has no effect
                 }
@@ -379,6 +595,12 @@ public class MarginalTree extends Tree {
 
         // A single active CF lineage (the root) should remain:;
         MarginalNode newRoot = activeCFlineages.get(acg.getRoot().getNr());
+        // With sequential numbering the root always landed on the highest Nr, which was also
+        // the slot assignFrom(acg)'s initial clone gave the CF root -- already parentless. Stable
+        // numbering can now put the root on ANY internal slot, including one that still carries a
+        // stale parent pointer from whatever node originally occupied it, so this must be cleared
+        // explicitly: setRootOnly() (Tree.java) does not do it, and isRoot()/getLength() rely on it.
+        newRoot.setParent(null);
         setRootOnly(newRoot);
 
         if (hasBranchRates) {
@@ -389,6 +611,7 @@ public class MarginalTree extends Tree {
         seenCfVersion = acg.getCFVersion();
         seenConvVersion = acg.getConvVersion();
         seenBlockVersion = block.getMoveSetVersion();
+        mappingVersion++;
 
         // Some operators (the Gibbs-sampling borrowing code in BorrowingOperator) call
         // recalculate() directly, bypassing requiresRecalculation(). somethingIsDirty() is
@@ -688,6 +911,97 @@ public class MarginalTree extends Tree {
             throw new IllegalStateException("MarginalTree encountered invalid conversion " + conversion.getID()
                     + " referenced by block " + block.getID());
         }
+    }
+
+    /*
+     * Public CF/conversion <-> marginal-node mapping API.
+     */
+
+    /**
+     * @param cfNodeNr a node Nr on the clonal frame
+     * @return the marginal Nr that CF node currently maps to, or -1 if it has no marginal
+     *         coalescence right now (a leaf always maps to the same Nr).
+     */
+    public int getMarginalNr(int cfNodeNr) {
+        if (cfNodeNr < acg.getLeafNodeCount())
+            return cfNodeNr;
+        return cfCoalescenceNr[cfNodeNr];
+    }
+
+    /**
+     * @param conv a conversion
+     * @return the marginal Nr that conversion currently maps to, or -1 if it has no marginal
+     *         coalescence right now (e.g. it is overshadowed, or not carried by this block).
+     */
+    public int getMarginalNr(Conversion conv) {
+        Integer nr = convMarginalNr.get(conv.getID());
+        return (nr == null) ? -1 : nr;
+    }
+
+    public MarginalNode getMarginalNode(int cfNodeNr) {
+        int nr = getMarginalNr(cfNodeNr);
+        return (nr < 0) ? null : (MarginalNode) m_nodes[nr];
+    }
+
+    public MarginalNode getMarginalNode(Conversion conv) {
+        int nr = getMarginalNr(conv);
+        return (nr < 0) ? null : (MarginalNode) m_nodes[nr];
+    }
+
+    /**
+     * @param marginalNr a Nr in this marginal tree
+     * @return {@link #CREATOR_LEAF}, {@link #CREATOR_CF_COALESCENCE} or {@link #CREATOR_CONVERSION}
+     */
+    public int getCreatorKind(int marginalNr) {
+        return (marginalNr < acg.getLeafNodeCount()) ? CREATOR_LEAF : creatorKind[marginalNr];
+    }
+
+    /**
+     * @param marginalNr a Nr whose creator kind is {@link #CREATOR_LEAF} or {@link #CREATOR_CF_COALESCENCE}
+     * @return the CF node Nr that created it
+     */
+    public int getCreatorCFNodeNr(int marginalNr) {
+        return (marginalNr < acg.getLeafNodeCount()) ? marginalNr : creatorKey[marginalNr];
+    }
+
+    /**
+     * @param marginalNr a Nr whose creator kind is {@link #CREATOR_CONVERSION}
+     * @return the conversion that created it, or null if that kind doesn't match
+     */
+    public Conversion getCreatorConversion(int marginalNr) {
+        if (getCreatorKind(marginalNr) != CREATOR_CONVERSION)
+            return null;
+        int convId = creatorKey[marginalNr];
+        for (Conversion conv : getBlockConversions()) {
+            if (conv.getID() == convId)
+                return conv;
+        }
+        return null;
+    }
+
+    /**
+     * @return all CF node Nrs currently governed by the given marginal Nr (i.e. the marginal
+     *         branch at marginalNr is the ancestor of these CF lineages), including any
+     *         pass-through CF coalescences it covers.
+     */
+    public int[] collectCoveredCFNodes(int marginalNr) {
+        int count = 0;
+        for (int occupant : cfBranchOccupant) {
+            if (occupant == marginalNr)
+                count++;
+        }
+        int[] result = new int[count];
+        int i = 0;
+        for (int cfNr = 0; cfNr < cfBranchOccupant.length; cfNr++) {
+            if (cfBranchOccupant[cfNr] == marginalNr)
+                result[i++] = cfNr;
+        }
+        return result;
+    }
+
+    /** Bumped every recalculate(); lets external caches know the mapping may have changed. */
+    public long getMappingVersion() {
+        return mappingVersion;
     }
 
     /**
