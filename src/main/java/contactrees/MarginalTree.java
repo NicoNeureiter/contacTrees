@@ -103,6 +103,25 @@ public class MarginalTree extends Tree {
     /** Bumped every recalculate(); lets external caches know the mapping may have changed. */
     protected long mappingVersion = 0;
 
+    /*
+     * Per-CF-node occupancy history: a single append-only, height-ordered log shared by all CF
+     * nodes, threaded per node via occPrev so a query can still walk one node's entries. Flat and
+     * contiguous instead of one tiny row array per CF node, for cache locality -- recalculate()
+     * is the hottest method in the program. Reset (occCount := 0, occLastOfNode filled with -1)
+     * at the start of every recalculate() -- see recalculate()'s reset loop. Nothing but tests
+     * reads this yet; it exists purely as groundwork for a future incremental rebuild.
+     */
+    /** Event heights, indexed by log position. */
+    protected double[] occHeight;
+    /** Occupant marginal Nrs (-1 = vacated), indexed by log position, parallel to {@link #occHeight}. */
+    protected int[] occNr;
+    /** Log position of the previous entry for the same CF node, or -1, indexed by log position. */
+    protected int[] occPrev;
+    /** Number of entries used in the log for the current rebuild. */
+    protected int occCount;
+    /** CF node Nr -> log position of its most recent entry, or -1. */
+    protected int[] occLastOfNode;
+
     /**
      * The root's own branch-length determinant has no meaning (it has no parent branch), so its
      * dirtiness is tracked separately from MarginalNode.prevBranchDeterminant: just its height.
@@ -217,6 +236,13 @@ public class MarginalTree extends Tree {
         freeNrTop = 0;
         creatorKind = new int[m_nodes.length];
         creatorKey = new int[m_nodes.length];
+
+        int initialOccCapacity = 256;
+        occHeight = new double[initialOccCapacity];
+        occNr = new int[initialOccCapacity];
+        occPrev = new int[initialOccCapacity];
+        occCount = 0;
+        occLastOfNode = newIntArrayFilled(acg.getNodeCount(), -1);
 
         recalculate();
         makeOutdated();
@@ -435,9 +461,61 @@ public class MarginalTree extends Tree {
      * the coverage map ("which CF nodes does this marginal Nr currently govern?") comes for
      * free from the existing bookkeeping.
      */
-    private void setActiveLineage(int cfNodeNr, MarginalNode marginalNode) {
+    private void setActiveLineage(int cfNodeNr, MarginalNode marginalNode, double height) {
         activeCFlineages.set(cfNodeNr, marginalNode);
-        cfBranchOccupant[cfNodeNr] = (marginalNode == null) ? -1 : marginalNode.getNr();
+        int nr = (marginalNode == null) ? -1 : marginalNode.getNr();
+        cfBranchOccupant[cfNodeNr] = nr;
+        recordOccupancy(cfNodeNr, height, nr);
+    }
+
+    /**
+     * Append one occupancy-change entry to the shared log, growing it (doubling) if full, and
+     * thread it onto the CF node's chain via occPrev/occLastOfNode. The log is reset (occCount
+     * := 0) at the start of every recalculate(), not reallocated, so this only grows the log's
+     * capacity, never its count of live entries at reset time.
+     */
+    private void recordOccupancy(int cfNodeNr, double height, int marginalNr) {
+        if (occCount == occHeight.length) {
+            int newCap = occHeight.length * 2;
+            occHeight = Arrays.copyOf(occHeight, newCap);
+            occNr = Arrays.copyOf(occNr, newCap);
+            occPrev = Arrays.copyOf(occPrev, newCap);
+        }
+        occHeight[occCount] = height;
+        occNr[occCount] = marginalNr;
+        occPrev[occCount] = occLastOfNode[cfNodeNr];
+        occLastOfNode[cfNodeNr] = occCount++;
+    }
+
+    /**
+     * @param cfNodeNr a CF node Nr
+     * @param height a height along that CF node's parent branch
+     * @return the marginal Nr occupying the branch at that height during the most recent
+     *         recalculate(), or -1 if none did (before the branch's first occupancy, or after a
+     *         vacate with no later occupant, or the CF node Nr is unknown to this height).
+     *         Entries are recorded in height order, so a node's chain is non-increasing in
+     *         height; this walks it newest-to-oldest for the first entry at or below
+     *         {@code height}, identical semantics to a backward scan over that node's history.
+     */
+    public int getOccupantAtHeight(int cfNodeNr, double height) {
+        for (int i = occLastOfNode[cfNodeNr]; i >= 0; i = occPrev[i]) {
+            if (occHeight[i] <= height)
+                return occNr[i];
+        }
+        return -1;
+    }
+
+    /**
+     * @param cfNodeNr a CF node Nr
+     * @return the number of occupancy-history entries recorded for that CF node during the most
+     *         recent recalculate(). Exposed for tests verifying the history is reset, not
+     *         accumulated, across rebuilds.
+     */
+    public int getOccupancyHistoryLength(int cfNodeNr) {
+        int len = 0;
+        for (int i = occLastOfNode[cfNodeNr]; i >= 0; i = occPrev[i])
+            len++;
+        return len;
     }
 
     /**
@@ -559,6 +637,8 @@ public class MarginalTree extends Tree {
         activeCFlineages.replaceAll((oldNode) -> {
             return null;
         });
+        occCount = 0;
+        Arrays.fill(occLastOfNode, -1);
         List<Conversion> convs = getBlockConversions();
         convs.sort((c1, c2) -> {
             if (c1.height < c2.height)
@@ -608,7 +688,7 @@ public class MarginalTree extends Tree {
             switch (event.getType()) {
                 case SAMPLE:
                     MarginalNode marginalLeaf = registerLeafNode(node);
-                    setActiveLineage(node.getNr(), marginalLeaf);
+                    setActiveLineage(node.getNr(), marginalLeaf, node.getHeight());
                     break;
 
                 case COALESCENCE:
@@ -622,9 +702,9 @@ public class MarginalTree extends Tree {
                         MarginalNode marginalNode = registerNode(node, activeCFlineages, nr);
 
                         // Remove the old and add the new marginal node to the active lineages.
-                        setActiveLineage(left.getNr(), null);
-                        setActiveLineage(right.getNr(), null);
-                        setActiveLineage(node.getNr(), marginalNode);
+                        setActiveLineage(left.getNr(), null, node.getHeight());
+                        setActiveLineage(right.getNr(), null, node.getHeight());
+                        setActiveLineage(node.getNr(), marginalNode, node.getHeight());
                     } else {
                         // Only one side is active -> no coalescence in marginal tree (i.e. no marginal node)
 
@@ -632,8 +712,8 @@ public class MarginalTree extends Tree {
                             MarginalNode marginalLeft = activeCFlineages.get(left.getNr());
                             updateTimeLength(node.getHeight(), left, marginalLeft);
 
-                            setActiveLineage(left.getNr(), null);
-                            setActiveLineage(node.getNr(), marginalLeft);
+                            setActiveLineage(left.getNr(), null, node.getHeight());
+                            setActiveLineage(node.getNr(), marginalLeft, node.getHeight());
                             break;
                         }
 
@@ -641,8 +721,8 @@ public class MarginalTree extends Tree {
                             MarginalNode marginalRight = activeCFlineages.get(right.getNr());
                             updateTimeLength(node.getHeight(), right, marginalRight);
 
-                            setActiveLineage(right.getNr(), null);
-                            setActiveLineage(node.getNr(), marginalRight);
+                            setActiveLineage(right.getNr(), null, node.getHeight());
+                            setActiveLineage(node.getNr(), marginalRight, node.getHeight());
                             break;
                         }
                     }
@@ -666,9 +746,9 @@ public class MarginalTree extends Tree {
                     MarginalNode convNode = registerNode(conv, activeCFlineages, nr);
 
                     // Remove child lineages and add new one
-                    setActiveLineage(node1.getNr(), null);
-                    setActiveLineage(node2.getNr(), null);
-                    setActiveLineage(node2.getNr(), convNode);
+                    setActiveLineage(node1.getNr(), null, conv.getHeight());
+                    setActiveLineage(node2.getNr(), null, conv.getHeight());
+                    setActiveLineage(node2.getNr(), convNode, conv.getHeight());
                 } else {
                     // node1 or node2 already moved away (overshadowed by another conversion)
 
@@ -677,8 +757,8 @@ public class MarginalTree extends Tree {
                         MarginalNode margNode1 = activeCFlineages.get(node1.getNr());
                         updateTimeLength(conv.getHeight(), node1, margNode1);
 
-                        setActiveLineage(node1.getNr(), null);
-                        setActiveLineage(node2.getNr(), margNode1);
+                        setActiveLineage(node1.getNr(), null, conv.getHeight());
+                        setActiveLineage(node2.getNr(), margNode1, conv.getHeight());
                     }
                     // else: node1 already branched away --> conversion has no effect
                 }
