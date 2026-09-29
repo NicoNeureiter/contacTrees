@@ -2,12 +2,9 @@ package contactrees;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import beast.base.core.Input;
 import beast.base.core.ProgramStatus;
@@ -1262,68 +1259,6 @@ public class MarginalTree extends Tree {
     /** Bumped every recalculate(); lets external caches know the mapping may have changed. */
     public long getMappingVersion() {
         return mappingVersion;
-    }
-
-    /**
-     * Conservative over-estimate of the CF nodes whose branch is perturbed by toggling whether
-     * {@code conv} is carried by this tree's block, computed without touching the marginal tree
-     * itself. Seeded with the CF path from each of {@code conv}'s endpoints up to (excluding)
-     * their CF-MRCA, then closed under any higher block conversion with an endpoint already in
-     * the set -- toggling conv can only ever perturb the walk between conv's own height and the
-     * point where it re-converges with the unperturbed walk.
-     *
-     * {@code convs} is passed in rather than read from {@link #getBlockConversions()}, which
-     * returns a shared buffer that every call clears and refills: the intended caller is the
-     * rebuild walk, which is already iterating that very buffer.
-     */
-    public BitSet computeAffectedCFBranches(Conversion conv, List<Conversion> convs) {
-        BitSet affected = new BitSet(acg.getNodeCount());
-        Node mrca = getCFMRCA(conv.getNode1(), conv.getNode2());
-        addCFPathExcluding(affected, conv.getNode1(), mrca);
-        addCFPathExcluding(affected, conv.getNode2(), mrca);
-
-        double convHeight = conv.getHeight();
-        boolean grown = true;
-        while (grown) {
-            grown = false;
-            for (Conversion c2 : convs) {
-                if (c2 == conv || c2.getHeight() <= convHeight)
-                    continue;
-                if (!affected.get(c2.getNode1().getNr()) && !affected.get(c2.getNode2().getNr()))
-                    continue;
-                Node mrca2 = getCFMRCA(c2.getNode1(), c2.getNode2());
-                grown |= addCFPathExcluding(affected, c2.getNode1(), mrca2);
-                grown |= addCFPathExcluding(affected, c2.getNode2(), mrca2);
-            }
-        }
-
-        return affected;
-    }
-
-    /**
-     * Add every CF node on the path from {@code from} up to (excluding) {@code excludedAncestor}.
-     * @return true if this grew the set.
-     */
-    private boolean addCFPathExcluding(BitSet set, Node from, Node excludedAncestor) {
-        boolean grown = false;
-        for (Node n = from; n != excludedAncestor; n = n.getParent()) {
-            if (!set.get(n.getNr())) {
-                set.set(n.getNr());
-                grown = true;
-            }
-        }
-        return grown;
-    }
-
-    /** MRCA of two CF nodes, found by walking ancestors. */
-    private static Node getCFMRCA(Node a, Node b) {
-        Set<Node> ancestorsOfA = new HashSet<>();
-        for (Node n = a; n != null; n = n.getParent())
-            ancestorsOfA.add(n);
-        Node m = b;
-        while (!ancestorsOfA.contains(m))
-            m = m.getParent();
-        return m;
     }
 
     /**
