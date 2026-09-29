@@ -27,6 +27,15 @@ public class MarginalNode extends Node {
     public double lastEventHeight = 0.0;
 
     /**
+     * The branch-length determinant (timeLength, or raw height when the marginal tree has no
+     * branch-rate model) as of the last time this node's dirtiness was assessed. Compared
+     * against the freshly computed value on the next rebuild to decide IS_FILTHY -- see
+     * MarginalTree.recalculate()'s post-walk dirty-marking pass. NaN means "never assessed yet"
+     * (always dirty).
+     */
+    public double prevBranchDeterminant = Double.NaN;
+
+    /**
      * @return unmodifiable list of children of this node
      */
     @Override

@@ -100,6 +100,13 @@ public class MarginalTree extends Tree {
     /** Bumped every recalculate(); lets external caches know the mapping may have changed. */
     protected long mappingVersion = 0;
 
+    /**
+     * The root's own branch-length determinant has no meaning (it has no parent branch), so its
+     * dirtiness is tracked separately from MarginalNode.prevBranchDeterminant: just its height.
+     * NaN means "never assessed yet" (always dirty).
+     */
+    protected double prevRootHeight = Double.NaN;
+
     public void setManuallyUpdated() {
         manuallyUpdated = true;
     }
@@ -607,6 +614,32 @@ public class MarginalTree extends Tree {
             rollOutTime(newRoot, newRoot.getHeight());
         }
 
+        // Per-node dirty marking, keyed on what TreeLikelihood actually consumes: a node's
+        // transition matrix depends on its own branch length, which in rolled-out coordinates
+        // is timeLength (or, if there's no branch-rate model, the raw height directly -- either
+        // way, "the branch determinant"). This runs once, after the whole walk (every node's
+        // timeLength/height is only final at this point), and is keyed against the LAST
+        // COMPUTED state, not the last accepted one: recalculate() legitimately runs several
+        // times per proposal in the Gibbs operators, and each call must be judged against
+        // whatever this same tree last actually looked like, not against some more distant
+        // "committed" baseline.
+        for (int nr = 0; nr < m_nodes.length; nr++) {
+            MarginalNode node = (MarginalNode) m_nodes[nr];
+            if (node == newRoot)
+                continue;
+            double determinant = hasBranchRates ? node.timeLength : node.getHeight();
+            if (Double.isNaN(node.prevBranchDeterminant) || determinant != node.prevBranchDeterminant) {
+                nFilthyNodesMarked++;
+                node.makeDirty(Tree.IS_FILTHY);
+            }
+            node.prevBranchDeterminant = determinant;
+        }
+        if (Double.isNaN(prevRootHeight) || newRoot.getHeight() != prevRootHeight) {
+            nFilthyNodesMarked++;
+            newRoot.makeDirty(Tree.IS_FILTHY);
+        }
+        prevRootHeight = newRoot.getHeight();
+
         outdated = false;
         seenCfVersion = acg.getCFVersion();
         seenConvVersion = acg.getConvVersion();
@@ -651,13 +684,12 @@ public class MarginalTree extends Tree {
 
     public MarginalNode registerLeafNode(Node node) {
         MarginalNode marginalNode = (MarginalNode) m_nodes[node.getNr()];
-//        if (marginalNode.getHeight() != node.getHeight()) marginalNode.makeDirty(Tree.IS_FILTHY);
-//        else if (marginalNode.getLength() != node.getLength()) marginalNode.makeDirty(Tree.IS_FILTHY);
-        if ((!marginalNode.equalsNode(node))) {
-            marginalNode.setHeight(node.getHeight());
-            nFilthyNodesMarked++;
-            marginalNode.makeDirty(Tree.IS_FILTHY);
-        }
+        // Dirtiness is decided by the post-walk pass in recalculate(), keyed on the branch
+        // determinant (timeLength, accumulated below and elsewhere as this leaf's lineage
+        // passes through pass-through CF events) -- not here, and not by height: once
+        // hasBranchRates rolls heights out, a leaf's raw CF height is no longer what
+        // TreeLikelihood's branch length actually depends on.
+        marginalNode.setHeight(node.getHeight());
         marginalNode.lastEventHeight = node.getHeight();
         marginalNode.setID(node.getID());
         marginalNode.timeLength = 0;
@@ -682,30 +714,13 @@ public class MarginalTree extends Tree {
         Node oldLeft = marginalNode.getLeft();
         Node oldRight = marginalNode.getRight();
 
-        // Mark the node as filthy if one of the children changed
-        if (oldLeft.getNr() != newLeft.getNr()) {
+        // Mark the node as filthy if a child slot now holds a different creator than last time
+        // (stable numbering, per-creator, makes this Nr comparison meaningful across rebuilds --
+        // see the class-level comment on cfCoalescenceNr/convMarginalNr). The node's OWN branch
+        // determinant (timeLength) is checked by the post-walk pass in recalculate(), not here.
+        if (oldLeft.getNr() != newLeft.getNr() || oldRight.getNr() != newRight.getNr()) {
             nFilthyNodesMarked++;
             marginalNode.makeDirty(Tree.IS_FILTHY);
-        }
-
-        if (oldRight.getNr() != newRight.getNr()) {
-            nFilthyNodesMarked++;
-            marginalNode.makeDirty(Tree.IS_FILTHY);
-        }
-
-        // Mark the node and children as dirty if the height changed
-        if (marginalNode.getHeight() != node.getHeight()) {
-            nFilthyNodesMarked++;
-            marginalNode.makeDirty(Tree.IS_FILTHY);
-            List<Node> children = marginalNode.getChildren();
-            if (children.size() > 0) {
-                nFilthyNodesMarked++;
-                children.get(0).makeDirty(Tree.IS_FILTHY);
-            }
-            if (children.size() > 1) {
-                nFilthyNodesMarked++;
-                children.get(1).makeDirty(Tree.IS_FILTHY);
-            }
         }
 
         // Update the marginal node and meta information
@@ -738,29 +753,13 @@ public class MarginalTree extends Tree {
         // Take the old marginal node from the given index
         MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
 
-        // Mark the node as filthy if one of the children changed
-        if (marginalNode.getLeft().getNr() != marginalLeft.getNr()) {
+        // Mark the node as filthy if a child slot now holds a different creator than last time
+        // (see the analogous comment in the CF-coalescence overload above). The node's OWN
+        // branch determinant (timeLength) is checked by the post-walk pass in recalculate().
+        if (marginalNode.getLeft().getNr() != marginalLeft.getNr()
+                || marginalNode.getRight().getNr() != marginalRight.getNr()) {
             nFilthyNodesMarked++;
             marginalNode.makeDirty(Tree.IS_FILTHY);
-        }
-        if (marginalNode.getRight().getNr() != marginalRight.getNr()) {
-            nFilthyNodesMarked++;
-            marginalNode.makeDirty(Tree.IS_FILTHY);
-        }
-
-        // Mark the node and children as dirty if the height changed
-        if (marginalNode.getHeight() != conv.getHeight()) {
-            nFilthyNodesMarked++;
-            marginalNode.makeDirty(Tree.IS_FILTHY);
-            List<Node> children = marginalNode.getChildren();
-            if (children.size() > 0) {
-                nFilthyNodesMarked++;
-                children.get(0).makeDirty(Tree.IS_FILTHY);
-            }
-            if (children.size() > 1) {
-                nFilthyNodesMarked++;
-                children.get(1).makeDirty(Tree.IS_FILTHY);
-            }
         }
 
         marginalNode.update(height, marginalLeft, marginalRight);
@@ -772,8 +771,6 @@ public class MarginalTree extends Tree {
             updateTimeLength(height, left, marginalLeft);
             updateTimeLength(height, right, marginalRight);
         }
-
-//        marginalNode.makeDirty(Tree.IS_FILTHY);
 
         return marginalNode;
     }
