@@ -73,12 +73,15 @@ public class ResampleBorrowings extends ACGOperator {
         }
 
         for (Block block : blockSet.getBlocks())
-            if (block.isAffected(conv))
+            if (block.isAffected(conv)) {
                 block.removeMove(conv);
+                noteBlockMoveChanged(block, conv);
+            }
 
         for (Block block : blockSet.getBlocks()) {
             if (Randomizer.nextDouble() < pMove) {
                 block.addMove(conv);
+                noteBlockMoveChanged(block, conv);
                 logP += Math.log(pMove);
             } else {
                 logP += Math.log(1 - pMove);

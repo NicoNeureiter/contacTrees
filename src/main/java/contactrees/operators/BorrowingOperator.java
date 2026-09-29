@@ -256,6 +256,7 @@ public abstract class BorrowingOperator extends ACGOperator {
         } else {
             block.addMove(conv);
         }
+        noteBlockMoveChanged(block, conv);
     }
 
     /**

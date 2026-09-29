@@ -5,6 +5,7 @@ import javax.naming.directory.InvalidAttributesException;
 import beast.base.core.Input;
 import beast.base.inference.Operator;
 import beast.base.evolution.tree.Node;
+import contactrees.Block;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
 import contactrees.MarginalTree;
@@ -42,6 +43,17 @@ public abstract class ACGOperator extends Operator {
 
     /** Perform the actual proposal. See {@link #proposal()}. */
     protected abstract double doProposal();
+
+    /**
+     * Report that a block's move set changed at an existing, unmoved conversion's height (a
+     * plain borrowing flip, not a re-attachment or a newly created conversion) to the block's
+     * own marginal tree, if it has one registered on this ACG.
+     */
+    protected void noteBlockMoveChanged(Block block, Conversion conv) {
+        MarginalTree marginalTree = acg.getMarginalTree(block);
+        if (marginalTree != null)
+            marginalTree.noteChangedAtHeight(conv.getHeight());
+    }
 
     /**
      * Return sister of node.

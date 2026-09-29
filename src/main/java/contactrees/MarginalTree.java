@@ -134,6 +134,16 @@ public class MarginalTree extends Tree {
      */
     protected boolean snapshotTakenThisProposal = false;
 
+    /*
+     * Lowest height changed during the current proposal, for a future incremental rebuild that
+     * only replays the walk from there upward. POSITIVE_INFINITY doubles as both "nothing
+     * reported yet" and "not eligible this proposal" (a CF/conversion/branch-rate change, or
+     * makeOutdated(), makes the whole tree ineligible for height-localized replay). Cleared at
+     * the same points as snapshotTakenThisProposal -- see accept()/restore(). Plumbing only:
+     * nothing reads this yet to change the rebuild.
+     */
+    protected double lowestChangedHeight = Double.POSITIVE_INFINITY;
+
     protected double[] storedHeight;
     protected double[] storedTimeLength;
     protected double[] storedLastEventHeight;
@@ -171,6 +181,9 @@ public class MarginalTree extends Tree {
     public static long nRestoreUntouched = 0;
     public static long nOutdatedChecks = 0;
     public static long nOutdatedTrue = 0;
+    /** recalculate() calls where lowestChangedHeight was usable (finite) vs. not (infinite/ineligible). */
+    public static long nRecalculateWithHeight = 0;
+    public static long nRecalculateIneligible = 0;
 
     public static void resetCounters() {
         nRecalculate = 0;
@@ -180,9 +193,12 @@ public class MarginalTree extends Tree {
         nRestoreUntouched = 0;
         nOutdatedChecks = 0;
         nOutdatedTrue = 0;
+        nRecalculateWithHeight = 0;
+        nRecalculateIneligible = 0;
     }
 
     public static String counterSummary() {
+        long nHeightTotal = nRecalculateWithHeight + nRecalculateIneligible;
         return "MarginalTree counters: recalculate=" + nRecalculate
                 + ", filthyNodesMarked=" + nFilthyNodesMarked
                 + ", nodesChecked=" + nNodesChecked
@@ -190,7 +206,10 @@ public class MarginalTree extends Tree {
                 + ", restore=" + nRestore
                 + ", restoreUntouched=" + nRestoreUntouched
                 + ", outdatedChecks=" + nOutdatedChecks
-                + ", outdatedTrue=" + nOutdatedTrue;
+                + ", outdatedTrue=" + nOutdatedTrue
+                + ", recalculateWithHeight=" + nRecalculateWithHeight
+                + ", recalculateIneligible=" + nRecalculateIneligible
+                + ", recalculateWithHeightFraction=" + (nHeightTotal == 0 ? 0.0 : (double) nRecalculateWithHeight / nHeightTotal);
     }
 
     public void setBranchRateModel(Base brm) {
@@ -203,9 +222,10 @@ public class MarginalTree extends Tree {
     public void initAndValidate() {
 
         acg = networkInput.get();
+        block = blockInput.get();
+        // After block is set: the registry indexes trees by block.
         if (!isInBeauti())
             acg.registerMarginalTree(this);
-        block = blockInput.get();
         frozenTaxa = frozenTaxaInput.get();
         validationLevel = validationLevelInput.get();
 
@@ -393,6 +413,36 @@ public class MarginalTree extends Tree {
         outdated = true;
         setEverythingDirty(true);
         manuallyUpdated = false;
+        makeIneligibleForIncrementalUpdate();
+    }
+
+    /**
+     * Report that something changed at the given height during the current proposal (called by
+     * operators that flip a block's borrowing of a single, unmoved conversion). Keeps the
+     * running minimum across the proposal; has no effect once the tree has been made ineligible.
+     */
+    public void noteChangedAtHeight(double height) {
+        if (height < lowestChangedHeight)
+            lowestChangedHeight = height;
+    }
+
+    /**
+     * @return the lowest height reported via {@link #noteChangedAtHeight(double)} so far this
+     *         proposal, or {@link Double#POSITIVE_INFINITY} if nothing was reported, or if the
+     *         tree is not eligible for a height-localized incremental rebuild this proposal.
+     */
+    public double getLowestChangedHeight() {
+        return lowestChangedHeight;
+    }
+
+    /**
+     * Force this tree out of eligibility for a height-localized incremental rebuild for the rest
+     * of the current proposal: something changed that is not a plain block-move-set toggle on an
+     * unmoved conversion (CF topology/height, conversion re-attachment/height, branch-rate-model
+     * dirtiness, or a manual makeOutdated()).
+     */
+    public void makeIneligibleForIncrementalUpdate() {
+        lowestChangedHeight = Double.POSITIVE_INFINITY;
     }
 
     @Override
@@ -405,11 +455,14 @@ public class MarginalTree extends Tree {
 
         boolean result;
         if (outdated) {
+            // Forced by makeOutdated(), which already made this tree ineligible.
             result = true;
         } else if (branchRateModel instanceof CalculationNode brm && brm.somethingIsDirty()) {
             result = true;
+            makeIneligibleForIncrementalUpdate();
         } else if (acg.getCFVersion() != seenCfVersion) {
             result = true;
+            makeIneligibleForIncrementalUpdate();
         } else if (block.getMoveSetVersion() != seenBlockVersion) {
             result = true;
         } else if (acg.getConvVersion() != seenConvVersion) {
@@ -419,6 +472,7 @@ public class MarginalTree extends Tree {
             for (Conversion conv : getBlockConversions()) {
                 if (conv.getVersion() > seenConvVersion) {
                     result = true;
+                    makeIneligibleForIncrementalUpdate();
                     break;
                 }
             }
@@ -617,6 +671,10 @@ public class MarginalTree extends Tree {
 
     public void recalculate() {
         nRecalculate++;
+        if (lowestChangedHeight < Double.POSITIVE_INFINITY)
+            nRecalculateWithHeight++;
+        else
+            nRecalculateIneligible++;
         startEditing(null);
 
         if (!snapshotTakenThisProposal) {
@@ -646,6 +704,17 @@ public class MarginalTree extends Tree {
 
             return 0;
         });
+
+        // Only a change confined to this block's move set is height-localizable. Validated here
+        // rather than in checkOutdated() for two reasons: convs is already materialised, so the
+        // scan is free; and the Gibbs operators call recalculate() DIRECTLY, bypassing
+        // checkOutdated() entirely, so this is the only place guaranteed to see every rebuild.
+        for (int i = 0; i < convs.size(); i++) {
+            if (convs.get(i).getVersion() > seenConvVersion) {
+                makeIneligibleForIncrementalUpdate();
+                break;
+            }
+        }
 
         // Precompute which creators fire this round, then reconcile ALL releases before ANY
         // new claim -- see computeFiringSets() for why that order matters.
@@ -996,6 +1065,8 @@ public class MarginalTree extends Tree {
         changed = false;
         // Next proposal's first recalculate() must snapshot again.
         snapshotTakenThisProposal = false;
+        // Next proposal starts with nothing reported.
+        lowestChangedHeight = Double.POSITIVE_INFINITY;
     }
 
     @Override
@@ -1099,6 +1170,8 @@ public class MarginalTree extends Tree {
         changed = true;
         manuallyUpdated = false;
         snapshotTakenThisProposal = false;
+        // Next proposal starts with nothing reported.
+        lowestChangedHeight = Double.POSITIVE_INFINITY;
     }
 
     /**

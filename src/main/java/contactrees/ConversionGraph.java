@@ -70,6 +70,7 @@ public class ConversionGraph extends Tree {
      * invert the calculation-node ordering. They register themselves instead.
      */
     private final List<MarginalTree> marginalTrees = new ArrayList<>();
+    private final Map<Block, MarginalTree> marginalTreeByBlock = new HashMap<>();
 
     @Override
     public void initAndValidate() {
@@ -196,6 +197,16 @@ public class ConversionGraph extends Tree {
                 return;
         }
         marginalTrees.add(marginalTree);
+        marginalTreeByBlock.put(marginalTree.block, marginalTree);
+    }
+
+    /**
+     * The marginal tree following the given block, or null. Keyed lookup rather than a scan of
+     * {@link #getMarginalTrees()}: the borrowing operators need this per flipped borrowing, which
+     * is the hottest operator path in the program.
+     */
+    public MarginalTree getMarginalTree(Block block) {
+        return marginalTreeByBlock.get(block);
     }
 
     /**
