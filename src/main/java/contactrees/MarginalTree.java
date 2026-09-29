@@ -118,6 +118,7 @@ public class MarginalTree extends Tree {
     // Diagnostics for single-threaded benchmark runs; not synchronized.
     public static long nRecalculate = 0;
     public static long nFilthyNodesMarked = 0;
+    public static long nNodesChecked = 0;
     public static long nRestore = 0;
     public static long nOutdatedChecks = 0;
     public static long nOutdatedTrue = 0;
@@ -125,6 +126,7 @@ public class MarginalTree extends Tree {
     public static void resetCounters() {
         nRecalculate = 0;
         nFilthyNodesMarked = 0;
+        nNodesChecked = 0;
         nRestore = 0;
         nOutdatedChecks = 0;
         nOutdatedTrue = 0;
@@ -133,6 +135,8 @@ public class MarginalTree extends Tree {
     public static String counterSummary() {
         return "MarginalTree counters: recalculate=" + nRecalculate
                 + ", filthyNodesMarked=" + nFilthyNodesMarked
+                + ", nodesChecked=" + nNodesChecked
+                + ", filthyFraction=" + (nNodesChecked == 0 ? 0.0 : (double) nFilthyNodesMarked / nNodesChecked)
                 + ", restore=" + nRestore
                 + ", outdatedChecks=" + nOutdatedChecks
                 + ", outdatedTrue=" + nOutdatedTrue;
@@ -627,6 +631,7 @@ public class MarginalTree extends Tree {
             MarginalNode node = (MarginalNode) m_nodes[nr];
             if (node == newRoot)
                 continue;
+            nNodesChecked++;
             double determinant = hasBranchRates ? node.timeLength : node.getHeight();
             if (Double.isNaN(node.prevBranchDeterminant) || determinant != node.prevBranchDeterminant) {
                 nFilthyNodesMarked++;
@@ -634,6 +639,7 @@ public class MarginalTree extends Tree {
             }
             node.prevBranchDeterminant = determinant;
         }
+        nNodesChecked++;
         if (Double.isNaN(prevRootHeight) || newRoot.getHeight() != prevRootHeight) {
             nFilthyNodesMarked++;
             newRoot.makeDirty(Tree.IS_FILTHY);
