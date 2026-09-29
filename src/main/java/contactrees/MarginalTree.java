@@ -150,6 +150,7 @@ public class MarginalTree extends Tree {
     public static long nFilthyNodesMarked = 0;
     public static long nNodesChecked = 0;
     public static long nRestore = 0;
+    public static long nRestoreUntouched = 0;
     public static long nOutdatedChecks = 0;
     public static long nOutdatedTrue = 0;
 
@@ -158,6 +159,7 @@ public class MarginalTree extends Tree {
         nFilthyNodesMarked = 0;
         nNodesChecked = 0;
         nRestore = 0;
+        nRestoreUntouched = 0;
         nOutdatedChecks = 0;
         nOutdatedTrue = 0;
     }
@@ -168,6 +170,7 @@ public class MarginalTree extends Tree {
                 + ", nodesChecked=" + nNodesChecked
                 + ", filthyFraction=" + (nNodesChecked == 0 ? 0.0 : (double) nFilthyNodesMarked / nNodesChecked)
                 + ", restore=" + nRestore
+                + ", restoreUntouched=" + nRestoreUntouched
                 + ", outdatedChecks=" + nOutdatedChecks
                 + ", outdatedTrue=" + nOutdatedTrue;
     }
@@ -926,19 +929,33 @@ public class MarginalTree extends Tree {
      * rejected proposal, in place (no m_nodes/m_storedNodes swap -- see the plan file's "Real
      * MarginalTree.store()/restore()" section for why).
      *
-     * If this tree was never snapshotted this proposal (storedHeight == null), it was never
-     * touched this proposal either -- nothing to restore, so fall back to a full refresh() for
-     * safety and return.
+     * A tree that saw no recalculate() at all this proposal needs no restoring and no rebuild:
+     * see the untouched fast path below.
      */
     @Override
     public void restore() {
         nRestore++;
 
-        if (storedHeight == null) {
-            refresh();
-            // refresh() -> recalculate() takes a snapshot of its own; drop it, since this
-            // proposal is over and the next one must snapshot its own baseline afresh.
-            snapshotTakenThisProposal = false;
+        if (!snapshotTakenThisProposal) {
+            // Untouched this proposal: m_nodes changes ONLY via recalculate(), and none ran, so
+            // this tree still matches the state its inputs have just been restored to (MCMC calls
+            // state.restore() before state.restoreCalculationNodes(), so the ACG and Blocks are
+            // already back to the accepted state). Nothing to restore, and nothing to rebuild.
+            //
+            // The stored arrays must NOT be applied here: they hold the snapshot of some EARLIER
+            // proposal, and if that one was accepted, applying it would revert an accepted change.
+            //
+            // Re-baseline the seen-version stamps instead. The ACG bumps its version counters
+            // conservatively in its own restore(), so leaving the old stamps in place would make
+            // the next checkOutdated() demand a full rebuild of a tree already known to be
+            // correct -- which is exactly the waste this fast path exists to remove. A later
+            // genuine change still bumps the counters past these values, so it is still detected.
+            nRestoreUntouched++;
+            seenCfVersion = acg.getCFVersion();
+            seenConvVersion = acg.getConvVersion();
+            seenBlockVersion = block.getMoveSetVersion();
+            outdated = false;
+            manuallyUpdated = false;
             return;
         }
 

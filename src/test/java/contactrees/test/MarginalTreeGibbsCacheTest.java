@@ -442,9 +442,55 @@ public class MarginalTreeGibbsCacheTest extends ContactreesTest {
     }
 
     /**
-     * The untouched-block fast path: a block that is never touched during a proposal has no
-     * snapshot taken (storedHeight == null), so MarginalTree.restore() must fall back to
-     * refresh() rather than crashing on null snapshot arrays.
+     * The case that catches a stale snapshot being applied: tree T is changed and the proposal is
+     * ACCEPTED, then a LATER proposal changes a different block (so T's restore() is still called,
+     * since every marginal tree is reachable from the ConversionGraph) without touching T, and is
+     * rejected. T must still reflect the change accepted in the first cycle -- applying T's
+     * snapshot here would revert it, because that snapshot was taken at the start of the FIRST
+     * cycle. Deliberately reads T's likelihood without going through requiresRecalculation(), so a
+     * wrong restore cannot be masked by a self-healing rebuild.
+     */
+    @Test
+    public void testUntouchedTreeKeepsEarlierAcceptedState() throws Exception {
+        Block treeBlock = blockSet2.getBlocks().get(0);
+        Block otherBlock = blockSet2.getBlocks().get(1);
+
+        MarginalTree marginalTree = buildMarginalTreeWithRelaxedClock(treeBlock);
+        TreeLikelihood treeLH = buildTreeLikelihood(marginalTree);
+
+        marginalTree.recalculate();
+        treeLH.calculateLogP();
+        marginalTree.accept();
+
+        // Cycle 1: change THIS tree's block, and accept.
+        acg2.store();
+        treeBlock.addMove(conv2_1);
+        marginalTree.recalculate();
+        double logPAccepted = treeLH.calculateLogP();
+        marginalTree.accept();
+        acg2.setEverythingDirty(false);
+        treeBlock.setEverythingDirty(false);
+
+        assertEquals("sanity: the accepted state must match a fresh rebuild",
+                freshLogPRelaxed(treeBlock), logPAccepted, 1e-6);
+
+        // Cycle 2: change a DIFFERENT block, leave this tree untouched, and reject. This tree's
+        // restore() is still called (it is reachable from the ConversionGraph).
+        acg2.store();
+        otherBlock.addMove(conv2_2);
+        acg2.restore();
+        otherBlock.restore();
+        marginalTree.restore();
+
+        assertEquals("An untouched tree must keep the state accepted in the previous cycle, not "
+                + "revert to the snapshot taken at the start of that cycle",
+                freshLogPRelaxed(treeBlock), treeLH.calculateLogP(), 1e-6);
+        marginalTree.assertMappingConsistent("untouched after reject");
+    }
+
+    /**
+     * The untouched-block fast path on a tree that has never been snapshotted at all: restore()
+     * must not crash on the null snapshot arrays, and must leave the tree correct.
      */
     @Test
     public void testUntouchedBlockRestoreFallsBackToRefresh() throws Exception {
