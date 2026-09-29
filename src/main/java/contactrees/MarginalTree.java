@@ -1224,12 +1224,73 @@ public class MarginalTree extends Tree {
 
 
     /**
-     * Marginal trees are currently implemented as lean calculation
-     * nodes, hence the state can be inconsistent at intermediate stages.
+     * Checksum over everything {@link #restore()} is responsible for putting back, so that BEAST's
+     * own reject validation ({@code MCMC.validateReject()} under {@code -Dbeast.debug=true})
+     * independently catches an incomplete restore on every rejected proposal.
+     *
+     * This used to return 0 -- opting out of that check -- on the grounds that a marginal tree is
+     * a lean calculation node whose intermediate state is arbitrary. That no longer holds: now
+     * that restore() is a real undo rather than a full rebuild, the state it restores to is
+     * exactly the state at the start of the proposal, which is precisely when
+     * {@code CalculationNode.storeChecksum()} is called.
+     *
+     * Deliberately excluded: the seen-version stamps and {@link #mappingVersion}. The untouched
+     * fast path in restore() re-baselines the stamps to the just-restored inputs' current values
+     * rather than reverting them, by design -- including them here would report that as a failure.
+     * Also excluded are the dirty/outdated flags, which describe freshness rather than tree state.
      */
     @Override
     public int getChecksum() {
-        return 0;
+        int checksum = 1;
+        for (int nr = 0; nr < m_nodes.length; nr++) {
+            MarginalNode node = (MarginalNode) m_nodes[nr];
+            checksum = 31 * checksum + Double.hashCode(node.getHeight());
+            checksum = 31 * checksum + Double.hashCode(node.timeLength);
+            checksum = 31 * checksum + Double.hashCode(node.lastEventHeight);
+            checksum = 31 * checksum + (node.isLeaf() ? -1 : node.getLeft().getNr());
+            checksum = 31 * checksum + (node.isLeaf() ? -1 : node.getRight().getNr());
+        }
+        checksum = 31 * checksum + root.getNr();
+
+        // The stable-numbering bookkeeping: a mapping restored incorrectly corrupts the NEXT
+        // rebuild rather than this state, so no likelihood comparison would catch it.
+        checksum = 31 * checksum + Arrays.hashCode(cfCoalescenceNr);
+        checksum = 31 * checksum + Arrays.hashCode(cfBranchOccupant);
+        checksum = 31 * checksum + Arrays.hashCode(creatorKind);
+        checksum = 31 * checksum + Arrays.hashCode(creatorKey);
+        checksum = 31 * checksum + nextNonLeafNr;
+        // Only the live prefix of the free stack: entries above freeNrTop are dead leftovers.
+        checksum = 31 * checksum + freeNrTop;
+        for (int i = 0; i < freeNrTop; i++)
+            checksum = 31 * checksum + freeNrStack[i];
+        // Map.hashCode() is the sum of entry hashes, so iteration order is irrelevant.
+        checksum = 31 * checksum + convMarginalNr.hashCode();
+
+        return checksum;
+    }
+
+    /**
+     * Skip the checksum comparison in the one case where BEAST never gave this tree a chance to
+     * restore itself.
+     *
+     * On the DIRECT-reject path (the operator returned -infinity), {@code MCMC.propagateState()}
+     * calls {@code state.restore()} but then guards {@code state.restoreCalculationNodes()} behind
+     * {@code !operator.requiresStateInitialisation()} (MCMC.java:574). That method defaults to
+     * {@code true} in {@code Operator} and no contacTrees operator overrides it, so calculation
+     * nodes are never restored on that path: this tree is deliberately left holding the rejected
+     * proposal's state. It self-heals before next use, because {@code ConversionGraph.restore()}
+     * conservatively bumps the version counters past the stamps recorded during the proposal,
+     * which makes {@link #checkOutdated()} force a rebuild.
+     *
+     * {@code snapshotTakenThisProposal} is exactly the signal for that case: a rebuild happened
+     * this proposal and neither {@link #restore()} nor {@link #accept()} has cleared it since.
+     * Whenever restore() genuinely ran, the flag is clear and the comparison goes ahead.
+     */
+    @Override
+    public boolean matchesOldChecksum() {
+        if (snapshotTakenThisProposal)
+            return true;
+        return super.matchesOldChecksum();
     }
 
 }

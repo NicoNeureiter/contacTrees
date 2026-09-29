@@ -1,6 +1,7 @@
 package contactrees.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import org.junit.Test;
 
@@ -439,6 +440,52 @@ public class MarginalTreeGibbsCacheTest extends ContactreesTest {
 
             marginalTree.assertMappingConsistent("step " + step);
         }
+    }
+
+    /**
+     * getChecksum() is what lets BEAST's own MCMC.validateReject() police restore() on every
+     * rejected proposal (under -Dbeast.debug=true), so it has to satisfy two properties: it must
+     * come back to its pre-proposal value after a restore, and it must actually be sensitive to
+     * the tree changing -- a checksum that never changes would police nothing. Both are asserted
+     * here, for the real-restore path and for the untouched fast path.
+     */
+    @Test
+    public void testChecksumRoundTripsAcrossRestore() throws Exception {
+        Block block = blockSet2.getBlocks().get(0);
+        Block otherBlock = blockSet2.getBlocks().get(1);
+
+        MarginalTree marginalTree = buildMarginalTreeWithRelaxedClock(block);
+        buildTreeLikelihood(marginalTree);
+
+        marginalTree.recalculate();
+        marginalTree.accept();
+
+        // Real-restore path: the tree changes, so the checksum must change, then come back.
+        int before = marginalTree.getChecksum();
+        acg2.store();
+        block.addMove(conv2_1);
+        marginalTree.recalculate();
+        assertNotEquals("the checksum must be sensitive to the tree actually changing",
+                before, marginalTree.getChecksum());
+
+        acg2.restore();
+        block.restore();
+        marginalTree.restore();
+        assertEquals("the checksum must return to its pre-proposal value after a restore",
+                before, marginalTree.getChecksum());
+        acg2.setEverythingDirty(false);
+        block.setEverythingDirty(false);
+
+        // Untouched fast path: a proposal that changes a different block must leave this tree's
+        // checksum untouched (this is what makes excluding the version stamps necessary).
+        int beforeUntouched = marginalTree.getChecksum();
+        acg2.store();
+        otherBlock.addMove(conv2_2);
+        acg2.restore();
+        otherBlock.restore();
+        marginalTree.restore();
+        assertEquals("an untouched tree's checksum must be unchanged by a rejected proposal "
+                + "elsewhere", beforeUntouched, marginalTree.getChecksum());
     }
 
     /**
