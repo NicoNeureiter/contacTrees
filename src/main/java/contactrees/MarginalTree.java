@@ -118,7 +118,6 @@ public class MarginalTree extends Tree {
     protected double[] storedHeight;
     protected double[] storedTimeLength;
     protected double[] storedLastEventHeight;
-    protected double[] storedPrevBranchDeterminant;
     protected int[] storedLeftNr;
     protected int[] storedRightNr;
     protected int storedRootNr;
@@ -509,7 +508,6 @@ public class MarginalTree extends Tree {
             storedHeight = new double[n];
             storedTimeLength = new double[n];
             storedLastEventHeight = new double[n];
-            storedPrevBranchDeterminant = new double[n];
             storedLeftNr = new int[n];
             storedRightNr = new int[n];
         }
@@ -519,7 +517,6 @@ public class MarginalTree extends Tree {
             storedHeight[nr] = node.getHeight();
             storedTimeLength[nr] = node.timeLength;
             storedLastEventHeight[nr] = node.lastEventHeight;
-            storedPrevBranchDeterminant[nr] = node.prevBranchDeterminant;
             storedLeftNr[nr] = node.isLeaf() ? -1 : node.getLeft().getNr();
             storedRightNr[nr] = node.isLeaf() ? -1 : node.getRight().getNr();
         }
