@@ -278,6 +278,11 @@ public class MarginalTreeGibbsCacheTest extends ContactreesTest {
         marginalTree.recalculate();
         treeLH.calculateLogP();
 
+        // Simulate the end of the PREVIOUS proposal (accepted): in real MCMC this happens via
+        // State.acceptCalculationNodes() before the next proposal's store() -- it's what tells
+        // MarginalTree.restore()'s lazy snapshot machinery that a fresh proposal is starting.
+        marginalTree.accept();
+
         // Outer MCMC-level "store" before the proposal begins.
         acg2.store();
 
@@ -370,5 +375,116 @@ public class MarginalTreeGibbsCacheTest extends ContactreesTest {
                     + ") must match a fresh rebuild",
                     logPExpected, logPStep, 1e-6);
         }
+    }
+
+    /**
+     * A sequence of several full outer-level accept/reject cycles in a row (each ending with
+     * marginalTree.accept() or marginalTree.restore()), checking that the store()/restore()
+     * snapshot machinery's bookkeeping (prevBranchDeterminant, prevRootHeight, and the stable-
+     * numbering fields) stays correct across repeated snapshot/restore/snapshot cycles, not just
+     * a single one.
+     */
+    @Test
+    public void testOuterAcceptRejectSequenceMatchesFreshRebuild() throws Exception {
+        Block block = blockSet2.getBlocks().get(0);
+        Conversion[] convs = {conv2_1, conv2_2, conv2_3};
+        // Deterministic accept/reject pattern covering both branches multiple times.
+        boolean[] reject = {true, false, true, true, false, false};
+
+        MarginalTree marginalTree = buildMarginalTreeWithRelaxedClock(block);
+        TreeLikelihood treeLH = buildTreeLikelihood(marginalTree);
+
+        marginalTree.recalculate();
+        treeLH.calculateLogP();
+        marginalTree.accept();
+
+        for (int step = 0; step < reject.length; step++) {
+            Conversion conv = convs[step % convs.length];
+
+            acg2.store();
+
+            boolean wasAffectedBefore = block.isAffected(conv);
+            if (wasAffectedBefore) {
+                block.removeMove(conv);
+            } else {
+                block.addMove(conv);
+            }
+            marginalTree.recalculate();
+            treeLH.calculateLogP();
+
+            double logPStep;
+            if (reject[step]) {
+                acg2.restore();
+                block.restore();
+                marginalTree.restore();
+                logPStep = treeLH.calculateLogP();
+            } else {
+                marginalTree.accept();
+                logPStep = treeLH.getCurrentLogP();
+            }
+            // Mirrors MCMC.propagateState()'s state.setEverythingDirty(false) call after every
+            // proposal (accept or reject): resets hasStartedEditing on the edited StateNodes so
+            // the NEXT proposal's first edit calls store() again instead of skipping it (Tree.
+            // setEverythingDirty(false) -> setSomethingIsDirty(false) -> hasStartedEditing =
+            // false). Without this, acg2/block's OWN store()/restore() (not MarginalTree's) would
+            // silently stop snapshotting after the first edit -- unrelated to this task's new
+            // MarginalTree store()/restore(), but required for this test to mirror real MCMC.
+            acg2.setEverythingDirty(false);
+            block.setEverythingDirty(false);
+
+            double logPExpected = freshLogPRelaxed(block);
+            assertEquals("Step " + step + " (reject=" + reject[step] + ", conv=" + conv.getID()
+                    + ") must match a fresh rebuild",
+                    logPExpected, logPStep, 1e-6);
+
+            marginalTree.assertMappingConsistent("step " + step);
+        }
+    }
+
+    /**
+     * The untouched-block fast path: a block that is never touched during a proposal has no
+     * snapshot taken (storedHeight == null), so MarginalTree.restore() must fall back to
+     * refresh() rather than crashing on null snapshot arrays.
+     */
+    @Test
+    public void testUntouchedBlockRestoreFallsBackToRefresh() throws Exception {
+        Block untouchedBlock = blockSet2.getBlocks().get(1);
+        Block touchedBlock = blockSet2.getBlocks().get(0);
+        Conversion conv = conv2_1;
+
+        MarginalTree untouchedTree = buildMarginalTree(untouchedBlock);
+        TreeLikelihood untouchedLH = buildTreeLikelihood(untouchedTree);
+        MarginalTree touchedTree = buildMarginalTree(touchedBlock);
+        TreeLikelihood touchedLH = buildTreeLikelihood(touchedTree);
+
+        untouchedTree.recalculate();
+        untouchedLH.calculateLogP();
+        untouchedTree.accept();
+
+        touchedTree.recalculate();
+        touchedLH.calculateLogP();
+        touchedTree.accept();
+
+        acg2.store();
+
+        // Only touchedBlock's conversion set changes; untouchedTree never gets recalculate()
+        // called on it this proposal, so it never snapshots.
+        touchedBlock.addMove(conv);
+        touchedTree.recalculate();
+        touchedLH.calculateLogP();
+
+        // Reject: bring both back via their own restore().
+        acg2.restore();
+        touchedBlock.restore();
+        touchedTree.restore();
+        untouchedTree.restore();
+
+        double logPTouchedAfter = touchedLH.calculateLogP();
+        double logPUntouchedAfter = untouchedLH.calculateLogP();
+
+        assertEquals("Touched block must match a fresh rebuild after reject",
+                freshLogP(touchedBlock), logPTouchedAfter, 1e-6);
+        assertEquals("Untouched block (fast-path refresh) must match a fresh rebuild after reject",
+                freshLogP(untouchedBlock), logPUntouchedAfter, 1e-6);
     }
 }

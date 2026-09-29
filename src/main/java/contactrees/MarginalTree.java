@@ -107,6 +107,36 @@ public class MarginalTree extends Tree {
      */
     protected double prevRootHeight = Double.NaN;
 
+    /*
+     * Real store()/restore(): a snapshot of this tree's state taken lazily on the first
+     * recalculate() of a proposal (see recalculate()'s startEditing(null) call), restored in
+     * place (no array swap) by restore(). See the plan file's "Real MarginalTree.store()/
+     * restore()" section for the full design rationale.
+     */
+    protected boolean snapshotTakenThisProposal = false;
+
+    protected double[] storedHeight;
+    protected double[] storedTimeLength;
+    protected double[] storedLastEventHeight;
+    protected double[] storedPrevBranchDeterminant;
+    protected int[] storedLeftNr;
+    protected int[] storedRightNr;
+    protected int storedRootNr;
+    protected double storedPrevRootHeight;
+
+    protected int[] storedCfCoalescenceNr;
+    protected Map<Integer, Integer> storedConvMarginalNr;
+    protected int[] storedFreeNrStack;
+    protected int storedFreeNrTop;
+    protected int[] storedCreatorKind;
+    protected int[] storedCreatorKey;
+    protected int[] storedCfBranchOccupant;
+    protected int storedNextNonLeafNr;
+    protected long storedSeenCfVersion;
+    protected long storedSeenConvVersion;
+    protected long storedSeenBlockVersion;
+    protected long storedMappingVersion;
+
     public void setManuallyUpdated() {
         manuallyUpdated = true;
     }
@@ -464,9 +494,57 @@ public class MarginalTree extends Tree {
         }
     }
 
+    /**
+     * Snapshot this tree's live state into the stored* fields, called lazily by recalculate()
+     * on the first call of a new proposal. m_nodes only ever changes as a result of
+     * recalculate()'s own logic, so this state -- right before the first recalculate() of a
+     * proposal -- is exactly the correct baseline for restore() to revert to.
+     */
+    private void snapshotThisProposal() {
+        int n = m_nodes.length;
+        if (storedHeight == null || storedHeight.length != n) {
+            storedHeight = new double[n];
+            storedTimeLength = new double[n];
+            storedLastEventHeight = new double[n];
+            storedPrevBranchDeterminant = new double[n];
+            storedLeftNr = new int[n];
+            storedRightNr = new int[n];
+        }
+
+        for (int nr = 0; nr < n; nr++) {
+            MarginalNode node = (MarginalNode) m_nodes[nr];
+            storedHeight[nr] = node.getHeight();
+            storedTimeLength[nr] = node.timeLength;
+            storedLastEventHeight[nr] = node.lastEventHeight;
+            storedPrevBranchDeterminant[nr] = node.prevBranchDeterminant;
+            storedLeftNr[nr] = node.isLeaf() ? -1 : node.getLeft().getNr();
+            storedRightNr[nr] = node.isLeaf() ? -1 : node.getRight().getNr();
+        }
+        storedRootNr = root.getNr();
+        storedPrevRootHeight = prevRootHeight;
+
+        storedCfCoalescenceNr = cfCoalescenceNr.clone();
+        storedConvMarginalNr = new HashMap<>(convMarginalNr);
+        storedFreeNrStack = freeNrStack.clone();
+        storedFreeNrTop = freeNrTop;
+        storedCreatorKind = creatorKind.clone();
+        storedCreatorKey = creatorKey.clone();
+        storedCfBranchOccupant = cfBranchOccupant.clone();
+        storedNextNonLeafNr = nextNonLeafNr;
+        storedSeenCfVersion = seenCfVersion;
+        storedSeenConvVersion = seenConvVersion;
+        storedSeenBlockVersion = seenBlockVersion;
+        storedMappingVersion = mappingVersion;
+    }
+
     public void recalculate() {
         nRecalculate++;
         startEditing(null);
+
+        if (!snapshotTakenThisProposal) {
+            snapshotThisProposal();
+            snapshotTakenThisProposal = true;
+        }
 
         if (cfCoalescenceNr.length != acg.getNodeCount()) {
             throw new IllegalStateException("MarginalTree: CF node count changed between rebuilds ("
@@ -830,21 +908,103 @@ public class MarginalTree extends Tree {
     }
 
     @Override
-    protected void accept() {
+    public void accept() {
         super.accept();
         setEverythingDirty(false);
         // Reset the sticky "changed" signal (see requiresRecalculation()) now that this
         // whole proposal cycle -- and any TreeLikelihood read of it -- is done.
         changed = false;
+        // Next proposal's first recalculate() must snapshot again.
+        snapshotTakenThisProposal = false;
     }
 
     @Override
     public void store() {}
 
+    /**
+     * Restore this tree to the state it had right before the first recalculate() of the
+     * rejected proposal, in place (no m_nodes/m_storedNodes swap -- see the plan file's "Real
+     * MarginalTree.store()/restore()" section for why).
+     *
+     * If this tree was never snapshotted this proposal (storedHeight == null), it was never
+     * touched this proposal either -- nothing to restore, so fall back to a full refresh() for
+     * safety and return.
+     */
     @Override
     public void restore() {
         nRestore++;
-        refresh();
+
+        if (storedHeight == null) {
+            refresh();
+            // refresh() -> recalculate() takes a snapshot of its own; drop it, since this
+            // proposal is over and the next one must snapshot its own baseline afresh.
+            snapshotTakenThisProposal = false;
+            return;
+        }
+
+        int n = m_nodes.length;
+        for (int nr = 0; nr < n; nr++) {
+            MarginalNode node = (MarginalNode) m_nodes[nr];
+            boolean isLeaf = node.isLeaf();
+            boolean isRoot = (nr == storedRootNr);
+
+            int preLeftNr = isLeaf ? -1 : node.getLeft().getNr();
+            int preRightNr = isLeaf ? -1 : node.getRight().getNr();
+            boolean childrenChanged = !isLeaf
+                    && (preLeftNr != storedLeftNr[nr] || preRightNr != storedRightNr[nr]);
+
+            boolean dirty;
+            if (isRoot) {
+                // The root's own branch determinant is meaningless (no parent branch); its
+                // dirtiness is judged by height alone, mirroring recalculate()'s own
+                // prevRootHeight handling.
+                dirty = childrenChanged || node.getHeight() != storedPrevRootHeight;
+            } else {
+                double preDeterminant = hasBranchRates ? node.timeLength : node.getHeight();
+                double restoredDeterminant = hasBranchRates ? storedTimeLength[nr] : storedHeight[nr];
+                dirty = childrenChanged || preDeterminant != restoredDeterminant;
+            }
+            nNodesChecked++;
+            if (dirty) {
+                nFilthyNodesMarked++;
+                node.makeDirty(Tree.IS_FILTHY);
+            }
+
+            if (isLeaf) {
+                node.setHeight(storedHeight[nr]);
+            } else {
+                MarginalNode left = (MarginalNode) m_nodes[storedLeftNr[nr]];
+                MarginalNode right = (MarginalNode) m_nodes[storedRightNr[nr]];
+                node.update(storedHeight[nr], left, right);
+            }
+            node.timeLength = storedTimeLength[nr];
+            node.lastEventHeight = storedLastEventHeight[nr];
+            node.prevBranchDeterminant = hasBranchRates ? storedTimeLength[nr] : storedHeight[nr];
+        }
+
+        MarginalNode restoredRoot = (MarginalNode) m_nodes[storedRootNr];
+        restoredRoot.setParent(null);
+        setRootOnly(restoredRoot);
+        prevRootHeight = storedPrevRootHeight;
+
+        cfCoalescenceNr = storedCfCoalescenceNr;
+        convMarginalNr = storedConvMarginalNr;
+        freeNrStack = storedFreeNrStack;
+        freeNrTop = storedFreeNrTop;
+        creatorKind = storedCreatorKind;
+        creatorKey = storedCreatorKey;
+        cfBranchOccupant = storedCfBranchOccupant;
+        nextNonLeafNr = storedNextNonLeafNr;
+        seenCfVersion = storedSeenCfVersion;
+        seenConvVersion = storedSeenConvVersion;
+        seenBlockVersion = storedSeenBlockVersion;
+        mappingVersion = storedMappingVersion;
+
+        postCache = null;
+        outdated = false;
+        changed = true;
+        manuallyUpdated = false;
+        snapshotTakenThisProposal = false;
     }
 
     /**
