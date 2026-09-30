@@ -46,7 +46,7 @@ public class MarginalTree extends Tree {
             "Taxa for which the last branch should have a fixed branch rate of 0.",
             new ArrayList<>());
     public Input<Integer> validationLevelInput = new Input<>("validationLevel",
-            "0 = off; 1 = check this marginal tree against a fresh rebuild after every proposal; 2 = also check the CF/conversion <-> marginal-node mapping.", 0);
+            "0 = off; 1 = check this marginal tree against a fresh rebuild after every proposal; 2 = also check the CF/conversion <-> marginal-node mapping; 3 = also validate the replay-and-compare occupancy-history walk against every eligible full rebuild.", 0);
 
     public ConversionGraph acg;
     public Block block;
@@ -184,6 +184,8 @@ public class MarginalTree extends Tree {
     /** recalculate() calls where lowestChangedHeight was usable (finite) vs. not (infinite/ineligible). */
     public static long nRecalculateWithHeight = 0;
     public static long nRecalculateIneligible = 0;
+    /** recalculate() calls where the Stage-C replay-and-compare validator actually ran. */
+    public static long nReplayValidated = 0;
 
     public static void resetCounters() {
         nRecalculate = 0;
@@ -195,6 +197,7 @@ public class MarginalTree extends Tree {
         nOutdatedTrue = 0;
         nRecalculateWithHeight = 0;
         nRecalculateIneligible = 0;
+        nReplayValidated = 0;
     }
 
     public static String counterSummary() {
@@ -209,7 +212,8 @@ public class MarginalTree extends Tree {
                 + ", outdatedTrue=" + nOutdatedTrue
                 + ", recalculateWithHeight=" + nRecalculateWithHeight
                 + ", recalculateIneligible=" + nRecalculateIneligible
-                + ", recalculateWithHeightFraction=" + (nHeightTotal == 0 ? 0.0 : (double) nRecalculateWithHeight / nHeightTotal);
+                + ", recalculateWithHeightFraction=" + (nHeightTotal == 0 ? 0.0 : (double) nRecalculateWithHeight / nHeightTotal)
+                + ", replayValidated=" + nReplayValidated;
     }
 
     public void setBranchRateModel(Base brm) {
@@ -569,6 +573,154 @@ public class MarginalTree extends Tree {
         return len;
     }
 
+    /** Sentinel for {@link #validateReplay}'s active-lineage array: "never touched by the replay". */
+    private static final int REPLAY_UNSEEDED = Integer.MIN_VALUE;
+
+    /**
+     * @return the marginal Nr occupying {@code cfNodeNr} strictly below {@code height} in the
+     *         given occupancy-history log (a snapshot taken before the current recalculate()
+     *         overwrote the live log), or -1 if none did. Unlike {@link #getOccupantAtHeight},
+     *         which is inclusive (used to query a fixed, already-final history), this is used to
+     *         seed a replay at the exact height something changed, where an entry recorded AT
+     *         that height belongs to the change itself and must not be used as the "before" state.
+     */
+    private static int occupantStrictlyBefore(int cfNodeNr, double height,
+            double[] occHeightLog, int[] occNrLog, int[] occPrevLog, int[] occLastOfNodeLog) {
+        for (int i = occLastOfNodeLog[cfNodeNr]; i >= 0; i = occPrevLog[i]) {
+            if (occHeightLog[i] < height)
+                return occNrLog[i];
+        }
+        return -1;
+    }
+
+    /**
+     * Stage C validator (design: see the plan's "Replay-and-compare" section). Independently
+     * re-derives the occupancy transitions of the just-completed real rebuild, from {@code hStart}
+     * upward only, seeding each CF branch lazily from the PREVIOUS rebuild's occupancy history
+     * (captured by the caller before it was overwritten) the first time the replay touches it.
+     * After every transition it assigns, checks the affected branch(es) against the just-completed
+     * real rebuild's OWN occupancy history ({@link #getOccupantAtHeight}, which by now reflects
+     * this real rebuild, not the previous one) at that exact height -- comparing against the FINAL
+     * {@link #cfBranchOccupant} instead would be near-vacuous, since every non-root CF branch is
+     * eventually vacated by its own parent event regardless of what fed into it; the history is
+     * the only place the intermediate, per-height truth survives. Never mutates any
+     * {@link MarginalNode}; a pure check.
+     *
+     * @param hStart the lowest height reported this proposal (via {@link #noteChangedAtHeight})
+     * @param cfEvents this rebuild's CF event list, in height order (as used by the real walk)
+     * @param convs this rebuild's block conversions, sorted by height (as used by the real walk)
+     * @param prevOccHeight the previous rebuild's occupancy-history log, or null/unused entries
+     *        beyond what {@code prevOccLastOfNode} reaches
+     * @param prevOccNr parallel to {@code prevOccHeight}
+     * @param prevOccPrev parallel to {@code prevOccHeight}
+     * @param prevOccLastOfNode CF node Nr -> log position of its most recent PREVIOUS-rebuild entry
+     */
+    private void validateReplay(double hStart, List<Event> cfEvents, List<Conversion> convs,
+            double[] prevOccHeight, int[] prevOccNr, int[] prevOccPrev, int[] prevOccLastOfNode) {
+        int n = acg.getNodeCount();
+        int[] active = new int[n];
+        Arrays.fill(active, REPLAY_UNSEEDED);
+
+        int iConv = 0;
+        for (int iEvent = 0; iEvent < cfEvents.size(); iEvent++) {
+            Event event = cfEvents.get(iEvent);
+            Node node = event.getNode();
+            double height = node.getHeight();
+
+            if (height >= hStart) {
+                switch (event.getType()) {
+                    case SAMPLE:
+                        // Leaves are identity-mapped: registerLeafNode() writes into
+                        // m_nodes[node.getNr()].
+                        active[node.getNr()] = node.getNr();
+                        checkAgainstRealHistory(node.getNr(), height, active[node.getNr()], hStart);
+                        break;
+
+                    case COALESCENCE:
+                        Node left = node.getChild(0);
+                        Node right = node.getChild(1);
+                        int aLeft = replaySeed(active, left.getNr(), hStart,
+                                prevOccHeight, prevOccNr, prevOccPrev, prevOccLastOfNode);
+                        int aRight = replaySeed(active, right.getNr(), hStart,
+                                prevOccHeight, prevOccNr, prevOccPrev, prevOccLastOfNode);
+                        if (aLeft >= 0 && aRight >= 0) {
+                            active[node.getNr()] = cfCoalescenceNr[node.getNr()];
+                            active[left.getNr()] = -1;
+                            active[right.getNr()] = -1;
+                        } else if (aLeft >= 0) {
+                            active[node.getNr()] = aLeft;
+                            active[left.getNr()] = -1;
+                        } else if (aRight >= 0) {
+                            active[node.getNr()] = aRight;
+                            active[right.getNr()] = -1;
+                        } else {
+                            active[node.getNr()] = -1;
+                        }
+                        checkAgainstRealHistory(node.getNr(), height, active[node.getNr()], hStart);
+                        checkAgainstRealHistory(left.getNr(), height, active[left.getNr()], hStart);
+                        checkAgainstRealHistory(right.getNr(), height, active[right.getNr()], hStart);
+                        break;
+                }
+            }
+
+            while (iConv < convs.size() &&
+                    (event.node.isRoot() || isBelowNextCFEvent(convs.get(iConv), cfEvents.get(iEvent + 1)))) {
+                Conversion conv = convs.get(iConv++);
+                double convHeight = conv.getHeight();
+                if (convHeight < hStart)
+                    continue;
+
+                Node node1 = conv.getNode1();
+                Node node2 = conv.getNode2();
+                int a1 = replaySeed(active, node1.getNr(), hStart,
+                        prevOccHeight, prevOccNr, prevOccPrev, prevOccLastOfNode);
+                int a2 = replaySeed(active, node2.getNr(), hStart,
+                        prevOccHeight, prevOccNr, prevOccPrev, prevOccLastOfNode);
+                if (a1 >= 0 && a2 >= 0) {
+                    active[node2.getNr()] = convMarginalNr.get(conv.getID());
+                    active[node1.getNr()] = -1;
+                    checkAgainstRealHistory(node1.getNr(), convHeight, active[node1.getNr()], hStart);
+                    checkAgainstRealHistory(node2.getNr(), convHeight, active[node2.getNr()], hStart);
+                } else if (a1 >= 0) {
+                    active[node2.getNr()] = a1;
+                    active[node1.getNr()] = -1;
+                    checkAgainstRealHistory(node1.getNr(), convHeight, active[node1.getNr()], hStart);
+                    checkAgainstRealHistory(node2.getNr(), convHeight, active[node2.getNr()], hStart);
+                }
+                // else: node1 already vacated -- conversion has no effect, matching the real walk.
+            }
+        }
+    }
+
+    /**
+     * Throw if the replay's just-assigned occupant for {@code cfNodeNr} disagrees with the real
+     * rebuild's own occupancy history at {@code height} -- the ground truth for a structural
+     * comparison, since it (unlike {@link #cfBranchOccupant}) survives past the point where a
+     * later event vacates the branch again.
+     */
+    private void checkAgainstRealHistory(int cfNodeNr, double height, int replayValue, double hStart) {
+        int real = getOccupantAtHeight(cfNodeNr, height);
+        if (replayValue != real) {
+            throw new IllegalStateException("MarginalTree.validateReplay: occupancy mismatch at CF node "
+                    + cfNodeNr + " height " + height + " for marginal tree " + getID()
+                    + " (block " + block.getID() + "): replay=" + replayValue + " actual=" + real
+                    + " hStart=" + hStart);
+        }
+    }
+
+    /**
+     * Lazily seed {@code active[cfNodeNr]} from the previous rebuild's occupancy history the
+     * first time the replay touches that branch, and return its (now-populated) value.
+     */
+    private int replaySeed(int[] active, int cfNodeNr, double hStart,
+            double[] prevOccHeight, int[] prevOccNr, int[] prevOccPrev, int[] prevOccLastOfNode) {
+        if (active[cfNodeNr] == REPLAY_UNSEEDED) {
+            active[cfNodeNr] = occupantStrictlyBefore(cfNodeNr, hStart,
+                    prevOccHeight, prevOccNr, prevOccPrev, prevOccLastOfNode);
+        }
+        return active[cfNodeNr];
+    }
+
     /**
      * Determine, without touching any MarginalNode, exactly which CF nodes and conversions will
      * produce a marginal coalescence in the upcoming rebuild.
@@ -671,6 +823,7 @@ public class MarginalTree extends Tree {
 
     public void recalculate() {
         nRecalculate++;
+        double hStart = lowestChangedHeight;
         if (lowestChangedHeight < Double.POSITIVE_INFINITY)
             nRecalculateWithHeight++;
         else
@@ -692,6 +845,23 @@ public class MarginalTree extends Tree {
         activeCFlineages.replaceAll((oldNode) -> {
             return null;
         });
+
+        // Stage C validator: snapshot the PREVIOUS rebuild's occupancy history before the reset
+        // below wipes it -- it is the seed the replay needs at hStart. Only bothered with when
+        // the validator might actually run (validationLevel >= 3): cloning is wasted work
+        // whenever this rebuild turns out ineligible below, but that is cheap insurance for a
+        // debug-only path.
+        double[] prevOccHeight = null;
+        int[] prevOccNr = null;
+        int[] prevOccPrev = null;
+        int[] prevOccLastOfNode = null;
+        if (validationLevel >= 3 && hStart < Double.POSITIVE_INFINITY) {
+            prevOccHeight = occHeight.clone();
+            prevOccNr = occNr.clone();
+            prevOccPrev = occPrev.clone();
+            prevOccLastOfNode = occLastOfNode.clone();
+        }
+
         occCount = 0;
         Arrays.fill(occLastOfNode, -1);
         List<Conversion> convs = getBlockConversions();
@@ -872,6 +1042,16 @@ public class MarginalTree extends Tree {
             newRoot.makeDirty(Tree.IS_FILTHY);
         }
         prevRootHeight = newRoot.getHeight();
+
+        // Stage C: validate the replay-and-compare design against this real rebuild, whenever
+        // this rebuild is (still) height-localizable -- lowestChangedHeight may have been pushed
+        // to +Infinity by the mid-method eligibility re-check above, in which case hStart no
+        // longer describes a safe seed point and the validator must not run.
+        if (validationLevel >= 3 && hStart < Double.POSITIVE_INFINITY
+                && lowestChangedHeight < Double.POSITIVE_INFINITY) {
+            nReplayValidated++;
+            validateReplay(hStart, cfEvents, convs, prevOccHeight, prevOccNr, prevOccPrev, prevOccLastOfNode);
+        }
 
         outdated = false;
         seenCfVersion = acg.getCFVersion();
