@@ -155,7 +155,7 @@ public class ConversionGraph extends Tree {
     }
 
     /**
-     * Obtain the CFEventList object, containting the ordered list of events
+     * Obtain the CFEventList object, containing the ordered list of events
      * that make up the clonal frame and some convenience methods.
      *
      * @return cfEventList.

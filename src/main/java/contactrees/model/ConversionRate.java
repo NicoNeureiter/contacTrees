@@ -1,25 +1,28 @@
 package contactrees.model;
 
 import java.io.PrintStream;
+import java.util.LinkedList;
+import java.util.List;
 
 import beast.base.core.Input;
 import beast.base.core.Loggable;
 import beast.base.inference.CalculationNode;
 import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.type.RealScalar;
+import beast.base.spec.type.RealVector;
 import contactrees.ConversionGraph;
 
 
-public class ConversionRate extends CalculationNode implements RealScalar<NonNegativeReal>, Loggable {
+public class ConversionRate extends CalculationNode implements RealVector<NonNegativeReal>, Loggable {
 
-    final public Input<RealScalar<NonNegativeReal>> expectedConversionsInput = new Input<>(
+    final public Input<RealVector<NonNegativeReal>> expectedConversionsInput = new Input<>(
             "expectedConversions",
             "The expected number of conversions in the whole phylogeny.",
             Input.Validate.REQUIRED);
 
     final public Input<ConversionGraph> networkInput = new Input<>(
             "network",
-            "The conversion graph containing, composed of a tree (clonal frame) and conversion edges.",
+            "The conversion graph composed of a tree (clonal frame) and conversion edges.",
             Input.Validate.REQUIRED);
 
     final public Input<Boolean> linearContactGrowthInput = new Input<>(
@@ -29,11 +32,22 @@ public class ConversionRate extends CalculationNode implements RealScalar<NonNeg
     @Override
     public void initAndValidate() {
     }
+    
+    @Override
+    public List<Double> getElements() {
+    	List<Double> expectedConversions = expectedConversionsInput.get().getElements();
+    	List<Double> conversionRates = new LinkedList<Double>();
+    	for (double eConv : expectedConversions) {
+    		double convRate = expectationToRate(eConv);
+    		conversionRates.add(convRate);
+    	}
+        return conversionRates;
+    }
 
     @Override
-    public double get() {
-        double expectedConversions = expectedConversionsInput.get().get();
-        return expectationToRate(expectedConversions);
+    public double get(int i) {
+        double eConv = expectedConversionsInput.get().get(i);
+        return expectationToRate(eConv);
     }
 
     @Override
@@ -70,7 +84,7 @@ public class ConversionRate extends CalculationNode implements RealScalar<NonNeg
         return networkInput.get().getClonalFrameLength();
     }
 
-    protected RealScalar<NonNegativeReal> getExpectation() {
+    protected RealVector<NonNegativeReal> getExpectation() {
         return expectedConversionsInput.get();
     }
 
