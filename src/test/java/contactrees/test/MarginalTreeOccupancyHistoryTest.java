@@ -84,4 +84,44 @@ public class MarginalTreeOccupancyHistoryTest extends ContactreesTest {
         assertEquals(-1, marginalTree.getOccupantAtHeight(leaf3Nr, convHeight));
     }
 
+    /**
+     * MarginalTree.restore() reverts node fields, cfBranchOccupant, and the stable-numbering
+     * mapping arrays -- but the per-CF-node occupancy history log (occHeight/occNr/occPrev/
+     * occLastOfNode) has no corresponding stored-field/restore support at all, so a rejected
+     * proposal's recalculate() permanently overwrites it with a walk that never actually
+     * happened. Caught by Stage C's replay validator empirically (bantu-contactrees.xml,
+     * seed 12345): after a reject, a CF node's occupancy history still showed the REJECTED
+     * proposal's vacate/install events instead of reverting to what was true before it.
+     */
+    @Test
+    public void testOccupancyHistoryRestoredAfterReject() {
+        Block block = blockSet2.getBlocks().get(0);
+        MarginalTree marginalTree = newMarginalTree(block);
+
+        int leaf3Nr = node2_3.getNr();
+        double convHeight = conv2_3.getHeight();
+
+        marginalTree.recalculate();
+        marginalTree.accept();
+
+        int occupantBefore = marginalTree.getOccupantAtHeight(leaf3Nr, convHeight);
+        int historyLenBefore = marginalTree.getOccupancyHistoryLength(leaf3Nr);
+
+        // Proposal: add conv2_3 to the block (vacates leaf3's branch at convHeight), then reject.
+        acg2.store();
+        block.addMove(conv2_3);
+        marginalTree.recalculate();
+        assertEquals(-1, marginalTree.getOccupantAtHeight(leaf3Nr, convHeight));
+
+        acg2.restore();
+        block.restore();
+        marginalTree.restore();
+
+        assertEquals("occupancy history must revert to the pre-proposal state after a reject, "
+                + "not keep reflecting the rejected proposal's walk",
+                occupantBefore, marginalTree.getOccupantAtHeight(leaf3Nr, convHeight));
+        assertEquals("occupancy history length must also revert after a reject",
+                historyLenBefore, marginalTree.getOccupancyHistoryLength(leaf3Nr));
+    }
+
 }

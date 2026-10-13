@@ -160,6 +160,11 @@ public class MarginalTree extends Tree {
     protected int[] storedCreatorKey;
     protected int[] storedCfBranchOccupant;
     protected int storedNextNonLeafNr;
+    protected double[] storedOccHeight;
+    protected int[] storedOccNr;
+    protected int[] storedOccPrev;
+    protected int[] storedOccLastOfNode;
+    protected int storedOccCount;
     protected long storedSeenCfVersion;
     protected long storedSeenConvVersion;
     protected long storedSeenBlockVersion;
@@ -815,6 +820,11 @@ public class MarginalTree extends Tree {
         storedCreatorKey = creatorKey.clone();
         storedCfBranchOccupant = cfBranchOccupant.clone();
         storedNextNonLeafNr = nextNonLeafNr;
+        storedOccHeight = occHeight.clone();
+        storedOccNr = occNr.clone();
+        storedOccPrev = occPrev.clone();
+        storedOccLastOfNode = occLastOfNode.clone();
+        storedOccCount = occCount;
         storedSeenCfVersion = seenCfVersion;
         storedSeenConvVersion = seenConvVersion;
         storedSeenBlockVersion = seenBlockVersion;
@@ -1340,6 +1350,11 @@ public class MarginalTree extends Tree {
         creatorKey = storedCreatorKey;
         cfBranchOccupant = storedCfBranchOccupant;
         nextNonLeafNr = storedNextNonLeafNr;
+        occHeight = storedOccHeight;
+        occNr = storedOccNr;
+        occPrev = storedOccPrev;
+        occLastOfNode = storedOccLastOfNode;
+        occCount = storedOccCount;
         seenCfVersion = storedSeenCfVersion;
         seenConvVersion = storedSeenConvVersion;
         seenBlockVersion = storedSeenBlockVersion;
