@@ -32,7 +32,7 @@ public abstract class ACGOperator extends Operator {
     @Override
     public final double proposal() {
         double logHGF = doProposal();
-        if (logHGF > Double.NEGATIVE_INFINITY) {
+        if (logHGF > Double.NEGATIVE_INFINITY && operatorUpdatesMarginalTree()) {
             for (MarginalTree marginalTree : acg.getMarginalTrees()) {
                 if (marginalTree.isValidating())
                     marginalTree.assertConsistent(getID());
@@ -43,6 +43,34 @@ public abstract class ACGOperator extends Operator {
 
     /** Perform the actual proposal. See {@link #proposal()}. */
     protected abstract double doProposal();
+
+    /**
+     * @return true if this operator's doProposal() already leaves every marginal tree it could
+     *         have affected fully, FINALLY recalculated (synced) by the time it returns.
+     *         {@link MarginalTree#assertConsistent} compares the tree's CURRENT,
+     *         not-yet-recalculated display against a fresh rebuild, so calling it from
+     *         {@link #proposal()} is only valid when this returns true -- otherwise the
+     *         operator's proposal would report a false "stale tree".
+     *         <p>
+     *         Default false, and -- as of this writing -- no operator overrides it, including the
+     *         Gibbs-sampling ones in {@link BorrowingOperator}: {@code sampleBlockMove()}'s own
+     *         choreography (evaluate old state -&gt; flip -&gt; recalculate for the flipped state
+     *         -&gt; maybe flip back with NO third recalculate) deliberately leaves a marginal tree
+     *         displaying the flipped topology whenever the block's move reverts, relying on
+     *         BEAST's lazy {@code requiresRecalculation()} to self-heal on the next dirty-check --
+     *         this is correct, load-bearing, and extensively tested behaviour (see
+     *         {@code MarginalTreeGibbsCacheTest}), not a bug, but it means even the Gibbs
+     *         operators cannot honestly claim "already synced" at the point {@link #proposal()}
+     *         would ask. Every non-Gibbs operator relies on the same lazy self-healing even more
+     *         directly (a CF-height change alone would otherwise force recalculating every
+     *         marginal tree, not just the ones actually consulted before the next accept/reject).
+     *         This hook stays real, general infrastructure for a hypothetical future operator
+     *         that genuinely never needs that self-healing -- flip it on for one only after
+     *         checking it doesn't go through {@code sampleBlockMove}'s revert path.
+     */
+    protected boolean operatorUpdatesMarginalTree() {
+        return false;
+    }
 
     /**
      * Report that a block's move set changed at an existing, unmoved conversion's height (a
