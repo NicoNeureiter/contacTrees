@@ -35,19 +35,16 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
     protected double doProposal() {
         double logHGF = 0.;
 
+        // Every direct rejection (-Infinity) must happen before the Gibbs steps below touch any
+        // marginal tree or likelihood: MCMC's direct-reject path restores only the state nodes,
+        // never the calculation nodes, so anything recalculated here would stay built for the
+        // rejected proposal.
         if (acg.getConvCount() == 0)
             return Double.NEGATIVE_INFINITY;
-
-        for (TreeLikelihood tLH : treeLHsInput.get()) {
-            tLH.store();
-        }
 
         // Select recombination at random
         Conversion conv = chooseConversion();
         double height = conv.getHeight();
-
-        // Compute back probability
-        logHGF += getBorrowingsProbGibbs(conv, true);
 
         // Choose whether to move departure or arrival point
         boolean moveDeparture = Randomizer.nextBoolean();
@@ -80,17 +77,7 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
         Node newNode = Util.sampleFrom(candidates);
         logHGF -= Math.log(1. / candidates.size());
 
-        // Select new attachment point:
-        if (moveDeparture)
-            conv.setNode1(newNode);
-        else
-            conv.setNode2(newNode);
-
-        assert !acg.isInvalid() : "ConvertedEdgeHopGibbs produced invalid state.";
-
-        // Resample affected blocks
-        logHGF -= drawBorrowingsGibbs(conv, true);
-
+        // The back-move only depends on the clonal frame, so it can be checked before anything moves.
         if (nClosest > 0) {
             HashSet<Node> candidatesBack = Util.getClosestRelatives(newNode, height, nClosest+1);
 
@@ -106,8 +93,23 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
             logHGF += Math.log(1. / candidates.size());
         }
 
+        // Compute back probability
+        logHGF += getBorrowingsProbGibbs(conv, true);
+
+        // Select new attachment point:
+        if (moveDeparture)
+            conv.setNode1(newNode);
+        else
+            conv.setNode2(newNode);
+
+        assert !acg.isInvalid() : "ConvertedEdgeHopGibbs produced invalid state.";
+
+        // Resample affected blocks
+        logHGF -= drawBorrowingsGibbs(conv, true);
+
+        // The Gibbs steps restore every likelihood themselves; only the marginal trees need
+        // bringing up to date with the final state.
         for (TreeLikelihood tLH : treeLHsInput.get()) {
-            tLH.restore();
             ((MarginalTree) tLH.treeInput.get()).refresh();
         }
 
