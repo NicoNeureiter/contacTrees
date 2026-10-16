@@ -39,15 +39,14 @@
     </state>
 
     <distribution id="prior" spec="beast.base.inference.CompoundDistribution">
-        <distribution id="ACGYulePrior.t" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
-            <cfModel id="YuleModel" spec="beast.base.spec.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
-        </distribution>
+        <distribution id="YuleModel" spec="beast.base.spec.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
+        <distribution id="ACGYulePrior.t" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
         <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
     </distribution>
 
     <operatorschedule id="schedule" spec="contactrees.test.StationarityTestSchedule" logInterval="$(logInterval)">
         <simulatorOperator id="SimumlaterOperator" spec="contactrees.test.SimulatorOperator" distribution="@prior" state="@state" weight="1"/>
-        <operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="1" acg="@acg" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" networkPrior="@ACGYulePrior.t"/>
+        <operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="1" acg="@acg" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" conversionPrior="@ACGYulePrior.t"/>
     </operatorschedule>
     
     <logger id="screenlog" logEvery="$(logInterval)">
