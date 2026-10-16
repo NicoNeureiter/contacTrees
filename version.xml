@@ -15,7 +15,6 @@
         <provider classname="contactrees.MarginalNodeSlow"/>
         <provider classname="contactrees.MarginalTree"/>
         <provider classname="contactrees.MarginalTreeSlow"/>
-        <provider classname="contactrees.model.ACGDistribution"/>
         <provider classname="contactrees.model.ACGSimulator"/>
         <provider classname="contactrees.model.BetaBinomialMovePrior"/>
         <provider classname="contactrees.model.ConversionMovePrior"/>

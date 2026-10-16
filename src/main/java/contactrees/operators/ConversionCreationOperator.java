@@ -10,7 +10,6 @@ import beast.base.spec.type.RealScalar;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import contactrees.Conversion;
-import contactrees.model.ACGDistribution;
 import contactrees.model.ConversionPrior;
 import contactrees.model.ConversionRate;
 
@@ -27,14 +26,10 @@ public abstract class ConversionCreationOperator extends BorrowingOperator {
             "Rate at which conversions happen along pairs of edges on the clonal frame.",
             Input.Validate.REQUIRED);
 
-    public Input<ACGDistribution> networkPriorInput = new Input<>(
-            "networkPrior",
-            "The network prior (or conversion prior) defines how new edges should be sampled.");
-
     public Input<ConversionPrior> conversionPriorInput = new Input<>(
             "conversionPrior",
-            "The conversion prior (or network prior) defines how new edges should be sampled.",
-            Input.Validate.XOR, networkPriorInput);
+            "The conversion prior defines how new edges should be sampled.",
+            Input.Validate.REQUIRED);
 
     @Override
     public void initAndValidate() {
@@ -67,11 +62,7 @@ public abstract class ConversionCreationOperator extends BorrowingOperator {
      * @return log probability density of chosen attachment.
      */
     public double attachEdge(Conversion conv) {
-        double logP;
-        if (networkPriorInput.get() != null)
-            logP = networkPriorInput.get().attachEdge(conv);
-        else
-            logP = conversionPriorInput.get().attachEdge(conv);
+        double logP = conversionPriorInput.get().attachEdge(conv);
         assert conv.isValid();
         return logP;
     }
@@ -84,10 +75,7 @@ public abstract class ConversionCreationOperator extends BorrowingOperator {
      * @return log probability density
      */
     public double getEdgeAttachmentProb(Conversion conv) {
-        if (networkPriorInput.get() != null)
-            return networkPriorInput.get().getEdgeAttachmentProb(conv);
-        else
-            return conversionPriorInput.get().getEdgeAttachmentProb(conv);
+        return conversionPriorInput.get().getEdgeAttachmentProb(conv);
     }
 
     /**

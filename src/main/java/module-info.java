@@ -35,7 +35,6 @@ open module contactrees {
         contactrees.MarginalNodeSlow,
         contactrees.MarginalTree,
         contactrees.MarginalTreeSlow,
-        contactrees.model.ACGDistribution,
         contactrees.model.ACGSimulator,
         contactrees.model.BetaBinomialMovePrior,
         contactrees.model.ConversionMovePrior,

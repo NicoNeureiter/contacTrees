@@ -80,7 +80,7 @@ public class ConversionPrior extends Distribution {
         convQueue = new PriorityQueue<>();
 
         Distribution cfPrior = clonalFramePriorInput.get();
-        if (cfPrior instanceof ConversionPrior || cfPrior instanceof ACGDistribution)
+        if (cfPrior instanceof ConversionPrior)
             throw new IllegalArgumentException("clonalFramePrior of " + getID() + " must be a tree prior, "
                     + "not a conversion prior (" + cfPrior.getID() + ").");
 
@@ -284,7 +284,7 @@ public class ConversionPrior extends Distribution {
             Distribution distr = (Distribution) output;
             if (!safeIDs(distr::getArguments).contains(acg.getID()))
                 continue;
-            if (distr instanceof ConversionPrior || distr instanceof ACGDistribution)
+            if (distr instanceof ConversionPrior)
                 throw new IllegalStateException("Network " + acg.getID() + " is governed by multiple "
                         + "conversion priors (" + getID() + ", " + distr.getID() + ").");
             candidates.add(distr);
@@ -343,7 +343,7 @@ public class ConversionPrior extends Distribution {
     }
 
     /**
-     * Sample the network by triggering the conversion prior (ConversionPrior or ACGDistribution)
+     * Sample the network by triggering the conversion prior
      * governing it. To be used by distributions conditioned on the network, instead of listing
      * the network in getConditions() (see {@link #checkNetworkConditions}).
      */
@@ -354,7 +354,7 @@ public class ConversionPrior extends Distribution {
             if (!(output instanceof Distribution))
                 continue;
             Distribution distr = (Distribution) output;
-            if (distr instanceof ConversionPrior || distr instanceof ACGDistribution)
+            if (distr instanceof ConversionPrior)
                 networkPriors.add(distr);
             else if (safeIDs(distr::getArguments).contains(acg.getID()))
                 owners.add(distr);

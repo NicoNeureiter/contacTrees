@@ -33,7 +33,6 @@ import contactrees.Block;
 import contactrees.BlockSet;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
-import contactrees.model.ACGDistribution;
 import contactrees.model.ConversionMovePrior;
 import contactrees.model.ConversionPrior;
 import contactrees.test.ContactreesTest;
@@ -52,18 +51,8 @@ public class NetworkSamplingTest extends ContactreesTest {
     @Test
     public void factorizedPriorIsOrderIndependent() {
         for (List<Integer> order : permutations(3)) {
-            Model m = new Model(false);
+            Model m = new Model();
             List<Distribution> distrs = Arrays.asList(m.yule, m.networkPrior, m.movePrior);
-            simulateAndCheck(m, reorder(distrs, order), "order " + order);
-        }
-    }
-
-    /** Joint model: ACGDistribution wrapping the tree prior, next to the move prior. */
-    @Test
-    public void jointPriorIsOrderIndependent() {
-        for (List<Integer> order : permutations(2)) {
-            Model m = new Model(true);
-            List<Distribution> distrs = Arrays.asList(m.networkPrior, m.movePrior);
             simulateAndCheck(m, reorder(distrs, order), "order " + order);
         }
     }
@@ -71,7 +60,7 @@ public class NetworkSamplingTest extends ContactreesTest {
     /** A distribution listing the network as a condition makes sampling order dependent. */
     @Test
     public void networkConditionIsRejected() {
-        Model m = new Model(false);
+        Model m = new Model();
         NetworkConditioned other = new NetworkConditioned();
         other.initByName("x", m.acg);
         assertThrows(IllegalStateException.class, () -> sample(m, Arrays.asList(m.yule, m.networkPrior, other)));
@@ -80,7 +69,7 @@ public class NetworkSamplingTest extends ContactreesTest {
     /** Same, but the network is reached indirectly through a CalculationNode (the BlockSet). */
     @Test
     public void indirectNetworkConditionIsRejected() {
-        Model m = new Model(false);
+        Model m = new Model();
         NetworkConditioned other = new NetworkConditioned();
         other.initByName("x", m.blockSet);
         assertThrows(IllegalStateException.class, () -> sample(m, Arrays.asList(m.yule, m.networkPrior, other)));
@@ -124,7 +113,7 @@ public class NetworkSamplingTest extends ContactreesTest {
     /** clonalFramePrior must not be a conversion prior. */
     @Test
     public void conversionPriorAsClonalFramePriorIsRejected() {
-        Model m = new Model(false);
+        Model m = new Model();
         ConversionPrior other = new ConversionPrior();
         RealScalarParam<NonNegativeReal> rate = new RealScalarParam<>(CONV_RATE, NonNegativeReal.INSTANCE);
         // initByName wraps exceptions from initAndValidate() in a RuntimeException
@@ -145,15 +134,11 @@ public class NetworkSamplingTest extends ContactreesTest {
         ConversionMovePrior movePrior;
         IndirectTreePrior indirectPrior;
 
-        Model(boolean joint) {
-            this(joint, Option.DEFAULT);
+        Model() {
+            this(Option.DEFAULT);
         }
 
         Model(Option option) {
-            this(false, option);
-        }
-
-        Model(boolean joint, Option option) {
             acg = getACGFromNewick("((1:1.0,2:1.0)5:1.0,(3:0.5,4:0.5)6:1.5)7:0.0;");
             acg.setID("acg");
             blockSet = getBlockSet(N_BLOCKS, acg);
@@ -182,17 +167,12 @@ public class NetworkSamplingTest extends ContactreesTest {
                 indirectPrior.setID("indirectPrior");
             }
 
-            if (joint) {
-                networkPrior = new ACGDistribution();
-                networkPrior.initByName("network", acg, "cfModel", yule, "conversionRate", convRate);
-            } else {
-                networkPrior = new ConversionPrior();
-                if (option == Option.INDIRECT_EXPLICIT)
-                    networkPrior.initByName("network", acg, "conversionRate", convRate,
-                            "clonalFramePrior", indirectPrior);
-                else
-                    networkPrior.initByName("network", acg, "conversionRate", convRate);
-            }
+            networkPrior = new ConversionPrior();
+            if (option == Option.INDIRECT_EXPLICIT)
+                networkPrior.initByName("network", acg, "conversionRate", convRate,
+                        "clonalFramePrior", indirectPrior);
+            else
+                networkPrior.initByName("network", acg, "conversionRate", convRate);
             networkPrior.setID("networkPrior");
 
             movePrior = new ConversionMovePrior();

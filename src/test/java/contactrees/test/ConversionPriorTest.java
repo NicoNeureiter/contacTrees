@@ -6,8 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import beast.base.spec.evolution.speciation.YuleModel;
-import contactrees.model.ACGDistribution;
 import contactrees.model.ConversionPrior;
 import contactrees.util.Util;
 
@@ -59,15 +57,6 @@ public class ConversionPriorTest extends ContactreesTest {
 		bounded.initByName("network", acg, "conversionRate", "0.5",
 				"lowerConvCountBound", lower, "upperConvCountBound", upper);
 		assertEquals(unbounded.calculateLogP() - Math.log(pInBounds), bounded.calculateLogP(), EPS);
-
-		YuleModel yule = new YuleModel();
-		yule.initByName("tree", acg, "birthDiffRate", "1.0");
-		ACGDistribution unboundedACG = new ACGDistribution();
-		unboundedACG.initByName("network", acg, "cfModel", yule, "conversionRate", "0.5");
-		ACGDistribution boundedACG = new ACGDistribution();
-		boundedACG.initByName("network", acg, "cfModel", yule, "conversionRate", "0.5",
-				"lowerConvCountBound", lower, "upperConvCountBound", upper);
-		assertEquals(unboundedACG.calculateLogP() - Math.log(pInBounds), boundedACG.calculateLogP(), EPS);
 	}
 
 	protected double poissonLogPDF(double mean, int value) {
