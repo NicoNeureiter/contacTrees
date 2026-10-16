@@ -45,6 +45,7 @@ open module contactrees {
         contactrees.model.likelihood.CTreeLikelihood,
         contactrees.model.SimulatedACGWithBlocks,
         contactrees.operators.ACGScaler,
+        contactrees.operators.ACGTipDatesRandomWalker,
         contactrees.operators.AddRemoveConversion,
         contactrees.operators.AddRemoveConversionGibbs,
         contactrees.operators.CFConversionSwap,

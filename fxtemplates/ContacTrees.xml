@@ -271,7 +271,7 @@
             <operator id='proportionInvariantScaler.s:$(n)' spec='beast.base.spec.inference.operator.ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@proportionInvariant.s:$(n)"/>
             <operator id='mutationRateScaler.s:$(n)' spec='beast.base.spec.inference.operator.ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@mutationRate.s:$(n)"/>
             <operator id='gammaShapeScaler.s:$(n)' spec='beast.base.spec.inference.operator.ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@gammaShape.s:$(n)"/>
-            <operator id='allTipDatesRandomWalker' spec='TipDatesRandomWalker' windowSize="1" weight="0" tree="@Tree.t:tree"/>
+            <operator id='allTipDatesRandomWalker' spec='contactrees.operators.ACGTipDatesRandomWalker' windowSize="1" weight="0" tree="@Tree.t:tree"/>
 
 
             <distribution id='YuleBirthRatePrior.t:tree' spec='beast.base.spec.inference.distribution.Gamma' param='@birthRate.t:tree'>

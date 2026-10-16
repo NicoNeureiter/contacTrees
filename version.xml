@@ -25,6 +25,7 @@
         <provider classname="contactrees.model.likelihood.CTreeLikelihood"/>
         <provider classname="contactrees.model.SimulatedACGWithBlocks"/>
         <provider classname="contactrees.operators.ACGScaler"/>
+        <provider classname="contactrees.operators.ACGTipDatesRandomWalker"/>
         <provider classname="contactrees.operators.AddRemoveConversion"/>
         <provider classname="contactrees.operators.AddRemoveConversionGibbs"/>
         <provider classname="contactrees.operators.CFConversionSwap"/>
