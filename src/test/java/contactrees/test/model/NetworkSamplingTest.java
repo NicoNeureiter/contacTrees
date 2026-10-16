@@ -17,6 +17,8 @@ import org.junit.Test;
 
 import beast.base.core.BEASTInterface;
 import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TreeIntervals;
 import beast.base.inference.CompoundDistribution;
 import beast.base.inference.DirectSimulator;
 import beast.base.inference.Distribution;
@@ -84,7 +86,56 @@ public class NetworkSamplingTest extends ContactreesTest {
         assertThrows(IllegalStateException.class, () -> sample(m, Arrays.asList(m.yule, m.networkPrior, other)));
     }
 
+    /** A tree prior depending on the network only indirectly (through TreeIntervals) needs clonalFramePrior. */
+    @Test
+    public void explicitIndirectClonalFramePrior() {
+        for (List<Integer> order : permutations(3)) {
+            Model m = new Model(Option.INDIRECT_EXPLICIT);
+            List<Distribution> distrs = Arrays.asList(m.indirectPrior, m.networkPrior, m.movePrior);
+            simulateAndCheck(m, reorder(distrs, order), "order " + order);
+        }
+    }
+
+    /** Without clonalFramePrior the indirect tree prior is not found, and the estimated network can not be simulated. */
+    @Test
+    public void indirectClonalFramePriorIsNotAutoDetected() {
+        Model m = new Model(Option.INDIRECT_IMPLICIT);
+        assertThrows(IllegalStateException.class,
+                () -> sample(m, Arrays.asList(m.indirectPrior, m.networkPrior, m.movePrior)));
+    }
+
+    /** Network with estimate=false and no tree prior: the clonal frame stays fixed. */
+    @Test
+    public void fixedClonalFrame() {
+        for (List<Integer> order : permutations(2)) {
+            Model m = new Model(Option.FIXED);
+            List<Distribution> distrs = Arrays.asList(m.networkPrior, m.movePrior);
+            simulateAndCheck(m, reorder(distrs, order), "order " + order, true);
+        }
+    }
+
+    /** No tree prior and an estimated network is an error. */
+    @Test
+    public void missingClonalFramePriorIsRejected() {
+        Model m = new Model(Option.NO_TREE_PRIOR);
+        assertThrows(IllegalStateException.class, () -> sample(m, Arrays.asList(m.networkPrior, m.movePrior)));
+    }
+
+    /** clonalFramePrior must not be a conversion prior. */
+    @Test
+    public void conversionPriorAsClonalFramePriorIsRejected() {
+        Model m = new Model(false);
+        ConversionPrior other = new ConversionPrior();
+        RealScalarParam<NonNegativeReal> rate = new RealScalarParam<>(CONV_RATE, NonNegativeReal.INSTANCE);
+        // initByName wraps exceptions from initAndValidate() in a RuntimeException
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () -> other.initByName("network", m.acg, "conversionRate", rate, "clonalFramePrior", m.networkPrior));
+        assertTrue(e.getMessage(), e.getMessage().contains("clonalFramePrior"));
+    }
+
     /* Helpers */
+
+    enum Option { DEFAULT, INDIRECT_EXPLICIT, INDIRECT_IMPLICIT, FIXED, NO_TREE_PRIOR }
 
     class Model {
         ConversionGraph acg;
@@ -92,8 +143,17 @@ public class NetworkSamplingTest extends ContactreesTest {
         YuleModel yule;
         Distribution networkPrior;
         ConversionMovePrior movePrior;
+        IndirectTreePrior indirectPrior;
 
         Model(boolean joint) {
+            this(joint, Option.DEFAULT);
+        }
+
+        Model(Option option) {
+            this(false, option);
+        }
+
+        Model(boolean joint, Option option) {
             acg = getACGFromNewick("((1:1.0,2:1.0)5:1.0,(3:0.5,4:0.5)6:1.5)7:0.0;");
             acg.setID("acg");
             blockSet = getBlockSet(N_BLOCKS, acg);
@@ -106,16 +166,32 @@ public class NetworkSamplingTest extends ContactreesTest {
             RealScalarParam<UnitInterval> pMove = new RealScalarParam<>(P_MOVE, UnitInterval.INSTANCE);
             pMove.setID("pMove");
 
-            yule = new YuleModel();
-            yule.initByName("tree", acg, "birthDiffRate", birthRate, "conditionalOnRoot", false);
-            yule.setID("yule");
+            if (option == Option.DEFAULT) {
+                yule = new YuleModel();
+                yule.initByName("tree", acg, "birthDiffRate", birthRate, "conditionalOnRoot", false);
+                yule.setID("yule");
+            }
+            if (option == Option.FIXED)
+                acg.isEstimatedInput.setValue(false, acg);
+            if (option == Option.INDIRECT_EXPLICIT || option == Option.INDIRECT_IMPLICIT) {
+                TreeIntervals intervals = new TreeIntervals();
+                intervals.initByName("tree", acg);
+                intervals.setID("intervals");
+                indirectPrior = new IndirectTreePrior();
+                indirectPrior.initByName("intervals", intervals);
+                indirectPrior.setID("indirectPrior");
+            }
 
             if (joint) {
                 networkPrior = new ACGDistribution();
                 networkPrior.initByName("network", acg, "cfModel", yule, "conversionRate", convRate);
             } else {
                 networkPrior = new ConversionPrior();
-                networkPrior.initByName("network", acg, "conversionRate", convRate);
+                if (option == Option.INDIRECT_EXPLICIT)
+                    networkPrior.initByName("network", acg, "conversionRate", convRate,
+                            "clonalFramePrior", indirectPrior);
+                else
+                    networkPrior.initByName("network", acg, "conversionRate", convRate);
             }
             networkPrior.setID("networkPrior");
 
@@ -134,6 +210,10 @@ public class NetworkSamplingTest extends ContactreesTest {
     }
 
     void simulateAndCheck(Model m, List<Distribution> distrs, String label) {
+        simulateAndCheck(m, distrs, label, false);
+    }
+
+    void simulateAndCheck(Model m, List<Distribution> distrs, String label, boolean fixedClonalFrame) {
         Randomizer.setSeed(1);
         Random random = new Random(1);
         CompoundDistribution prior = new CompoundDistribution();
@@ -141,6 +221,7 @@ public class NetworkSamplingTest extends ContactreesTest {
         DirectSimulator sim = new DirectSimulator();
 
         double prevRootHeight = Double.NaN;
+        double initialRootHeight = m.acg.getRoot().getHeight();
         double sumDiff = 0, sumSqDiff = 0;  // conversion count minus its expectation given the tree
         long nConvTotal = 0, nMovesTotal = 0;
 
@@ -149,9 +230,11 @@ public class NetworkSamplingTest extends ContactreesTest {
             prior.sample(null, random);
             ConversionGraph acg = m.acg;
 
-            // Clonal frame was resampled
             double rootHeight = acg.getRoot().getHeight();
-            assertNotEquals(label, prevRootHeight, rootHeight, 0.0);
+            if (fixedClonalFrame)
+                assertEquals(label, initialRootHeight, rootHeight, 0.0);
+            else  // Clonal frame was resampled
+                assertNotEquals(label, prevRootHeight, rootHeight, 0.0);
             prevRootHeight = rootHeight;
 
             // Conversions are attached to the current clonal frame
@@ -242,6 +325,53 @@ public class NetworkSamplingTest extends ContactreesTest {
                 return;
             sampledFlag = true;
             sampleConditions(state, random);
+        }
+    }
+
+    /**
+     * Tree prior which depends on the network only through TreeIntervals, like a coalescent.
+     * Sampling rescales the internal node heights by a random factor.
+     */
+    public static class IndirectTreePrior extends Distribution {
+        public Input<TreeIntervals> intervalsInput = new Input<>("intervals", "Intervals of the tree.", Input.Validate.REQUIRED);
+
+        double[] originalHeights;
+
+        @Override
+        public void initAndValidate() {}
+
+        @Override
+        public double calculateLogP() {
+            return 0.0;
+        }
+
+        @Override
+        public List<String> getArguments() {
+            return Arrays.asList(intervalsInput.get().getID());
+        }
+
+        @Override
+        public List<String> getConditions() {
+            return new ArrayList<>();
+        }
+
+        @Override
+        public void sample(State state, Random random) {
+            if (sampledFlag)
+                return;
+            sampledFlag = true;
+
+            beast.base.evolution.tree.Tree tree = intervalsInput.get().treeInput.get();
+            Node[] nodes = tree.getNodesAsArray();
+            if (originalHeights == null) {
+                originalHeights = new double[nodes.length];
+                for (Node node : nodes)
+                    originalHeights[node.getNr()] = node.getHeight();
+            }
+            double factor = 0.5 + 1.5 * random.nextDouble();
+            for (Node node : nodes)
+                if (!node.isLeaf())
+                    node.setHeight(originalHeights[node.getNr()] * factor);
         }
     }
 }

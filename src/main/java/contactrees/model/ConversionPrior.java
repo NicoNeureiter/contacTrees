@@ -64,16 +64,26 @@ public class ConversionPrior extends Distribution {
             "Contact process is applied per lineage, i.e. the expected number of contact edges grows linearly with lineages.",
             false);
 
+    final public Input<Distribution> clonalFramePriorInput = new Input<>(
+            "clonalFramePrior",
+            "Tree prior of the clonal frame, only used for direct simulation (sample()). "
+            + "Only needed if it can not be found automatically, i.e. if it does not list the network "
+            + "as an argument (e.g. a coalescent prior on TreeIntervals).");
+
     ConversionGraph acg;
     PriorityQueue<Conversion> convQueue;
-    boolean warnedFixedClonalFrame = false;
 
     @Override
     public void initAndValidate() {
         super.initAndValidate();
         acg = networkInput.get();
         convQueue = new PriorityQueue<>();
-        
+
+        Distribution cfPrior = clonalFramePriorInput.get();
+        if (cfPrior instanceof ConversionPrior || cfPrior instanceof ACGDistribution)
+            throw new IllegalArgumentException("clonalFramePrior of " + getID() + " must be a tree prior, "
+                    + "not a conversion prior (" + cfPrior.getID() + ").");
+
         if (conversionRateInput.get() != null && conversionRateInput.get() instanceof ConversionRate) {
         	ConversionRate rate = (ConversionRate) conversionRateInput.get();
         	if (rate.linearContactGrowthInput.get() != linearContactGrowthInput.get()) {
@@ -228,8 +238,9 @@ public class ConversionPrior extends Distribution {
     }
 
     /**
-     * Sample the network: first the clonal frame (by triggering its tree prior), then the
-     * conversions given the clonal frame.
+     * Sample the network: first the clonal frame (by triggering its tree prior, see
+     * {@link #getClonalFramePrior}), then the conversions given the clonal frame.
+     * If the network is not estimated and has no tree prior, the clonal frame stays fixed.
      *
      * The tree prior has to be part of the simulated distribution, since DirectSimulator
      * only resets the sampledFlag of distributions reachable from there.
@@ -253,12 +264,19 @@ public class ConversionPrior extends Distribution {
     }
 
     /**
-     * Find the tree prior of the clonal frame, i.e. the other distribution which has the
-     * network as an argument.
+     * Find the tree prior of the clonal frame. This is the explicitly specified clonalFramePrior, if
+     * any. Otherwise, it is the other distribution which has the network as a direct argument.
+     * Tree priors connected only indirectly (e.g. a coalescent on TreeIntervals) have to be
+     * specified explicitly.
      *
-     * @return the clonal frame prior or null if there is none (fixed clonal frame).
+     * @return the clonal frame prior, or null if there is none and the network is not estimated
+     *         (fixed clonal frame).
+     * @throws IllegalStateException if none is found and the network is estimated, or if it is ambiguous.
      */
     private Distribution getClonalFramePrior() {
+        if (clonalFramePriorInput.get() != null)
+            return clonalFramePriorInput.get();
+
         List<Distribution> candidates = new ArrayList<>();
         for (BEASTInterface output : acg.getOutputs()) {
             if (output == this || !(output instanceof Distribution))
@@ -274,15 +292,14 @@ public class ConversionPrior extends Distribution {
 
         if (candidates.size() > 1)
             throw new IllegalStateException("Ambiguous clonal frame prior for network " + acg.getID()
-                    + ": multiple distributions have it as an argument.");
+                    + ": multiple distributions have it as an argument. Specify the tree prior via clonalFramePrior.");
 
         if (candidates.isEmpty()) {
-            if (!warnedFixedClonalFrame) {
-                Log.warning("No prior found for the clonal frame of " + acg.getID()
-                        + ". The clonal frame is kept fixed during simulation.");
-                warnedFixedClonalFrame = true;
-            }
-            return null;
+            if (!acg.isEstimatedInput.get())
+                return null;
+            throw new IllegalStateException("No tree prior found for the clonal frame of " + acg.getID()
+                    + ". Specify it via clonalFramePrior, or set estimate=\"false\" on the network "
+                    + "to keep the clonal frame fixed during simulation.");
         }
         return candidates.get(0);
     }
