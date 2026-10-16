@@ -84,7 +84,6 @@ public class ConversionMovePrior extends Distribution {
     @Override
     public List<String> getConditions() {
         List<String> conditions = new ArrayList<>();
-        conditions.add(networkInput.get().getID());
         maybeAddInputToConditions(conditions, pMoveInput);
 
         return conditions;
@@ -106,7 +105,9 @@ public class ConversionMovePrior extends Distribution {
             return;
         sampledFlag = true;
 
-        // Cause conditional parameters to be sampled
+        // Cause conditional parameters to be sampled. The network is not listed in the
+        // conditions, since it has to be sampled via its conversion prior (see ConversionPrior).
+        ConversionPrior.sampleNetwork(networkInput.get(), state, random);
         sampleConditions(state, random);
 
         acg = networkInput.get();

@@ -3,14 +3,22 @@
  */
 package contactrees.model;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.apache.commons.statistics.distribution.PoissonDistribution;
 
+import beast.base.inference.CalculationNode;
 import beast.base.inference.Distribution;
+import beast.base.core.BEASTInterface;
 import beast.base.core.Input;
 import beast.base.core.Log;
 import beast.base.inference.State;
@@ -58,6 +66,7 @@ public class ConversionPrior extends Distribution {
 
     ConversionGraph acg;
     PriorityQueue<Conversion> convQueue;
+    boolean warnedFixedClonalFrame = false;
 
     @Override
     public void initAndValidate() {
@@ -185,36 +194,178 @@ public class ConversionPrior extends Distribution {
 
     @Override
     public List<String> getArguments() {
-        throw new UnsupportedOperationException("For direct simulation, use ACGDistribution.");
+        List<String> arguments = new ArrayList<>();
+        arguments.add(acg.getID());
+        return arguments;
     }
 
     @Override
     public List<String> getConditions() {
-        throw new UnsupportedOperationException("For direct simulation, use ACGDistribution.");
+        List<String> conditions = new ArrayList<>();
+        if (conversionRateInput.get() != null)
+            maybeAddInputToConditions(conditions, conversionRateInput);
+        else
+            maybeAddInputToConditions(conditions, expectedConversionsInput);
+        return conditions;
     }
 
+    /**
+     * Add an input to the `conditions` list if it is a BEASTInterface.
+     * Otherwise, we assume it is constant and doesn't need to be sampled.
+     */
+    void maybeAddInputToConditions(List<String> conditions, Input<?> input) {
+        if (input.get() instanceof BEASTInterface beastInterface) {
+            conditions.add(beastInterface.getID());
+        }
+    }
+
+    /**
+     * Sample the network: first the clonal frame (by triggering its tree prior), then the
+     * conversions given the clonal frame.
+     *
+     * The tree prior has to be part of the simulated distribution, since DirectSimulator
+     * only resets the sampledFlag of distributions reachable from there.
+     */
     @Override
     public void sample(State state, Random random) {
-        throw new UnsupportedOperationException("For direct simulation, use ACGDistribution.");
+        if (sampledFlag)
+            return;
+        sampledFlag = true;
+
+        checkNetworkConditions();
+
+        Distribution cfPrior = getClonalFramePrior();
+        if (cfPrior != null)
+            cfPrior.sample(state, random);
+
+        // Conditions are sampled after the clonal frame, since the conversion rate may depend on it
+        sampleConditions(state, random);
+
+        generateConversions(getExpectedConversions());
     }
 
-    // /**
-    //  * Sample conversion edges according to the current convRate
-    //  * in the current clonal frame.
-    //  */
-    // private void generateConversions(double expectedConversions) {
-    //     acg.removeAllConversions();
+    /**
+     * Find the tree prior of the clonal frame, i.e. the other distribution which has the
+     * network as an argument.
+     *
+     * @return the clonal frame prior or null if there is none (fixed clonal frame).
+     */
+    private Distribution getClonalFramePrior() {
+        List<Distribution> candidates = new ArrayList<>();
+        for (BEASTInterface output : acg.getOutputs()) {
+            if (output == this || !(output instanceof Distribution))
+                continue;
+            Distribution distr = (Distribution) output;
+            if (!safeIDs(distr::getArguments).contains(acg.getID()))
+                continue;
+            if (distr instanceof ConversionPrior || distr instanceof ACGDistribution)
+                throw new IllegalStateException("Network " + acg.getID() + " is governed by multiple "
+                        + "conversion priors (" + getID() + ", " + distr.getID() + ").");
+            candidates.add(distr);
+        }
 
-    //     // Draw number of conversions:
-    //     double nConvMean = expectedConversions;
-    //     int nConv = (int) Randomizer.nextPoisson(nConvMean);
+        if (candidates.size() > 1)
+            throw new IllegalStateException("Ambiguous clonal frame prior for network " + acg.getID()
+                    + ": multiple distributions have it as an argument.");
 
-    //     // Generate conversions:
-    //     for (int i=0; i<nConv; i++) {
-    //         Conversion conv = acg.addNewConversion();
-    //         attachEdge(conv);
-    //     }
-    // }
+        if (candidates.isEmpty()) {
+            if (!warnedFixedClonalFrame) {
+                Log.warning("No prior found for the clonal frame of " + acg.getID()
+                        + ". The clonal frame is kept fixed during simulation.");
+                warnedFixedClonalFrame = true;
+            }
+            return null;
+        }
+        return candidates.get(0);
+    }
+
+    /**
+     * Ensure that no other distribution is conditioned on the network, directly or through
+     * a CalculationNode depending on it. Distribution.sampleConditions() would resolve such a
+     * condition by sampling an arbitrary distribution governing the network (possibly the
+     * tree prior instead of this conversion prior), making the simulation depend on the order
+     * of distributions. Distributions conditioned on the network should call
+     * {@link #sampleNetwork} instead.
+     */
+    private void checkNetworkConditions() {
+        Set<BEASTInterface> visited = new HashSet<>();
+        Deque<BEASTInterface> queue = new ArrayDeque<>();
+        queue.add(acg);
+        while (!queue.isEmpty()) {
+            BEASTInterface node = queue.poll();
+            if (!visited.add(node))
+                continue;
+
+            for (BEASTInterface output : node.getOutputs()) {
+                if (output instanceof Distribution && output != this && node.getID() != null
+                        && safeIDs(((Distribution) output)::getConditions).contains(node.getID()))
+                    throw new IllegalStateException("Distribution " + output.getID() + " lists " + node.getID()
+                            + " as a condition, which depends on the network " + acg.getID() + ". This makes "
+                            + "direct simulation order dependent. Use ConversionPrior.sampleNetwork() instead.");
+
+                if (output instanceof CalculationNode)
+                    queue.add(output);
+            }
+        }
+    }
+
+    /**
+     * Sample the network by triggering the conversion prior (ConversionPrior or ACGDistribution)
+     * governing it. To be used by distributions conditioned on the network, instead of listing
+     * the network in getConditions() (see {@link #checkNetworkConditions}).
+     */
+    public static void sampleNetwork(ConversionGraph acg, State state, Random random) {
+        List<Distribution> networkPriors = new ArrayList<>();
+        List<Distribution> owners = new ArrayList<>();
+        for (BEASTInterface output : acg.getOutputs()) {
+            if (!(output instanceof Distribution))
+                continue;
+            Distribution distr = (Distribution) output;
+            if (distr instanceof ConversionPrior || distr instanceof ACGDistribution)
+                networkPriors.add(distr);
+            else if (safeIDs(distr::getArguments).contains(acg.getID()))
+                owners.add(distr);
+        }
+
+        // Without a conversion prior, fall back to the tree prior (if any)
+        if (networkPriors.isEmpty())
+            networkPriors = owners;
+
+        if (networkPriors.size() > 1)
+            throw new IllegalStateException("Ambiguous prior for network " + acg.getID()
+                    + ": multiple distributions have it as an argument.");
+
+        if (networkPriors.size() == 1)
+            networkPriors.get(0).sample(state, random);
+    }
+
+    /** Get list of IDs from getArguments() or getConditions(), which may be null or unsupported. */
+    private static List<String> safeIDs(Supplier<List<String>> getter) {
+        try {
+            List<String> ids = getter.get();
+            return ids == null ? Collections.emptyList() : ids;
+        } catch (UnsupportedOperationException e) {
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Sample conversion edges according to the current convRate
+     * in the current clonal frame.
+     */
+    private void generateConversions(double expectedConversions) {
+        acg.removeAllConversions();
+
+        // Draw number of conversions:
+        double nConvMean = expectedConversions;
+        int nConv = (int) Randomizer.nextPoisson(nConvMean);
+
+        // Generate conversions:
+        for (int i=0; i<nConv; i++) {
+            Conversion conv = acg.addNewConversion();
+            attachEdge(conv);
+        }
+    }
 
     /**
      * Attach the conversion edge at a random point in the clonal
