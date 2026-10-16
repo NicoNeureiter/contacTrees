@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import beast.base.spec.evolution.speciation.YuleModel;
+import contactrees.model.ACGDistribution;
 import contactrees.model.ConversionPrior;
 import contactrees.util.Util;
 
@@ -40,6 +42,32 @@ public class ConversionPriorTest extends ContactreesTest {
 		node2.setHeight(0.7);
 		assertFalse(conv1.isValid());
 		assertEquals(Double.NEGATIVE_INFINITY, prior.calculateLogP(), 0.0);
+	}
+
+	/** Bounds on the conversion count renormalise the prior by P(lower <= N <= upper). */
+	@Test
+	public void conversionCountBoundsTest() {
+		int lower = 1, upper = 3;
+		double mean = 0.5 * acg.getClonalFramePairedLength();
+		double pInBounds = 0.0;
+		for (int k = lower; k <= upper; k++)
+			pInBounds += Math.exp(poissonLogPDF(mean, k));
+
+		ConversionPrior unbounded = new ConversionPrior();
+		unbounded.initByName("network", acg, "conversionRate", "0.5");
+		ConversionPrior bounded = new ConversionPrior();
+		bounded.initByName("network", acg, "conversionRate", "0.5",
+				"lowerConvCountBound", lower, "upperConvCountBound", upper);
+		assertEquals(unbounded.calculateLogP() - Math.log(pInBounds), bounded.calculateLogP(), EPS);
+
+		YuleModel yule = new YuleModel();
+		yule.initByName("tree", acg, "birthDiffRate", "1.0");
+		ACGDistribution unboundedACG = new ACGDistribution();
+		unboundedACG.initByName("network", acg, "cfModel", yule, "conversionRate", "0.5");
+		ACGDistribution boundedACG = new ACGDistribution();
+		boundedACG.initByName("network", acg, "cfModel", yule, "conversionRate", "0.5",
+				"lowerConvCountBound", lower, "upperConvCountBound", upper);
+		assertEquals(unboundedACG.calculateLogP() - Math.log(pInBounds), boundedACG.calculateLogP(), EPS);
 	}
 
 	protected double poissonLogPDF(double mean, int value) {

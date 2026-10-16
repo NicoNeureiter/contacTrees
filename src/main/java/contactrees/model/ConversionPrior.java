@@ -186,7 +186,7 @@ public class ConversionPrior extends Distribution {
             if (pInBounds <= 0.0) {
                 throw new RuntimeException("Error computing modification to ARG prior density required by conversion number constraint.");
             }
-            logP -= pInBounds;
+            logP -= Math.log(pInBounds);
         }
 
         return logP;
