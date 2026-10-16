@@ -191,7 +191,6 @@
                                 <resource>
                                     <directory>${project.basedir}/examples</directory>
                                     <includes>
-                                        <include>bantu-contactrees.xml</include>
                                         <include>indoeuropean.xml</include>
                                     </includes>
                                 </resource>
