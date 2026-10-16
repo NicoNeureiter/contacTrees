@@ -312,6 +312,7 @@ public class ConversionPrior extends Distribution {
      * of distributions. Distributions conditioned on the network should call
      * {@link #sampleNetwork} instead.
      */
+    @SuppressWarnings("deprecation")  // legacy GenericTreeLikelihood
     private void checkNetworkConditions() {
         Set<BEASTInterface> visited = new HashSet<>();
         Deque<BEASTInterface> queue = new ArrayDeque<>();
@@ -322,6 +323,13 @@ public class ConversionPrior extends Distribution {
                 continue;
 
             for (BEASTInterface output : node.getOutputs()) {
+                // Tree likelihoods never list their tree as a condition. Skipping them also avoids
+                // core TreeLikelihood.getConditions(), which throws a NullPointerException when the
+                // likelihood is delegated to BEAGLE (its m_siteModel is never set in that case).
+                if (output instanceof beast.base.spec.evolution.likelihood.GenericTreeLikelihood
+                        || output instanceof beast.base.evolution.likelihood.GenericTreeLikelihood)
+                    continue;
+
                 if (output instanceof Distribution && output != this && node.getID() != null
                         && safeIDs(((Distribution) output)::getConditions).contains(node.getID()))
                     throw new IllegalStateException("Distribution " + output.getID() + " lists " + node.getID()
