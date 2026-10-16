@@ -1,5 +1,9 @@
 package contactrees.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 
 import contactrees.model.ConversionPrior;
@@ -24,6 +28,18 @@ public class ConversionPriorTest extends ContactreesTest {
 			assert prior.calculateLogP() == poissonLogPDF(2*gamma, n) + 0.5*n + Util.logFactorial(n);
 
 		}
+	}
+
+	@Test
+	public void invalidConversionTest() {
+		ConversionPrior prior = new ConversionPrior();
+		prior.initByName("network", acg, "conversionRate", "0.5");
+		assertTrue(Double.isFinite(prior.calculateLogP()));
+
+		// Move tip 2 above conv1 (height 0.5), but keep it below its parent (height 1.0)
+		node2.setHeight(0.7);
+		assertFalse(conv1.isValid());
+		assertEquals(Double.NEGATIVE_INFINITY, prior.calculateLogP(), 0.0);
 	}
 
 	protected double poissonLogPDF(double mean, int value) {

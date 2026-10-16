@@ -137,6 +137,14 @@ public class ConversionPrior extends Distribution {
             return logP;
         }
 
+        // Reject conversions outside the valid range of their edges (e.g. after a tip date move)
+        for (Conversion conv : acg.getConversions()) {
+            if (!conv.isValid()) {
+                logP = Double.NEGATIVE_INFINITY;
+                return logP;
+            }
+        }
+
         convQueue.clear();
         convQueue.addAll(acg.getConversions().getConversions());
 
