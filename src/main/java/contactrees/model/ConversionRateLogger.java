@@ -41,7 +41,7 @@ public class ConversionRateLogger extends BEASTObject implements Loggable {
     public void log(long sample, PrintStream out) {
     	double[] rates = conversionPrior.getRates();
     	for (int i = 0; i < rates.length; i++) {
-    		out.print(rates.length + "\t");
+    		out.print(rates[i] + "\t");
     	}
     }
 
