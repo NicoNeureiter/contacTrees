@@ -3,16 +3,23 @@
  */
 package contactrees.model;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.apache.commons.statistics.distribution.PoissonDistribution;
 
+import beast.base.inference.CalculationNode;
 import beast.base.inference.Distribution;
+import beast.base.core.BEASTInterface;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.core.Log;
@@ -89,7 +96,12 @@ public class ConversionPrior extends Distribution {
             "Contact process is applied per lineage, i.e. the expected number of contact edges grows linearly with lineages.",
             false);
 
-    // The network containing conversion edges
+    final public Input<Distribution> clonalFramePriorInput = new Input<>(
+            "clonalFramePrior",
+            "Tree prior of the clonal frame, only used for direct simulation (sample()). "
+            + "Only needed if it can not be found automatically, i.e. if it does not list the network "
+            + "as an argument (e.g. a coalescent prior on TreeIntervals).");
+
     ConversionGraph acg;
     // Data structure containing the conversion objects
     PriorityQueue<Conversion> convQueue;
@@ -107,21 +119,12 @@ public class ConversionPrior extends Distribution {
         super.initAndValidate();
         acg = networkInput.get();
         convQueue = new PriorityQueue<>();
-        // If the conversion rates input is a calculation node 
-        // (typically based on the expected number of conversions per epoch),
-        // then issue a warning if its options do not match those of this prior:
-        if (conversionRatesInput.get() != null && conversionRatesInput.get() instanceof ConversionRate) {
-        	ConversionRate rate = (ConversionRate) conversionRatesInput.get();
-        	if (rate.linearContactGrowthInput.get() != linearContactGrowthInput.get()) {
-        		rate.linearContactGrowthInput.setValue(linearContactGrowthInput.get(), rate);
-        		Log.warning("==========================================================================");
-        		Log.warning("==========================================================================");        		
-        		Log.warning("LinearContactGrowth differs between " + getID()  + " and " + rate.getID());
-        		Log.warning("Setting linearContactGrowth to " + linearContactGrowthInput.get() + " on conversion rate parameter " + rate.getID());
-        		Log.warning("==========================================================================");
-        		Log.warning("==========================================================================");
-        	}
-        }
+        
+        Distribution cfPrior = clonalFramePriorInput.get();
+        if (cfPrior instanceof ConversionPrior)
+            throw new IllegalArgumentException("clonalFramePrior of " + getID() + " must be a tree prior, "
+                    + "not a conversion prior (" + cfPrior.getID() + ").");
+
         // If multiple conversion rates and their change times are specified, 
         // then ensure that there is one fewer change time than there are rates:
 		if (conversionRateChangeTimesInput.get() != null && conversionRatesInput.get() != null && conversionRateChangeTimesInput.get().size() != conversionRatesInput.get().size() - 1) {
@@ -242,11 +245,11 @@ public class ConversionPrior extends Distribution {
     	}
     	// Then proceed through all sampling and coalescence events 
     	// and add their clonal frame lengths to the internal array:
-        List<CFEventList.Event> events = acg.getCFEvents();
+        List<Event> events = acg.getCFEvents();
         for (int i = 0; i < events.size() - 1; i++) {
-            CFEventList.Event eStart = events.get(i);
+            Event eStart = events.get(i);
             int eStartEpoch = index(eStart.getHeight());
-            CFEventList.Event eEnd = events.get(i+1);
+            Event eEnd = events.get(i+1);
             int eEndEpoch = index(eEnd.getHeight());
             // By definition, between any two events, 
             // there will be a constant number of lineages in the tree:
@@ -315,51 +318,35 @@ public class ConversionPrior extends Distribution {
     }
     
     /**
-     * Returns a list containing this prior's epoch start times.
+     * Returns an array containing this prior's epoch start times.
      * @return A list containing this prior's epoch start times.
      */
-    public List<Double> getTimes() {
-    	List<Double> timesList = new ArrayList<Double>();
-    	for (int i = 0; i < times.length; i++) {
-    		timesList.add(times[i]);
-    	}
-    	return timesList;
+    public double[] getTimes() {
+    	return times;
     }
     
     /**
-     * Returns a list containing this prior's clonal frame lengths by epoch.
-     * @return A list containing this prior's clonal frame lengths by epoch.
+     * Returns an array containing this prior's clonal frame lengths by epoch.
+     * @return An array containing this prior's clonal frame lengths by epoch.
      */
-    public List<Double> getClonalFrameLengths() {
-    	List<Double> clonalFrameLengthsList = new ArrayList<Double>();
-    	for (int i = 0; i < clonalFrameLengths.length; i++) {
-    		clonalFrameLengthsList.add(clonalFrameLengths[i]);
-    	}
-    	return clonalFrameLengthsList;
+    public double[] getClonalFrameLengths() {
+    	return clonalFrameLengths;
     }
     
     /**
-     * Returns a list containing this prior's conversion rates by epoch.
-     * @return A list containing this prior's conversion rates by epoch.
+     * Returns an array containing this prior's conversion rates by epoch.
+     * @return An array containing this prior's conversion rates by epoch.
      */
-    public List<Double> getRates() {
-    	List<Double> ratesList = new ArrayList<Double>();
-    	for (int i = 0; i < rates.length; i++) {
-    		ratesList.add(rates[i]);
-    	}
-    	return ratesList;
+    public double[] getRates() {
+    	return rates;
     }
     
     /**
-     * Returns a list containing this prior's expected numbers of conversions by epoch.
-     * @return A list containing this prior's expected numbers of conversions by epoch.
+     * Returns an array containing this prior's expected numbers of conversions by epoch.
+     * @return An array containing this prior's expected numbers of conversions by epoch.
      */
-    public List<Double> getExpectedConversions() {
-    	List<Double> expectedConversionsList = new ArrayList<Double>();
-    	for (int i = 0; i < expectedConversions.length; i++) {
-    		expectedConversionsList.add(expectedConversions[i]);
-    	}
-    	return expectedConversionsList;
+    public double[] getExpectedConversions() {
+    	return expectedConversions;
     }
 
     @Override
@@ -387,6 +374,13 @@ public class ConversionPrior extends Distribution {
         if (acg.getConvCount() < lowerCCBoundInput.get() || acg.getConvCount() > upperCCBoundInput.get()) {
             logP = Double.NEGATIVE_INFINITY;
             return logP;
+        }
+        // Reject conversions outside the valid range of their edges (e.g. after a tip date move)
+        for (Conversion conv : acg.getConversions()) {
+            if (!conv.isValid()) {
+                logP = Double.NEGATIVE_INFINITY;
+                return logP;
+            }
         }
         // Poisson prior on the number of conversions per event interval (between sampling/coalescent events)
         for (int i = 0; i < clonalFrameLengths.length; i++) {
@@ -439,7 +433,7 @@ public class ConversionPrior extends Distribution {
             if (pInBounds <= 0.0) {
                 throw new RuntimeException("Error computing modification to ARG prior density required by conversion number constraint.");
             }
-            logP -= pInBounds;
+            logP -= Math.log(pInBounds);
         }
 
         return logP;
@@ -457,65 +451,260 @@ public class ConversionPrior extends Distribution {
 
     @Override
     public List<String> getArguments() {
-        throw new UnsupportedOperationException("For direct simulation, use ACGDistribution.");
+        List<String> arguments = new ArrayList<>();
+        arguments.add(acg.getID());
+        return arguments;
     }
 
     @Override
     public List<String> getConditions() {
-        throw new UnsupportedOperationException("For direct simulation, use ACGDistribution.");
+        List<String> conditions = new ArrayList<>();
+        if (conversionRatesInput.get() != null)
+            maybeAddInputToConditions(conditions, conversionRatesInput);
+        else
+            maybeAddInputToConditions(conditions, expectedConversionsInput);
+        return conditions;
     }
 
+    /**
+     * Add an input to the `conditions` list if it is a BEASTInterface.
+     * Otherwise, we assume it is constant and doesn't need to be sampled.
+     */
+    void maybeAddInputToConditions(List<String> conditions, Input<?> input) {
+        if (input.get() instanceof BEASTInterface beastInterface) {
+            conditions.add(beastInterface.getID());
+        }
+    }
+
+    /**
+     * Sample the network: first the clonal frame (by triggering its tree prior, see
+     * {@link #getClonalFramePrior}), then the conversions given the clonal frame.
+     * If the network is not estimated and has no tree prior, the clonal frame stays fixed.
+     *
+     * The tree prior has to be part of the simulated distribution, since DirectSimulator
+     * only resets the sampledFlag of distributions reachable from there.
+     */
     @Override
     public void sample(State state, Random random) {
-        throw new UnsupportedOperationException("For direct simulation, use ACGDistribution.");
+        if (sampledFlag)
+            return;
+        sampledFlag = true;
+
+        checkNetworkConditions();
+
+        Distribution cfPrior = getClonalFramePrior();
+        if (cfPrior != null)
+            cfPrior.sample(state, random);
+
+        // Conditions are sampled after the clonal frame, since the conversion rate may depend on it
+        sampleConditions(state, random);
+        generateConversions();
     }
 
-    // /**
-    //  * Sample conversion edges according to the current convRate
-    //  * in the current clonal frame.
-    //  */
-    // private void generateConversions(double expectedConversions) {
-    //     acg.removeAllConversions();
+    /**
+     * Find the tree prior of the clonal frame. This is the explicitly specified clonalFramePrior, if
+     * any. Otherwise, it is the other distribution which has the network as a direct argument.
+     * Tree priors connected only indirectly (e.g. a coalescent on TreeIntervals) have to be
+     * specified explicitly.
+     *
+     * @return the clonal frame prior, or null if there is none and the network is not estimated
+     *         (fixed clonal frame).
+     * @throws IllegalStateException if none is found and the network is estimated, or if it is ambiguous.
+     */
+    private Distribution getClonalFramePrior() {
+        if (clonalFramePriorInput.get() != null)
+            return clonalFramePriorInput.get();
 
-    //     // Draw number of conversions:
-    //     double nConvMean = expectedConversions;
-    //     int nConv = (int) Randomizer.nextPoisson(nConvMean);
+        List<Distribution> candidates = new ArrayList<>();
+        for (BEASTInterface output : acg.getOutputs()) {
+            if (output == this || !(output instanceof Distribution))
+                continue;
+            Distribution distr = (Distribution) output;
+            if (!safeIDs(distr::getArguments).contains(acg.getID()))
+                continue;
+            if (distr instanceof ConversionPrior)
+                throw new IllegalStateException("Network " + acg.getID() + " is governed by multiple "
+                        + "conversion priors (" + getID() + ", " + distr.getID() + ").");
+            candidates.add(distr);
+        }
 
-    //     // Generate conversions:
-    //     for (int i=0; i<nConv; i++) {
-    //         Conversion conv = acg.addNewConversion();
-    //         attachEdge(conv);
-    //     }
-    // }
+        if (candidates.size() > 1)
+            throw new IllegalStateException("Ambiguous clonal frame prior for network " + acg.getID()
+                    + ": multiple distributions have it as an argument. Specify the tree prior via clonalFramePrior.");
+
+        if (candidates.isEmpty()) {
+            if (!acg.isEstimatedInput.get())
+                return null;
+            throw new IllegalStateException("No tree prior found for the clonal frame of " + acg.getID()
+                    + ". Specify it via clonalFramePrior, or set estimate=\"false\" on the network "
+                    + "to keep the clonal frame fixed during simulation.");
+        }
+        return candidates.get(0);
+    }
+
+    /**
+     * Ensure that no other distribution is conditioned on the network, directly or through
+     * a CalculationNode depending on it. Distribution.sampleConditions() would resolve such a
+     * condition by sampling an arbitrary distribution governing the network (possibly the
+     * tree prior instead of this conversion prior), making the simulation depend on the order
+     * of distributions. Distributions conditioned on the network should call
+     * {@link #sampleNetwork} instead.
+     */
+    @SuppressWarnings("deprecation")  // legacy GenericTreeLikelihood
+    private void checkNetworkConditions() {
+        Set<BEASTInterface> visited = new HashSet<>();
+        Deque<BEASTInterface> queue = new ArrayDeque<>();
+        queue.add(acg);
+        while (!queue.isEmpty()) {
+            BEASTInterface node = queue.poll();
+            if (!visited.add(node))
+                continue;
+
+            for (BEASTInterface output : node.getOutputs()) {
+                // Tree likelihoods never list their tree as a condition. Skipping them also avoids
+                // core TreeLikelihood.getConditions(), which throws a NullPointerException when the
+                // likelihood is delegated to BEAGLE (its m_siteModel is never set in that case).
+                if (output instanceof beast.base.spec.evolution.likelihood.GenericTreeLikelihood
+                        || output instanceof beast.base.evolution.likelihood.GenericTreeLikelihood)
+                    continue;
+
+                if (output instanceof Distribution && output != this && node.getID() != null
+                        && safeIDs(((Distribution) output)::getConditions).contains(node.getID()))
+                    throw new IllegalStateException("Distribution " + output.getID() + " lists " + node.getID()
+                            + " as a condition, which depends on the network " + acg.getID() + ". This makes "
+                            + "direct simulation order dependent. Use ConversionPrior.sampleNetwork() instead.");
+
+                if (output instanceof CalculationNode)
+                    queue.add(output);
+            }
+        }
+    }
+
+    /**
+     * Sample the network by triggering the conversion prior
+     * governing it. To be used by distributions conditioned on the network, instead of listing
+     * the network in getConditions() (see {@link #checkNetworkConditions}).
+     */
+    public static void sampleNetwork(ConversionGraph acg, State state, Random random) {
+        List<Distribution> networkPriors = new ArrayList<>();
+        List<Distribution> owners = new ArrayList<>();
+        for (BEASTInterface output : acg.getOutputs()) {
+            if (!(output instanceof Distribution))
+                continue;
+            Distribution distr = (Distribution) output;
+            if (distr instanceof ConversionPrior)
+                networkPriors.add(distr);
+            else if (safeIDs(distr::getArguments).contains(acg.getID()))
+                owners.add(distr);
+        }
+
+        // Without a conversion prior, fall back to the tree prior (if any)
+        if (networkPriors.isEmpty())
+            networkPriors = owners;
+
+        if (networkPriors.size() > 1)
+            throw new IllegalStateException("Ambiguous prior for network " + acg.getID()
+                    + ": multiple distributions have it as an argument.");
+
+        if (networkPriors.size() == 1)
+            networkPriors.get(0).sample(state, random);
+    }
+
+    /** Get list of IDs from getArguments() or getConditions(), which may be null or unsupported. */
+    private static List<String> safeIDs(Supplier<List<String>> getter) {
+        try {
+            List<String> ids = getter.get();
+            return ids == null ? Collections.emptyList() : ids;
+        } catch (UnsupportedOperationException e) {
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Sample conversion edges according to the current conversion rates
+     * in the current clonal frame.
+     */
+    private void generateConversions() {
+        acg.removeAllConversions();
+
+        // The total expected number of conversions 
+        // is the sum of each epoch's expected number of conversions:
+        int nConv = 0;
+        for (int epoch = 0; epoch < times.length; epoch++) {
+        	// Draw number of conversions from the Poisson distribution for this epoch:
+        	double nConvMean = expectedConversions[epoch];
+        	nConv += (int) Randomizer.nextPoisson(nConvMean);
+        }
+        // Then add the new edges to the conversion graph,
+        // (they will be distributed according to the epochs' expected numbers of conversions 
+        // in the attachEdge method):
+        for (int i = 0; i < nConv; i++) {
+            Conversion conv = acg.addNewConversion();
+            attachEdge(conv);
+        }
+    }
 
     /**
      * Attach the conversion edge at a random point in the clonal
      * frame, selecting points of departure and arrival.
+     * The location of the edge is distributed according to the conversion rate 
+     * and number of active lineages at any given time.
      *
      * @param conv recombination to associate
      * @return the log probability density of the attachment points
      */
     public double attachEdge(Conversion conv) {
         double logQ = 0.0;
+        // As an edge case, if all conversion rates are zero, then no edge can be attached:
+        double rateSum = 0.0;
+        for (int i = 0; i < rates.length; i++) {
+        	rateSum += rates[i];
+        }
+        if (rateSum == 0.0) {
+        	return Double.NEGATIVE_INFINITY;
+        }
+        // Otherwise, populate lists of starting heights, lineage counts, 
+        // and weighted volumes for candidate intervals, 
+        // where the intervals are divided at event boundaries and epoch boundaries:
+        ArrayList<Double> intervalStarts = new ArrayList<Double>();
+        ArrayList<Integer> intervalLineageCounts = new ArrayList<Integer>();
+        ArrayList<Double> intervalVolumes = new ArrayList<Double>();
         CFEventList cfEventList = acg.getCFEventList();
         List<Event> cfEvents = cfEventList.getCFEvents();
-
-        // Choose event interval
-        double[] intervalVolumes = cfEventList.getIntervalVolumes(!linearContactGrowthInput.get());
-        int iEvent = Util.sampleCategorical(intervalVolumes);
-        Event event = cfEvents.get(iEvent);
-        double pInterval = intervalVolumes[iEvent] / Util.sum(intervalVolumes);
+        for (int i = 0; i < cfEvents.size() - 1; i++) {
+            Event eStart = cfEvents.get(i);
+            int eStartEpoch = index(eStart.getHeight());
+            Event eEnd = cfEvents.get(i+1);
+            int eEndEpoch = index(eEnd.getHeight());
+            // By definition, between any two events, 
+            // there will be a constant number of lineages in the tree:
+            int k = eStart.getLineageCount();
+            // For every epoch that contains part of this interval,
+            // we calculate the necessary values for the part of the interval contained in that epoch:
+            for (int epoch = eStartEpoch; epoch <= eEndEpoch; epoch++) {
+            	double start = times[epoch] > eStart.getHeight() ? times[epoch] : eStart.getHeight();
+            	double end = (epoch < times.length - 1 && times[epoch + 1] < eEnd.getHeight()) ? times[epoch + 1] : eEnd.getHeight();
+            	double dt = end - start;
+            	double length = linearContactGrowthInput.get() ? dt * k : dt * k * (k-1);
+            	intervalStarts.add(start);
+            	intervalLineageCounts.add(k);
+            	intervalVolumes.add(length*rates[epoch]);
+            }
+        }
+        // Sample an interval according to its weight:
+        int iInterval = Util.sampleCategorical(intervalVolumes);
+        double pInterval = intervalVolumes.get(iInterval) / Util.sum(intervalVolumes);
         logQ += Math.log(pInterval);
-
-        // Choose height within interval
-        double height = Randomizer.uniform(event.getHeight(), cfEvents.get(iEvent+1).getHeight());
-        logQ -= Math.log(cfEvents.get(iEvent+1).getHeight() - event.getHeight());
+        // Then uniformly sample a height within the interval
+        // (note that intervalStarts.get(iInterval + 1) should not throw an IndexOutOfBounds exception, 
+        // because the single lineage above the root has a volume of zero and should never get sampled):
+        double height = Randomizer.uniform(intervalStarts.get(iInterval), intervalStarts.get(iInterval + 1));
+        logQ -= Math.log(intervalStarts.get(iInterval + 1) - intervalStarts.get(iInterval));
+        // Then uniformly sample the source lineage at this height:
         Set<Node> activeLineages = acg.getLineagesAtHeight(height);
         if (activeLineages.size() <= 1)
             return Double.POSITIVE_INFINITY;
         conv.setHeight(height);
-
-        // Choose source lineage (given the height)
         Node node1 = Util.sampleFrom(activeLineages);
         logQ -= Math.log(activeLineages.size());
         conv.setNode1(node1);
@@ -539,53 +728,70 @@ public class ConversionPrior extends Distribution {
      * @return the log probability density of the attachment points
      */
     public double getEdgeAttachmentProb(Conversion conv) {
-        if (linearContactGrowthInput.get()) {
-            double logQ = 0.0;
-            double height = conv.getHeight();
-            List<CFEventList.Event> events = acg.getCFEvents();
-
-            // Prob. of event interval
-            double totalVolume = 0.0;
-            double intervalVolume = 0.0;
-            double intervalLength = 0.0;
-            int hits = 0;
-            for (int i = 0; i<events.size()-1; i++) {
-                CFEventList.Event eStart = events.get(i);
-                CFEventList.Event eEnd = events.get(i+1);
-                double dt = eEnd.getHeight() - eStart.getHeight();
-                int k = eStart.getLineageCount();
-                if (k == 1) continue;
-                if (eStart.getHeight() <= height && height < eEnd.getHeight()) {
-                    // Probability of choosing this interval (normalization over intervals is done further down)
-                    intervalVolume = k * dt;
+        double logQ = 0.0;
+        double height = conv.getHeight();
+        // As an edge case, if all conversion rates are zero, then no edge can be attached:
+        double rateSum = 0.0;
+        for (int i = 0; i < rates.length; i++) {
+        	rateSum += rates[i];
+        }
+        if (rateSum == 0.0) {
+        	return Double.NEGATIVE_INFINITY;
+        }
+        // Otherwise, find the height and volume of the interval containing this conversion,
+        // checking all intervals partitioned by event and epoch boundaries:
+        double totalVolume = 0.0;
+        double intervalVolume = 0.0;
+        double intervalLength = 0.0;
+        CFEventList cfEventList = acg.getCFEventList();
+        List<Event> cfEvents = cfEventList.getCFEvents();
+        int hits = 0;
+        for (int i = 0; i < cfEvents.size() - 1; i++) {
+            Event eStart = cfEvents.get(i);
+            int eStartEpoch = index(eStart.getHeight());
+            Event eEnd = cfEvents.get(i+1);
+            int eEndEpoch = index(eEnd.getHeight());
+            // By definition, between any two events, 
+            // there will be a constant number of lineages in the tree:
+            int k = eStart.getLineageCount();
+            // If there is only one, then we can skip it
+            // (because the edge in question could not be attached here):
+            if (k == 1) continue;
+            // For every epoch that contains part of this interval,
+            // we calculate the necessary values for the part of the interval contained in that epoch:
+            for (int epoch = eStartEpoch; epoch <= eEndEpoch; epoch++) {
+            	double start = times[epoch] > eStart.getHeight() ? times[epoch] : eStart.getHeight();
+            	double end = (epoch < times.length - 1 && times[epoch + 1] < eEnd.getHeight()) ? times[epoch + 1] : eEnd.getHeight();
+            	double dt = end - start;
+            	double length = linearContactGrowthInput.get() ? dt * k : dt * k * (k-1);
+            	if (start <= height && height < end) {
+            		// Probability of choosing this interval (normalization over intervals is done further down)
+                    intervalVolume = rates[epoch] * length;
                     // Probability density of height within interval
                     intervalLength = dt;
                     // Just to make sure we find one and only one active interval
                     hits++;
-                }
-                totalVolume += (k * dt);
+            	}
+            	totalVolume += rates[epoch] * length;
             }
-            assert hits == 1;
-
-            double pInterval = intervalVolume / totalVolume;
-            logQ += Math.log(pInterval);
-
-            // Prob. of height within interval
-            logQ -= Math.log(intervalLength);
-
-            Set<Node> activeLineages = acg.getLineagesAtHeight(height);
-            if (activeLineages.size() <= 1)
-                return Double.POSITIVE_INFINITY;
-
-            // Prob. of source lineage (given the height)
-            int k = activeLineages.size();
-            logQ -= Math.log(k);
-            // Prob. of destination lineage (given the height and node1)
-            logQ -= Math.log(k - 1);
-
-            return logQ;
-        } else {
-            return -Math.log(acg.getClonalFramePairedLength());
         }
+        assert hits == 1;
+
+        double pInterval = intervalVolume / totalVolume;
+        logQ += Math.log(pInterval);
+
+        // Prob. of height within interval
+        logQ -= Math.log(intervalLength);
+
+        Set<Node> activeLineages = acg.getLineagesAtHeight(height);
+        if (activeLineages.size() <= 1)
+            return Double.POSITIVE_INFINITY;
+
+        // Prob. of source lineage (given the height)
+        int k = activeLineages.size();
+        logQ -= Math.log(k);
+        // Prob. of destination lineage (given the height and node1)
+        logQ -= Math.log(k - 1);
+        return logQ;
     }
 }

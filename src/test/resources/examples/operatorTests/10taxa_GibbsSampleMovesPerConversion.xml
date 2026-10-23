@@ -53,9 +53,8 @@
     </state>
 
     <distribution id="prior" spec="beast.base.inference.CompoundDistribution">
-        <distribution id="ACGYulePrior.t" spec="contactrees.model.ACGDistribution" network="@acg" conversionRate="@conversionRate">
-            <cfModel id="YuleModel" spec="beast.base.spec.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
-        </distribution>
+        <distribution id="YuleModel" spec="beast.base.spec.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
+        <distribution id="ACGYulePrior.t" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
         <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
     </distribution>
 
