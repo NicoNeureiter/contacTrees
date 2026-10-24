@@ -174,7 +174,7 @@ public class ConversionPrior extends Distribution {
 			// If no change times are specified, then use equidistant change times:
 			double intervalWidth = maxTime / (times.length + 1);
             for (int i = 1; i <= times.length; i++) {
-            	times[i] = intervalWidth * i;
+            	times[i - 1] = intervalWidth * i;
             }
             return 0.0;
 		}
@@ -250,11 +250,18 @@ public class ConversionPrior extends Distribution {
     	// Then proceed through all sampling and coalescence events 
     	// and add their clonal frame lengths to the internal array:
         List<Event> events = acg.getCFEvents();
+        int eStartEpoch = 0;
+        int eEndEpoch = 0;
         for (int i = 0; i < events.size() - 1; i++) {
             Event eStart = events.get(i);
-            int eStartEpoch = index(eStart.getHeight());
             Event eEnd = events.get(i+1);
-            int eEndEpoch = index(eEnd.getHeight());
+            // The current event starts at the previous event's end time,
+            // so its epoch is the previous event's end epoch, 
+            // and we just have to update the end epoch:
+            eStartEpoch = eEndEpoch;
+            while (eEndEpoch < times.length && eEnd.getHeight() > times[eEndEpoch]) {
+            	eEndEpoch++;
+            }
             // If this event and the next take place at the same time,
             // then nothing can happen between them:
             if (eStart.getHeight() == eEnd.getHeight()) continue;
@@ -680,11 +687,17 @@ public class ConversionPrior extends Distribution {
         ArrayList<Double> intervalVolumes = new ArrayList<Double>();
         CFEventList cfEventList = acg.getCFEventList();
         List<Event> cfEvents = cfEventList.getCFEvents();
+        int eStartEpoch = 0;
+        int eEndEpoch = 0;
         for (int i = 0; i < cfEvents.size() - 1; i++) {
             Event eStart = cfEvents.get(i);
-            int eStartEpoch = index(eStart.getHeight());
             Event eEnd = cfEvents.get(i+1);
-            int eEndEpoch = index(eEnd.getHeight());
+            // The current event starts at the previous end's end time,
+            // so its epoch is the previous event's end epoch:
+            eStartEpoch = eEndEpoch;
+            while (eEndEpoch < times.length && eEnd.getHeight() > times[eEndEpoch]) {
+            	eEndEpoch++;
+            }
             // By definition, between any two events, 
             // there will be a constant number of lineages in the tree:
             int k = eStart.getLineageCount();
@@ -754,12 +767,19 @@ public class ConversionPrior extends Distribution {
         double intervalLength = 0.0;
         CFEventList cfEventList = acg.getCFEventList();
         List<Event> cfEvents = cfEventList.getCFEvents();
+        int eStartEpoch = 0;
+        int eEndEpoch = 0;
         int hits = 0;
         for (int i = 0; i < cfEvents.size() - 1; i++) {
             Event eStart = cfEvents.get(i);
-            int eStartEpoch = index(eStart.getHeight());
             Event eEnd = cfEvents.get(i+1);
-            int eEndEpoch = index(eEnd.getHeight());
+            // The current event starts at the previous event's end time,
+            // so its epoch is the previous event's end epoch, 
+            // and we just have to update the end epoch:
+            eStartEpoch = eEndEpoch;
+            while (eEndEpoch < times.length && eEnd.getHeight() > times[eEndEpoch]) {
+            	eEndEpoch++;
+            }
             // By definition, between any two events, 
             // there will be a constant number of lineages in the tree:
             int k = eStart.getLineageCount();
