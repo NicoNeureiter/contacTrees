@@ -56,7 +56,7 @@ public class ConversionPrior extends Distribution {
     		+ "If not specified, the height of the tree's root (i.e., the MRCA of all taxa) is used instead.");
 
     final public Input<RealVector<NonNegativeReal>> conversionRatesInput = new Input<>(
-            "conversionRate",
+            "conversionRates",
             "Epoch-dependent rates at which a pair of lineages will get in contact and form a conversion."
             + "If a single rate is specified, then a single epoch containing the entire tree will be assumed."
             + "The conversion rates should be specified in forward time, starting from the epoch farthest in the past and moving towards the epoch ending in the present."
@@ -136,18 +136,18 @@ public class ConversionPrior extends Distribution {
 			throw new RuntimeException("The specified conversionRateChangeTimes input should have dimension one less than that of expectedConversions, but it does not.");
 		}
         // Then attempt to initialize the internal arrays, and report any invalid assignments:
-		times = conversionRatesInput.get() != null ? new double[conversionRatesInput.get().size()] : new double[expectedConversionsInput.get().size()];
+		times = conversionRatesInput.get() != null ? new double[conversionRatesInput.get().size() - 1] : new double[expectedConversionsInput.get().size() - 1];
         Double timesLogP = updateTimes();
         if (timesLogP.isInfinite()) {
         	throw new RuntimeException("The times inputs are not valid. Please ensure that the origin height, if specified, is not less than the tree height and that all change times, if specified in forward time, do not exceed the origin/root height (or 1, if they are specified relative to this height).");
         }
-        clonalFrameLengths = new double[times.length];
+        clonalFrameLengths = new double[times.length + 1];
         Double clonalFrameLengthsLogP = updateClonalFrameLengths();
         if (clonalFrameLengthsLogP.isInfinite()) {
         	throw new RuntimeException("The network input is producing clonal frame lengths that are not valid in one or more epochs. Please check the network input.");
         }
-		rates = new double[times.length];
-		expectedConversions = new double[times.length];
+		rates = new double[times.length + 1];
+		expectedConversions = new double[times.length + 1];
 		Double ratesAndExpectedConversionsLogP = updateRatesAndExpectedConversions();
         if (ratesAndExpectedConversionsLogP.isInfinite()) {
         	throw new RuntimeException("The rates input or expected conversions input is not valid. Please ensure that all specified values are non-negative and that the expected number of conversions is not positive in epochs where contact edges cannot be added to the network (e.g., if at most one lineage in the network occurs in those epochs).");
@@ -172,8 +172,8 @@ public class ConversionPrior extends Distribution {
     	// Otherwise, populate the times array based on which inputs have been specified:
 		if (conversionRateChangeTimesInput.get() == null) {
 			// If no change times are specified, then use equidistant change times:
-			double intervalWidth = maxTime / times.length;
-            for (int i = 0; i < times.length; i++) {
+			double intervalWidth = maxTime / (times.length + 1);
+            for (int i = 1; i <= times.length; i++) {
             	times[i] = intervalWidth * i;
             }
             return 0.0;
@@ -197,13 +197,12 @@ public class ConversionPrior extends Distribution {
 		    	}
 			}
 		}
-		// If they are, then convert them to heights, add them to the times array, starting with a height of 0, 
+		// If they are, then convert them to heights, add them to the times array, 
 		// and sort them in ascending order:
 		ArrayList<Double> conversionRateChangeTimes = new ArrayList<Double>();
-		conversionRateChangeTimes.add(0.0);
 		for (int i = 0; i < conversionRateChangeTimesInput.get().size(); i++) {
     		double t = conversionRateChangeTimesInput.get().get(i) * (relative ? maxTime : 1);
-    		if (reverse) {
+    		if (!reverse) {
     			t = maxTime - t;
     		}
     		conversionRateChangeTimes.add(t);
@@ -217,14 +216,19 @@ public class ConversionPrior extends Distribution {
     }
     
     /**
-     * Returns the index of the epoch that contains (or ends at) the given time.
+     * Returns the index of the epoch that contains 
+     * (or whose lowest height equals) the given time.
      * @param t The time in question.
-     * @return The index of this time or the next smallest time in the times array.
+     * @return The index of the epoch in the times array
+     * that contains (or whose lowest height equals) the given time.
      */
     public int index(double t) {
         if (t >= times[times.length - 1])
-            return times.length - 1;
+            return times.length;
         int epoch = Arrays.binarySearch(times, t);
+        // The binarySearch algorithm returns a positive index 
+        // if the value is present in the array
+        // and a negative index (-(insertion point) - 1) if it is absent:
         if (epoch < 0) {
             epoch = -epoch - 1;
         }
@@ -240,7 +244,7 @@ public class ConversionPrior extends Distribution {
      */
     protected Double updateClonalFrameLengths() {
     	// First, reinitialize the internal array:
-    	for (int i = 0; i < times.length; i++) {
+    	for (int i = 0; i < clonalFrameLengths.length; i++) {
     		clonalFrameLengths[i] = 0.0;
     	}
     	// Then proceed through all sampling and coalescence events 
@@ -251,6 +255,9 @@ public class ConversionPrior extends Distribution {
             int eStartEpoch = index(eStart.getHeight());
             Event eEnd = events.get(i+1);
             int eEndEpoch = index(eEnd.getHeight());
+            // If this event and the next take place at the same time,
+            // then nothing can happen between them:
+            if (eStart.getHeight() == eEnd.getHeight()) continue;
             // By definition, between any two events, 
             // there will be a constant number of lineages in the tree:
             int k = eStart.getLineageCount();
@@ -260,8 +267,8 @@ public class ConversionPrior extends Distribution {
             // we calculate the expected number of conversions 
             // in the part of the interval contained in that epoch:
             for (int epoch = eStartEpoch; epoch <= eEndEpoch; epoch++) {
-            	double start = times[epoch] > eStart.getHeight() ? times[epoch] : eStart.getHeight();
-            	double end = (epoch < times.length - 1 && times[epoch + 1] < eEnd.getHeight()) ? times[epoch + 1] : eEnd.getHeight();
+            	double start = (epoch == 0 || eStart.getHeight() > times[epoch - 1]) ? eStart.getHeight() : times[epoch - 1];
+            	double end = (epoch >= times.length || eEnd.getHeight() < times[epoch]) ? eEnd.getHeight() : times[epoch];
             	double dt = end - start;
             	double length = linearContactGrowthInput.get() ? dt * k : dt * k * (k-1);
             	clonalFrameLengths[epoch] += length;
@@ -284,13 +291,15 @@ public class ConversionPrior extends Distribution {
     		// If the conversion rates by epoch have been specified, then validate them,
     		// copy them into the rates array directly,
     		// and calculate the expected conversions using them:
-    		for (int i = 0; i < times.length; i++) {
+    		for (int i = 0; i < rates.length; i++) {
         		if (conversionRatesInput.get().get(i) < 0.0) {
             		return Double.NEGATIVE_INFINITY;
             	}
         	}
-        	for (int i = 0; i < times.length; i++) {
-        		rates[i] = conversionRatesInput.get().get(i);
+        	for (int i = 0; i < rates.length; i++) {
+        		// The rates are always specified from the highest epoch to the lowest, 
+        		// so we populate the internal array in reverse order:
+        		rates[i] = conversionRatesInput.get().get(rates.length - i - 1);
         		expectedConversions[i] = rates[i] * clonalFrameLengths[i];
         	}
         	return 0.0;
@@ -298,7 +307,7 @@ public class ConversionPrior extends Distribution {
         // Otherwise, the expected numbers of conversions by epoch have been specified;
     	// validate them, copy them into the expected conversions array directly,
     	// and calculate the expected conversion rates using them:
-    	for (int i = 0; i < times.length; i++) {
+    	for (int i = 0; i < expectedConversions.length; i++) {
     		if (expectedConversionsInput.get().get(i) < 0.0) {
         		return Double.NEGATIVE_INFINITY;
         	}
@@ -306,7 +315,7 @@ public class ConversionPrior extends Distribution {
         		return Double.NEGATIVE_INFINITY;
         	}
     	}
-    	for (int i = 0; i < times.length; i++) {
+    	for (int i = 0; i < expectedConversions.length; i++) {
     		expectedConversions[i] = expectedConversionsInput.get().get(i);
     		// The above check ensures that the expected number of conversions never exceeds zero 
     		// when the total clonal frame length is zero,
@@ -401,7 +410,7 @@ public class ConversionPrior extends Distribution {
         	Conversion conv = convQueue.poll();
         	double convHeight = conv.getHeight();
         	// Update the current epoch to the one containing this conversion:
-        	while ((epoch < times.length - 1) && (convHeight >= times[epoch + 1])) {
+        	while ((epoch < times.length) && (convHeight >= times[epoch])) {
         		epoch++;
         	}
         	double conversionRate = rates[epoch];
@@ -630,7 +639,7 @@ public class ConversionPrior extends Distribution {
         // The total expected number of conversions 
         // is the sum of each epoch's expected number of conversions:
         int nConv = 0;
-        for (int epoch = 0; epoch < times.length; epoch++) {
+        for (int epoch = 0; epoch < expectedConversions.length; epoch++) {
         	// Draw number of conversions from the Poisson distribution for this epoch:
         	double nConvMean = expectedConversions[epoch];
         	nConv += (int) Randomizer.nextPoisson(nConvMean);
@@ -682,8 +691,8 @@ public class ConversionPrior extends Distribution {
             // For every epoch that contains part of this interval,
             // we calculate the necessary values for the part of the interval contained in that epoch:
             for (int epoch = eStartEpoch; epoch <= eEndEpoch; epoch++) {
-            	double start = times[epoch] > eStart.getHeight() ? times[epoch] : eStart.getHeight();
-            	double end = (epoch < times.length - 1 && times[epoch + 1] < eEnd.getHeight()) ? times[epoch + 1] : eEnd.getHeight();
+            	double start = (epoch == 0 || eStart.getHeight() > times[epoch - 1]) ? eStart.getHeight() : times[epoch - 1];
+            	double end = (epoch >= times.length || eEnd.getHeight() < times[epoch]) ? eEnd.getHeight() : times[epoch];
             	double dt = end - start;
             	double length = linearContactGrowthInput.get() ? dt * k : dt * k * (k-1);
             	intervalStarts.add(start);
@@ -760,8 +769,8 @@ public class ConversionPrior extends Distribution {
             // For every epoch that contains part of this interval,
             // we calculate the necessary values for the part of the interval contained in that epoch:
             for (int epoch = eStartEpoch; epoch <= eEndEpoch; epoch++) {
-            	double start = times[epoch] > eStart.getHeight() ? times[epoch] : eStart.getHeight();
-            	double end = (epoch < times.length - 1 && times[epoch + 1] < eEnd.getHeight()) ? times[epoch + 1] : eEnd.getHeight();
+            	double start = (epoch == 0 || eStart.getHeight() > times[epoch - 1]) ? eStart.getHeight() : times[epoch - 1];
+            	double end = (epoch >= times.length || eEnd.getHeight() < times[epoch]) ? eEnd.getHeight() : times[epoch];
             	double dt = end - start;
             	double length = linearContactGrowthInput.get() ? dt * k : dt * k * (k-1);
             	if (start <= height && height < end) {

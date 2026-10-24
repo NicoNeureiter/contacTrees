@@ -73,8 +73,8 @@ public abstract class CFOperator extends ConversionCreationOperator {
         double L = 0.0; // total length of both lineages in this interval
         double Nexp = 0.0;
         for (int epoch = eStartEpoch; epoch <= eEndEpoch; epoch++) {
-        	double start = times[epoch] > destTime ? times[epoch] : destTime;
-        	double end = (epoch < times.length - 1 && times[epoch + 1] < parentHeight) ? times[epoch + 1] : parentHeight;
+        	double start = (epoch == 0 || destTime > times[epoch - 1]) ? destTime : times[epoch - 1];
+        	double end = (epoch >= times.length || parentHeight < times[epoch]) ? parentHeight : times[epoch];
         	double dt = end - start;
         	int k = 2; // we are only considering these two lineages (thus, the expected number of conversions is the same whether the growth is linear or quadratic)
         	L += k * dt;
@@ -162,8 +162,8 @@ public abstract class CFOperator extends ConversionCreationOperator {
         double L = 0.0; // total length of both lineages in this interval
         double Nexp = 0.0;
         for (int epoch = eStartEpoch; epoch <= eEndEpoch; epoch++) {
-        	double start = times[epoch] > parentHeight ? times[epoch] : parentHeight;
-        	double end = (epoch < times.length - 1 && times[epoch + 1] < destTime) ? times[epoch + 1] : destTime;
+        	double start = (epoch == 0 || parentHeight > times[epoch - 1]) ? parentHeight : times[epoch - 1];
+        	double end = (epoch >= times.length || destTime < times[epoch]) ? destTime : times[epoch];
         	double dt = end - start;
         	int k = 2; // we are only considering these two lineages (thus, the expected number of conversions is the same whether the growth is linear or quadratic)
         	L += k * dt;
