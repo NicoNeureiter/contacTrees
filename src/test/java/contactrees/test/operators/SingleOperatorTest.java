@@ -9,11 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
-import java.util.TreeSet;
 
 import beastfx.app.beast.BeastMCMC;
 import beast.base.util.Randomizer;
@@ -63,8 +59,7 @@ public abstract class SingleOperatorTest {
 
 		BeastMCMC.main(mcmcArgs);
 		samplesMCMC = readSamplesFromNexus(workingDir + FBASE_MCMC + ".trees");
-        samplesMCMC.remove(0);
-        samplesMCMC.remove(1);
+        samplesMCMC.remove(0);  // initial state, not a draw from the prior
 	}
 
 	public void testStationarity(String operatorName) throws Exception {
@@ -122,17 +117,17 @@ public abstract class SingleOperatorTest {
 	    xMCMC = filterNaNs(xMCMC);
 	    xSimu = filterNaNs(xSimu);
 
-	    double ksStatistic = kolmogorovSmirnovTest(xSimu, xMCMC);
+	    double pValue = kolmogorovSmirnovTest(xSimu, xMCMC);
 
 		System.out.println();
-		System.out.println(String.format("KS-test %s: %.4f", statName, ksStatistic));
+		System.out.println(String.format("KS-test %s: p = %.4f", statName, pValue));
 		System.out.println(String.format("MCMC %s: %.2f  \t   %.3f\t+/- %.2f", statName,
 									     median(xMCMC), mean(xMCMC), std(xMCMC)));
 		System.out.println(String.format("Simu %s: %.2f  \t   %.3f\t+/- %.2f", statName,
 										 median(xSimu), mean(xSimu), std(xSimu)));
 
-		// We test whether a bootstrap sample of the KS-Statistic averages out to 0.5 (as it should)-
-		assertTrue(ksStatistic > KS_THRESHOLD);
+		assertTrue(statName + ": MCMC and simulator distributions differ (KS p = " + pValue + ")",
+		           pValue > KS_THRESHOLD);
 	}
 
 	double[] filterNaNs(double[] x) {
@@ -258,20 +253,15 @@ public abstract class SingleOperatorTest {
 	 * From `commons-math 3.6`
 	 */
 
+    /**
+     * Asymptotic p-value of the two-sample Kolmogorov-Smirnov test that x and y come from the
+     * same distribution (as commons-math3's approximateP). Conservative for discrete statistics.
+     */
     public double kolmogorovSmirnovTest(double[] x, double[] y) {
-        int LARGE_SAMPLE_PRODUCT = 10000;
-        final long lengthProduct = (long) x.length * y.length;
-        double[] xa = null;
-        double[] ya = null;
-        if (lengthProduct < LARGE_SAMPLE_PRODUCT && hasTies(x,y)) {
-            xa = x.clone();
-            ya = y.clone();
-            fixTies(xa, ya);
-        } else {
-            xa = x;
-            ya = y;
-        }
-        return ksCdf(x.length, kolmogorovSmirnovStatistic(x, y));
+        final double n = x.length;
+        final double m = y.length;
+        final double d = kolmogorovSmirnovStatistic(x, y);
+        return 1.0 - kolmogorovCdf(d * Math.sqrt(n * m / (n + m)));
     }
 
     public double kolmogorovSmirnovStatistic(double[] x, double[] y) {
@@ -313,92 +303,6 @@ public abstract class SingleOperatorTest {
         return supD;
     }
 
-    private static boolean hasTies(double[] x, double[] y) {
-        final HashSet<Double> values = new HashSet<Double>();
-            for (int i = 0; i < x.length; i++) {
-                if (!values.add(x[i])) {
-                    return true;
-                }
-            }
-            for (int i = 0; i < y.length; i++) {
-                if (!values.add(y[i])) {
-                    return true;
-                }
-            }
-        return false;
-    }
-
-    private static void fixTies(double[] x, double[] y) {
-       final double[] values = unique(concatenate(x,y));
-       if (values.length == x.length + y.length) {
-           return;
-       }
-       // Find the smallest difference between values, or 1 if all values are the same
-       double minDelta = 1;
-       double prev = values[0];
-       double delta = 1;
-       for (int i = 1; i < values.length; i++) {
-          delta = prev - values[i];
-          if (delta < minDelta) {
-              minDelta = delta;
-          }
-          prev = values[i];
-       }
-       minDelta /= 2;
-       // Add jitter using a fixed seed (so same arguments always give same results).
-       final Random rng = new Random(0);
-       // It is theoretically possible that jitter does not break ties, so repeat
-       // until all ties are gone.  Bound the loop and throw if bound is exceeded.
-       int ct = 0;
-       boolean ties = true;
-       do {
-           jitter(x, minDelta, rng);
-           jitter(y, minDelta, rng);
-           ties = hasTies(x, y);
-           ct++;
-       } while (ties && ct < 1000);
-       if (ties) {
-           throw new RuntimeException("Unable to break ties by jittering"); // Should never happen
-       }
-    }
-
-    private static void jitter(double[] data, double minDelta, Random rng) {
-        for (int i = 0; i < data.length; i++) {
-            data[i] += (rng.nextDouble() * 2.0 - 1.0) * minDelta;
-        }
-    }
-
-   public static double[] concatenate(double[] ...x) {
-       int combinedLength = 0;
-       for (double[] a : x) {
-           combinedLength += a.length;
-       }
-       int offset = 0;
-       int curLength = 0;
-       final double[] combined = new double[combinedLength];
-       for (int i = 0; i < x.length; i++) {
-           curLength = x[i].length;
-           System.arraycopy(x[i], 0, combined, offset, curLength);
-           offset += curLength;
-       }
-       return combined;
-   }
-
-   public static double[] unique(double[] data) {
-       TreeSet<Double> values = new TreeSet<Double>();
-       for (int i = 0; i < data.length; i++) {
-           values.add(data[i]);
-       }
-       final int count = values.size();
-       final double[] out = new double[count];
-       Iterator<Double> iterator = values.iterator();
-       int i = 0;
-       while (iterator.hasNext()) {
-           out[count - ++i] = iterator.next();
-       }
-       return out;
-   }
-
    /** Sample median (average of the two middle values for even length). */
    private static double median(double[] data) {
        if (data.length == 0)
@@ -411,14 +315,8 @@ public abstract class SingleOperatorTest {
        return 0.5 * (sorted[n / 2 - 1] + sorted[n / 2]);
    }
 
-   /**
-    * CDF P(D_n < d) of the one-sample Kolmogorov-Smirnov statistic, via the
-    * asymptotic Kolmogorov distribution K(sqrt(n)*d). Accurate for the large n
-    * used here and more than sufficient for the loose KS_THRESHOLD check.
-    * Replaces commons-math3 KolmogorovSmirnovDistribution.cdf.
-    */
-   private static double ksCdf(int n, double d) {
-       final double t = Math.sqrt(n) * d;
+   /** CDF K(t) of the Kolmogorov distribution. */
+   private static double kolmogorovCdf(double t) {
        if (t <= 0.0)
            return 0.0;
        // K(t) = 1 - 2 * sum_{k=1}^inf (-1)^(k-1) exp(-2 k^2 t^2)
