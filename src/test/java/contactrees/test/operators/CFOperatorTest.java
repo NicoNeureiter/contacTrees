@@ -8,7 +8,9 @@ import org.junit.Test;
 import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.UnitInterval;
 import beast.base.spec.inference.parameter.RealScalarParam;
+import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.spec.type.RealScalar;
+import beast.base.spec.type.RealVector;
 import contactrees.Conversion;
 import contactrees.model.ConversionPrior;
 import contactrees.operators.CFOperator;
@@ -21,13 +23,13 @@ public class CFOperatorTest extends ContactreesTest {
             
 	@Test
 	public void testCollapseExpandSymmetry() {
-		RealScalar<NonNegativeReal> cRate = new RealScalarParam<>(C_RATE, NonNegativeReal.INSTANCE);
+		RealVector<NonNegativeReal> cRates = new RealVectorParam<>(new double[] {C_RATE}, NonNegativeReal.INSTANCE);
 		RealScalar<UnitInterval> pMove = new RealScalarParam<>(P_MOVE, UnitInterval.INSTANCE);
 		ConversionPrior prior = new ConversionPrior();
-		prior.initByName("network", acg, "conversionRate", cRate);
+		prior.initByName("network", acg, "conversionRates", cRates);
 
 		CFOperator cfOp = new CollapseExpandOperator();
-		cfOp.initByName("acg", acg, "conversionRate", cRate, "pMove", pMove,
+		cfOp.initByName("acg", acg, "pMove", pMove,
 						"blockSet", blockSet, "conversionPrior", prior,
 						"weight", 1.0);
 		double logHGF = cfOp.proposal();
@@ -42,17 +44,17 @@ public class CFOperatorTest extends ContactreesTest {
      */
     @Test
     public void testCollapseConversionsKeepsBorrowingStateValid() {
-        RealScalar<NonNegativeReal> cRate = new RealScalarParam<>(C_RATE, NonNegativeReal.INSTANCE);
+    	RealVector<NonNegativeReal> cRates = new RealVectorParam<>(new double[] {C_RATE}, NonNegativeReal.INSTANCE);
         RealScalar<UnitInterval> pMove = new RealScalarParam<>(P_MOVE, UnitInterval.INSTANCE);
         ConversionPrior prior = new ConversionPrior();
-        prior.initByName("network", acg, "conversionRate", cRate);
+        prior.initByName("network", acg, "conversionRates", cRates);
 
         Conversion loopCandidate = new Conversion(node1, node2, 0.5, acg, 3);
         acg.addConversion(loopCandidate);
         blockSet.getBlocks().get(0).addMove(loopCandidate);
 
         CollapseValidityCheckingOperator cfOp = new CollapseValidityCheckingOperator();
-        cfOp.initByName("acg", acg, "conversionRate", cRate, "pMove", pMove,
+        cfOp.initByName("acg", acg, "pMove", pMove,
                         "blockSet", blockSet, "conversionPrior", prior,
                         "gibbsSampleBlockMoves", true,
                         "weight", 1.0);

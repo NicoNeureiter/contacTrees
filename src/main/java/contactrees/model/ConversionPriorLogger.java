@@ -19,21 +19,16 @@ public class ConversionPriorLogger extends BEASTObject implements Loggable {
     final public Input<Boolean> logTimesInput = new Input<>(
             "logTimes",
             "Log all epoch change times (measured backwards from the present).",
-            false);
+            true);
     
     final public Input<Boolean> logRatesInput = new Input<>(
             "logRates",
             "Log conversion rates for all epochs (from the lowest epoch to the highest).",
-            false);
+            true);
     
     final public Input<Boolean> logExpectedConversionsInput = new Input<>(
             "logExpectedConversions",
             "Log expected number of conversions for all epochs (from the lowest epoch to the highest).",
-            false);
-    
-    final public Input<Boolean> logProbabilityInput = new Input<>(
-            "logProbability",
-            "Log the log-probability of the conversion prior.",
             true);
 
     @Override
@@ -61,9 +56,6 @@ public class ConversionPriorLogger extends BEASTObject implements Loggable {
 	    		out.print("ExpectedConversions_" + i + "\t");
 	    	}
     	}
-    	if (logProbabilityInput.get()) {
-	    	out.print("ConversionPrior" + "\t");
-    	}
     }
 
     @Override
@@ -85,10 +77,6 @@ public class ConversionPriorLogger extends BEASTObject implements Loggable {
 	    	for (int i = 0; i < expectedConversions.length; i++) {
 	    		out.print(expectedConversions[i] + "\t");
 	    	}
-    	}
-    	if (logProbabilityInput.get()) {
-    		double logP = conversionPrior.calculateLogP();
-	    	out.print(logP + "\t");
     	}
     }
 

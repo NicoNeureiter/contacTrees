@@ -9,7 +9,9 @@ import beast.base.inference.OperatorSchedule;
 import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.UnitInterval;
 import beast.base.spec.inference.parameter.RealScalarParam;
+import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.spec.type.RealScalar;
+import beast.base.spec.type.RealVector;
 import contactrees.model.ConversionPrior;
 import contactrees.operators.CFSubtreeSlide;
 import contactrees.test.ContactreesTest;
@@ -19,13 +21,13 @@ public class CFSubtreeSlideTest extends ContactreesTest {
     private static final double SCALE_FACTOR = 0.8;
 
     private CFSubtreeSlide getOperator(boolean optimise) {
-        RealScalar<NonNegativeReal> cRate = new RealScalarParam<>(1.0, NonNegativeReal.INSTANCE);
+        RealVector<NonNegativeReal> cRates = new RealVectorParam<>(new double[] {1.0}, NonNegativeReal.INSTANCE);
         RealScalar<UnitInterval> pMove = new RealScalarParam<>(0.4, UnitInterval.INSTANCE);
         ConversionPrior prior = new ConversionPrior();
-        prior.initByName("network", acg, "conversionRate", cRate);
+        prior.initByName("network", acg, "conversionRates", cRates);
 
         CFSubtreeSlide operator = new CFSubtreeSlide();
-        operator.initByName("acg", acg, "conversionRate", cRate, "pMove", pMove,
+        operator.initByName("acg", acg, "pMove", pMove,
                             "blockSet", blockSet, "conversionPrior", prior,
                             "scaleFactor", SCALE_FACTOR, "optimise", optimise,
                             "weight", 1.0);

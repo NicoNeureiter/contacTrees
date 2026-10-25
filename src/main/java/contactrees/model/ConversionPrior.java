@@ -223,7 +223,7 @@ public class ConversionPrior extends Distribution {
      * that contains (or whose lowest height equals) the given time.
      */
     public int index(double t) {
-        if (t >= times[times.length - 1])
+    	if (times.length == 0 || t >= times[times.length - 1])
             return times.length;
         int epoch = Arrays.binarySearch(times, t);
         // The binarySearch algorithm returns a positive index 
@@ -398,7 +398,8 @@ public class ConversionPrior extends Distribution {
                 return logP;
             }
         }
-        // Poisson prior on the number of conversions per event interval (between sampling/coalescent events)
+        // We assume a Poisson prior on the number of conversions per event interval
+        // (between sampling/coalescent events)
         for (int i = 0; i < clonalFrameLengths.length; i++) {
         	// For a Poisson-distributed random variable X,
         	// the probability of no event happening in time t
@@ -713,6 +714,11 @@ public class ConversionPrior extends Distribution {
             	intervalVolumes.add(length*rates[epoch]);
             }
         }
+        // Finally, add a final interval covering everything above the root,
+        // assigning it a volume of 0:
+        intervalStarts.add(cfEvents.get(cfEvents.size() - 1).getHeight());
+        intervalLineageCounts.add(1);
+        intervalVolumes.add(0.0);
         // Sample an interval according to its weight:
         int iInterval = Util.sampleCategorical(intervalVolumes);
         double pInterval = intervalVolumes.get(iInterval) / Util.sum(intervalVolumes);

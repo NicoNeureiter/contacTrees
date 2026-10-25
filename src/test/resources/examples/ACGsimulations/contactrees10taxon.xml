@@ -34,7 +34,7 @@
 		</plate>
         
         <stateNode id="pMove" estimate="false" value="$(pMove)" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
-		<stateNode id="conversionRate" estimate="false" value="$(convRate)" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+		<stateNode id="conversionRates" estimate="false" value="$(convRate)" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
         <stateNode id="popSize" estimate="false" value="$(popSize)" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
  	</state>
  	
@@ -49,7 +49,7 @@
                 <treeIntervals id="TreeIntervals.t:treeSim" spec="beast.base.evolution.tree.TreeIntervals" tree="@acg"/>
             </distribution>
 
-            <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
+            <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRates="@conversionRates"/>
             <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
     
         </distribution>
@@ -57,20 +57,20 @@
 
  <!--  
 	<operatorschedule id="schedule" spec="contactrees.test.OrderedOperatorSchedule">
-	 	<operator id="SimumlateOp" spec="contactrees.test.SimulatorOperator" network="@acg" blockSet="@allBlocks" 
-	 	 		  pMove="@pMove" conversionRate="@conversionRate" weight="1.0">
+	 	<operator id="SimumlateOp" spec="contactrees.test.SimulatorOperator" network="@acg" conversionPrior="@ConversionPrior.t:treeSim" blockSet="@allBlocks" 
+	 	 		  pMove="@pMove" weight="1.0">
 	 		<populationModel spec="ConstantPopulation" popSize="$(popSize)"/>
 	 	</operator>		 
  -->  
       
  <!-- 
  -->
-	 	<operator id="CFWilsonBalding.t" spec="CFWilsonBalding" acg="@acg" alpha="0.1" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" includeRoot="false" weight="10.0"/>
-		<operator id="CFUniform.t" spec="CFUniform" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" weight="10.0"/>
-	 	<operator id="CFNarrowExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="true" weight="10.0"/>      
-	 	<operator id="CFWideExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="false" weight="10.0"/>
+	 	<operator id="CFWilsonBalding.t" spec="CFWilsonBalding" acg="@acg" alpha="0.1" conversionPrior="@ConversionPrior.t:treeSim" pMove="@pMove" blockSet="@allBlocks" includeRoot="false" weight="10.0"/>
+		<operator id="CFUniform.t" spec="CFUniform" acg="@acg" conversionPrior="@ConversionPrior.t:treeSim" pMove="@pMove" blockSet="@allBlocks" weight="10.0"/>
+	 	<operator id="CFNarrowExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionPrior="@ConversionPrior.t:treeSim" pMove="@pMove" blockSet="@allBlocks" isNarrow="true" weight="10.0"/>      
+	 	<operator id="CFWideExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionPrior="@ConversionPrior.t:treeSim" pMove="@pMove" blockSet="@allBlocks" isNarrow="false" weight="10.0"/>
 		  
-	 	<operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="200.0" acg="@acg" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" conversionPrior="@ConversionPrior.t:treeSim"/>
+	 	<operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="200.0" acg="@acg" conversionPrior="@ConversionPrior.t:treeSim" pMove="@pMove" blockSet="@allBlocks"/>
 	 	<operator id="ACGscale.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="10.0"/>
 
 	 	<operator id="ACGscale.rootOnly.t" spec="ACGScaler" acg="@acg" scaleFactor="0.9" weight="10.0" rootOnly="true"/> 
