@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,7 +34,7 @@ public abstract class SingleOperatorTest {
 	public void generateSamples(String operator) throws Exception {
 	    FBASE_MCMC = String.format("%dtaxa_%s", N_TAXA, operator);
 
-		String workingDir = "simulations/";
+		String workingDir = new File(resourcePath("examples")).getParent() + "/simulations/";
 		new File(workingDir).mkdirs();
 		System.setProperty("beast.useWindow", "true"); // Trick beast into not stopping application
 
@@ -43,8 +44,8 @@ public abstract class SingleOperatorTest {
 
 		// Run the simulation and read samples from file
 		samplesSimulator = new ArrayList<>();
-		String xmlPath = String.format("examples/ACGsimulations/%s.xml", FBASE_SIM);
-		String paramsPath = "examples/operatorTests/parameters.json";
+		String xmlPath = resourcePath(String.format("examples/ACGsimulations/%s.xml", FBASE_SIM));
+		String paramsPath = resourcePath("examples/operatorTests/parameters.json");
 		System.out.println(xmlPath);
 		String[] simArgs = {"-overwrite", "-DF", paramsPath, "-seed", seed, "-prefix", workingDir, xmlPath};
 		System.out.println(Arrays.toString(simArgs));
@@ -53,13 +54,18 @@ public abstract class SingleOperatorTest {
 
 		// Run the MCMC and read samples from file
 		samplesMCMC = new ArrayList<>();
-		xmlPath = String.format("examples/operatorTests/%s.xml", FBASE_MCMC);
+		xmlPath = resourcePath(String.format("examples/operatorTests/%s.xml", FBASE_MCMC));
 		String[] mcmcArgs = {"-overwrite", "-DF", paramsPath, "-seed", seed, "-prefix", workingDir, xmlPath};
 		System.out.println(xmlPath);
 
 		BeastMCMC.main(mcmcArgs);
 		samplesMCMC = readSamplesFromNexus(workingDir + FBASE_MCMC + ".trees");
         samplesMCMC.remove(0);  // initial state, not a draw from the prior
+	}
+
+	/** Resolves test resources via the classpath, so the tests don't depend on the working directory. */
+	static String resourcePath(String name) throws URISyntaxException {
+		return new File(SingleOperatorTest.class.getResource("/" + name).toURI()).getPath();
 	}
 
 	public void testStationarity(String operatorName) throws Exception {
