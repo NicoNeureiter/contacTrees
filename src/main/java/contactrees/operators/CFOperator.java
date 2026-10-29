@@ -1,5 +1,6 @@
 package contactrees.operators;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -7,6 +8,7 @@ import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import contactrees.Conversion;
+import contactrees.CFEventList.Event;
 
 /**
  * @author Nico Neureiter
@@ -35,6 +37,7 @@ public abstract class CFOperator extends ConversionCreationOperator {
 
         boolean reverseRootMove = srcNode.getParent().isRoot();
         Node srcNodeP = srcNode.getParent();
+        double parentHeight = srcNodeP.getHeight();
         Node srcNodeS = getSibling(srcNode);
         double maxChildHeight = getMaxRootChildHeight();
 
@@ -59,14 +62,29 @@ public abstract class CFOperator extends ConversionCreationOperator {
 
         assert assertAllConversionsValid("after collapsing attachments");
 
-        // Remove degenerated conversions
-        double L = 2.0 * (srcNode.getParent().getHeight() - destTime);
-        double Nexp = L * conversionRateInput.get().get();
+        // Remove degenerated conversions, calculating the log-likelihood of the reverse move
+        // using the expected number of conversion events between the two lineages in question:
+        double[] times = conversionPriorInput.get().getTimes();
+        double[] rates = conversionPriorInput.get().getRates();
+        int eStartEpoch = conversionPriorInput.get().index(destTime);
+        int eEndEpoch = conversionPriorInput.get().index(parentHeight);
+        // For every epoch that contains part of this interval,
+        // we calculate the expected number of conversions in the part of the interval contained in that epoch:
+        double L = 0.0; // total length of both lineages in this interval
+        double Nexp = 0.0;
+        for (int epoch = eStartEpoch; epoch <= eEndEpoch; epoch++) {
+        	double start = (epoch == 0 || destTime > times[epoch - 1]) ? destTime : times[epoch - 1];
+        	double end = (epoch >= times.length || parentHeight < times[epoch]) ? parentHeight : times[epoch];
+        	double dt = end - start;
+        	int k = 2; // we are only considering these two lineages (thus, the expected number of conversions is the same whether the growth is linear or quadratic)
+        	L += k * dt;
+        	Nexp += k * dt * rates[epoch];
+        }
         if (Nexp == 0.) {
         	assert toRemove.isEmpty();
         } else {
         	// We remove "toRemove.size()" edges
-        	// In reverse move these are added according to prior:
+        	// In reverse move these are added according to a Poisson prior:
 	        logP += -Nexp + toRemove.size() * Math.log(Nexp); // Factorial cancels
         }
 
@@ -133,8 +151,24 @@ public abstract class CFOperator extends ConversionCreationOperator {
         }
 
         // Randomly add edges which would be pruned in a corresponding collapse move
-        double L = 2.0*(destTime - parentHeight);
-        double Nexp = L * conversionRateInput.get().get();
+        // calculating the log-likelihood of the addition
+        // using the expected number of conversion events between the two lineages in question:
+        double[] times = conversionPriorInput.get().getTimes();
+        double[] rates = conversionPriorInput.get().getRates();
+        int eStartEpoch = conversionPriorInput.get().index(parentHeight);
+        int eEndEpoch = conversionPriorInput.get().index(destTime);
+        // For every epoch that contains part of this interval,
+        // we calculate the expected number of conversions in the part of the interval contained in that epoch:
+        double L = 0.0; // total length of both lineages in this interval
+        double Nexp = 0.0;
+        for (int epoch = eStartEpoch; epoch <= eEndEpoch; epoch++) {
+        	double start = (epoch == 0 || parentHeight > times[epoch - 1]) ? parentHeight : times[epoch - 1];
+        	double end = (epoch >= times.length || destTime < times[epoch]) ? destTime : times[epoch];
+        	double dt = end - start;
+        	int k = 2; // we are only considering these two lineages (thus, the expected number of conversions is the same whether the growth is linear or quadratic)
+        	L += k * dt;
+        	Nexp += k * dt * rates[epoch];
+        }
         int N = 0;
         if (Nexp > 0.) {
             // Choose number of new conversions according to Poisson distribution
@@ -146,7 +180,7 @@ public abstract class CFOperator extends ConversionCreationOperator {
         for (int i=0; i<N; i++) {
             Conversion conv = addNewConversion();
 
-            double convHeight = Randomizer.uniform(destTime, parentHeight);
+            double convHeight = Randomizer.uniform(parentHeight, destTime);
             boolean convDirection = Randomizer.nextBoolean();
             logP += Math.log(1.0/L);
 

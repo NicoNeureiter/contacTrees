@@ -11,7 +11,6 @@ import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import contactrees.Conversion;
 import contactrees.model.ConversionPrior;
-import contactrees.model.ConversionRate;
 
 /**
  * Abstract class of ACG operators that add new converted edges
@@ -20,11 +19,6 @@ import contactrees.model.ConversionRate;
  * @author Nico Neureiter
  */
 public abstract class ConversionCreationOperator extends BorrowingOperator {
-
-    public Input<RealScalar<NonNegativeReal>> conversionRateInput = new Input<>(
-            "conversionRate",
-            "Rate at which conversions happen along pairs of edges on the clonal frame.",
-            Input.Validate.REQUIRED);
 
     public Input<ConversionPrior> conversionPriorInput = new Input<>(
             "conversionPrior",
