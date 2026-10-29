@@ -68,6 +68,40 @@ public class ConversionPriorTest extends ContactreesTest {
 	}
 	
 	@Test
+	public void MultipleEpochsExpectedConversionInputTest() {
+		double gamma_0 = 0.25; // the conversion rate in the earliest epoch
+		double gamma_1 = 0.5; // the conversion rate in the latest epoch
+		// Setup the initial tree topology
+		String newick = "((1:1.0,2:1.0)4:2.0,3:3.0)5:0.0;";
+		ConversionGraph acg = getACGFromNewick(newick);
+        // Initialize the prior:
+		ConversionPrior prior = new ConversionPrior();
+		prior.initByName("network", acg, "linearContactGrowth", "true", "conversionRateChangeTimes", "2.0", "expectedConversions", "0.5 2.5", "reverseChangeTimes", "true");
+
+		double[] times = prior.getTimes();
+		double[] rates = prior.getRates();
+		double[] clonalFrameLengths = prior.getClonalFrameLengths();
+		double[] expectedConversions = prior.getExpectedConversions();
+		// The internal times array should consist of change times from lowest to highest,
+		// and all other internal arrays should be reversed 
+		// so they proceed from the lowest epoch to the highest:
+		assertArrayEquals(new double[] {2.0}, times, 0.0);
+		assertArrayEquals(new double[] {0.5, 0.25}, rates, 0.0);
+		assertArrayEquals(new double[] {5.0, 2.0}, clonalFrameLengths, 0.0);
+		assertArrayEquals(new double[] {2.5, 0.5}, expectedConversions, 0.0);
+		// Get prior with no conversion edges:
+		assertEquals(-(5.0)*gamma_1 - (2.0)*gamma_0, prior.calculateLogP(), 0.0);
+		// Add one conversion in the lower epoch and check the prior again:
+        Conversion conv1 = new Conversion(node3, node4, 1.5, acg, 1);
+        acg.addConversion(conv1);
+        assertEquals(Math.log(gamma_1) - (5.0)*gamma_1 - (2.0)*gamma_0, prior.calculateLogP(), 0.0);
+        // Add another conversion in the higher epoch and check the prior again:
+        Conversion conv2 = new Conversion(node4, node3, 2.5, acg, 2);
+        acg.addConversion(conv2);
+        assertEquals(Math.log(gamma_0) + Math.log(gamma_1) - (5.0)*gamma_1 - (2.0)*gamma_0, prior.calculateLogP(), 0.0);
+	}
+	
+	@Test
 	public void MultipleEpochsQuadraticGrowthTest() {
 		double gamma_0 = 0.25; // the conversion rate in the earliest epoch
 		double gamma_1 = 0.5; // the conversion rate in the latest epoch

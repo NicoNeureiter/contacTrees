@@ -65,7 +65,9 @@ public class ConversionPrior extends Distribution {
     final public Input<RealVector<NonNegativeReal>> expectedConversionsInput = new Input<>(
             "expectedConversions",
             "The expected number of conversions in each epoch."
-            + "If a single number is specified, then a single epoch containing the entire tree will be assumed.",
+            + "If a single number is specified, then a single epoch containing the entire tree will be assumed."
+            + "The expected numbers of conversions by epoch should be specified in forward time, starting from the epoch farthest in the past and moving towards the epoch ending in the present."
+            + "If more than one rate is specified, then the times at which the epochs change can be specified in the conversionRateChangeTimes input.",
             Validate.XOR, conversionRatesInput);
     
     final public Input<RealVector<PositiveReal>> conversionRateChangeTimesInput = new Input<>(
@@ -323,7 +325,9 @@ public class ConversionPrior extends Distribution {
         	}
     	}
     	for (int i = 0; i < expectedConversions.length; i++) {
-    		expectedConversions[i] = expectedConversionsInput.get().get(i);
+    		// The expected numbers of conversions are always specified from the highest epoch to the lowest, 
+    		// so we populate the internal array in reverse order:
+    		expectedConversions[i] = expectedConversionsInput.get().get(expectedConversions.length - i - 1);
     		// The above check ensures that the expected number of conversions never exceeds zero 
     		// when the total clonal frame length is zero,
     		// so a division by zero should only occur when the expected number of conversions is also zero;
