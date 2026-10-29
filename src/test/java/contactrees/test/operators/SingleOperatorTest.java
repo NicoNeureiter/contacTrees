@@ -47,8 +47,8 @@ public abstract class SingleOperatorTest {
 
 		// Run the simulation and read samples from file
 		samplesSimulator = new ArrayList<>();
-		String xmlPath = String.format("examples/ACGsimulations/%s.xml", FBASE_SIM);
-		String paramsPath = "examples/operatorTests/parameters.json";
+		String xmlPath = String.format("src/test/resources/examples/ACGsimulations/%s.xml", FBASE_SIM);
+		String paramsPath = "src/test/resources/examples/operatorTests/parameters.json";
 		System.out.println(xmlPath);
 		String[] simArgs = {"-overwrite", "-DF", paramsPath, "-seed", seed, "-prefix", workingDir, xmlPath};
 		System.out.println(Arrays.toString(simArgs));
