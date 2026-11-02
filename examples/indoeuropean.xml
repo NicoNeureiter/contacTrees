@@ -334,8 +334,6 @@
 </plate>
 </stateNode>
 
-<x id="conversionRate" spec="ConversionRate" expectedConversions="@expectedConversions" linearContactGrowth="true" network="@acg"/>
-
 <run id="mcmc" spec="MCMC" chainLength="20000000">
 
   <state id="state" storeEvery="5000">
@@ -409,7 +407,7 @@
     <plate var="concept" range="&concepts;">
       <stateNode idref="$(concept)"/>
     </plate>
-    <stateNode id="expectedConversions" spec="RealScalarParam" estimate="false" value="1.0"/>
+    <stateNode id="expectedConversions" spec="RealVectorParam" estimate="false" dimension="1" value="1.0"/>
     <stateNode id="pMove" spec="RealScalarParam" estimate="true" value="0.025"/>
   </state>
 
@@ -427,7 +425,7 @@
         <relativeDeathRate idref="relativeDeathRate" />
         <sampleProbability idref="sampleProbability" />
       </distribution>
-      <distribution id="ConvPrior" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate" linearContactGrowth="true" upperConvCountBound="50"/>
+      <distribution id="ConvPrior" spec="contactrees.model.ConversionPrior" network="@acg" expectedConversions="@expectedConversions" linearContactGrowth="true" upperConvCountBound="50"/>
 
       <distribution id="ConvMovePrior" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
       <distribution id="prior:expectedConversions" spec="Exponential" mean="0.1" param="@expectedConversions"/>
@@ -1323,9 +1321,9 @@
         <parameterInverse idref="clockRate.fast"/>
     </operator>
     <operator id="ACGscaler.rootOnly" spec="ACGScaler" acg="@acg" scaleFactor="0.75" weight="1.0" rootOnly="true"/>
-    <operator id="CFUniform" spec="CFUniform" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" scaleFactor="0.9" conversionPrior="@ConvPrior" weight="28.0"/>
-    <!--operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="50.0" acg="@acg" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" conversionPrior="@ConvPrior"/-->
-    <operator id="AddRemoveConversion.t" spec="AddRemoveConversionGibbs" weight="50.0" acg="@acg" pMove="@pMove" conversionRate="@conversionRate" blockSet="@allBlocks" conversionPrior="@ConvPrior">
+    <operator id="CFUniform" spec="CFUniform" acg="@acg" pMove="@pMove" blockSet="@allBlocks" scaleFactor="0.9" conversionPrior="@ConvPrior" weight="28.0"/>
+    <!--operator id="AddRemoveConversion.t" spec="AddRemoveConversion" weight="50.0" acg="@acg" pMove="@pMove" blockSet="@allBlocks" conversionPrior="@ConvPrior"/-->
+    <operator id="AddRemoveConversion.t" spec="AddRemoveConversionGibbs" weight="50.0" acg="@acg" pMove="@pMove" blockSet="@allBlocks" conversionPrior="@ConvPrior">
         <plate var="concept" range="&concepts;">
           <treeLikelihood idref="treeLikelihood.$(concept)"/>
         </plate>
@@ -1339,18 +1337,18 @@
     <operator id="ConvertedEdgeSlide.t" spec="ConvertedEdgeSlide" acg="@acg" apertureSize="0.2" weight="15.0"/>
     <operator id="ConvertedEdgeFlip.t" spec="ConvertedEdgeFlip" acg="@acg" weight="1.0"/>
     <operator id="ConversionSplit.t" spec="ConversionSplit" acg="@acg" weight="1.0"
-            blockSet="@allBlocks" conversionRate="@conversionRate" conversionPrior="@ConvPrior" flip="false" pMove="@pMove"/>
-    <operator id="ConvertedEdgeHop.source" spec="ConvertedEdgeHopGibbs" acg="@acg" sourceOnly="true" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" conversionPrior="@ConvPrior" weight="2.0">
+            blockSet="@allBlocks" conversionPrior="@ConvPrior" flip="false" pMove="@pMove"/>
+    <operator id="ConvertedEdgeHop.source" spec="ConvertedEdgeHopGibbs" acg="@acg" sourceOnly="true" blockSet="@allBlocks" pMove="@pMove" conversionPrior="@ConvPrior" weight="2.0">
         <plate var="concept" range="&concepts;">
           <treeLikelihood idref="treeLikelihood.$(concept)"/>
         </plate>
     </operator>
-    <operator id="ConvertedEdgeHop.source.narrow" spec="ConvertedEdgeHopGibbs" acg="@acg" sourceOnly="true" nClosestRelatives="3" blockSet="@allBlocks" pMove="@pMove" conversionRate="@conversionRate" conversionPrior="@ConvPrior" weight="6.0">
+    <operator id="ConvertedEdgeHop.source.narrow" spec="ConvertedEdgeHopGibbs" acg="@acg" sourceOnly="true" nClosestRelatives="3" blockSet="@allBlocks" pMove="@pMove" conversionPrior="@ConvPrior" weight="6.0">
         <plate var="concept" range="&concepts;">
           <treeLikelihood idref="treeLikelihood.$(concept)"/>
         </plate>
     </operator>
-    <operator id="ConvertedEdgeHop.narrow" spec="ConvertedEdgeHopGibbs" acg="@acg" blockSet="@allBlocks" nClosestRelatives="3" pMove="@pMove" conversionRate="@conversionRate" conversionPrior="@ConvPrior" weight="2.0">
+    <operator id="ConvertedEdgeHop.narrow" spec="ConvertedEdgeHopGibbs" acg="@acg" blockSet="@allBlocks" nClosestRelatives="3" pMove="@pMove" conversionPrior="@ConvPrior" weight="2.0">
         <plate var="concept" range="&concepts;">
           <treeLikelihood idref="treeLikelihood.$(concept)"/>
         </plate>
@@ -1384,7 +1382,7 @@
     <log idref="likelihood"/>
     <log idref="prior"/>
     <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
-    <log idref="conversionRate"/>
+    <log spec="ConversionPriorLogger" conversionPrior="@ConvPrior" logTimes="false" logRates="true" logExpectedSubstitutions="false" logProbability="false"/>
     <log idref="pMove"/>
     <log idref="clockRate.slow"/>
     <log idref="clockRate.medium"/>
@@ -1401,7 +1399,7 @@
     <log idref="likelihood"/>
     <log idref="prior"/>
     <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
-    <log idref="conversionRate"/>
+    <log spec="ConversionPriorLogger" conversionPrior="@ConvPrior" logTimes="false" logRates="true" logExpectedSubstitutions="false" logProbability="false"/>
     <log idref="pMove"/>
     <log idref="clockRate.slow"/>
     <log idref="clockRate.medium"/>

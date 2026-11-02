@@ -19,6 +19,7 @@ import beast.base.spec.domain.UnitInterval;
 import beast.base.spec.evolution.speciation.YuleModel;
 import beast.base.spec.evolution.tree.coalescent.ConstantPopulation;
 import beast.base.spec.inference.parameter.RealScalarParam;
+import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.spec.type.RealScalar;
 
 import contactrees.Block;
@@ -212,7 +213,7 @@ public class ACGOperatorDetailedBalanceTest extends DetailedBalanceTest<Conversi
                 ConversionPrior convPrior = conversionPrior(acg);
                 AddRemoveConversion op = new AddRemoveConversion();
                 op.initByName("acg", acg, "blockSet", blockSet,
-                        "pMove", pMoveParam(), "conversionRate", conversionRateParam(),
+                        "pMove", pMoveParam(), "conversionRates", conversionRatesParam(),
                         "conversionPrior", convPrior, "weight", 1.0);
                 return op;
             }
@@ -233,7 +234,7 @@ public class ACGOperatorDetailedBalanceTest extends DetailedBalanceTest<Conversi
             ACGOperator buildOperator(ConversionGraph acg, BlockSet blockSet) {
                 ConversionPrior convPrior = conversionPrior(acg);
                 CFSubtreeSlide op = new CFSubtreeSlide();
-                op.initByName("acg", acg, "conversionRate", conversionRateParam(), "pMove", pMoveParam(),
+                op.initByName("acg", acg, "conversionRates", conversionRatesParam(), "pMove", pMoveParam(),
                         "blockSet", blockSet, "conversionPrior", convPrior,
                         "scaleFactor", 0.8, "optimise", false, "weight", 1.0);
                 return op;
@@ -254,7 +255,7 @@ public class ACGOperatorDetailedBalanceTest extends DetailedBalanceTest<Conversi
             ACGOperator buildOperator(ConversionGraph acg, BlockSet blockSet) {
                 ConversionPrior convPrior = conversionPrior(acg);
                 CFWilsonBalding op = new CFWilsonBalding();
-                op.initByName("acg", acg, "conversionRate", conversionRateParam(), "pMove", pMoveParam(),
+                op.initByName("acg", acg, "conversionRates", conversionRatesParam(), "pMove", pMoveParam(),
                         "blockSet", blockSet, "conversionPrior", convPrior,
                         "alpha", ALPHA, "weight", 1.0);
                 return op;
@@ -285,8 +286,8 @@ public class ACGOperatorDetailedBalanceTest extends DetailedBalanceTest<Conversi
 
     // ---- Shared helpers ----
 
-    private static RealScalar<NonNegativeReal> conversionRateParam() {
-        return new RealScalarParam<>(CONVERSION_RATE, NonNegativeReal.INSTANCE);
+    private static RealVectorParam<NonNegativeReal> conversionRatesParam() {
+        return new RealVectorParam<>(new double[] {CONVERSION_RATE}, NonNegativeReal.INSTANCE);
     }
 
     private static RealScalar<UnitInterval> pMoveParam() {
@@ -295,7 +296,7 @@ public class ACGOperatorDetailedBalanceTest extends DetailedBalanceTest<Conversi
 
     private static ConversionPrior conversionPrior(ConversionGraph acg) {
         ConversionPrior prior = new ConversionPrior();
-        prior.initByName("network", acg, "conversionRate", conversionRateParam());
+        prior.initByName("network", acg, "conversionRates", conversionRatesParam());
         return prior;
     }
 

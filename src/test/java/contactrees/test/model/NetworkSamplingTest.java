@@ -28,6 +28,7 @@ import beast.base.spec.domain.PositiveReal;
 import beast.base.spec.domain.UnitInterval;
 import beast.base.spec.evolution.speciation.YuleModel;
 import beast.base.spec.inference.parameter.RealScalarParam;
+import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.util.Randomizer;
 import contactrees.Block;
 import contactrees.BlockSet;
@@ -115,10 +116,10 @@ public class NetworkSamplingTest extends ContactreesTest {
     public void conversionPriorAsClonalFramePriorIsRejected() {
         Model m = new Model();
         ConversionPrior other = new ConversionPrior();
-        RealScalarParam<NonNegativeReal> rate = new RealScalarParam<>(CONV_RATE, NonNegativeReal.INSTANCE);
+        RealVectorParam<NonNegativeReal> rates = new RealVectorParam<>(new double[] {CONV_RATE}, NonNegativeReal.INSTANCE);
         // initByName wraps exceptions from initAndValidate() in a RuntimeException
         RuntimeException e = assertThrows(RuntimeException.class,
-                () -> other.initByName("network", m.acg, "conversionRate", rate, "clonalFramePrior", m.networkPrior));
+                () -> other.initByName("network", m.acg, "conversionRates", rates, "clonalFramePrior", m.networkPrior));
         assertTrue(e.getMessage(), e.getMessage().contains("clonalFramePrior"));
     }
 
@@ -146,8 +147,8 @@ public class NetworkSamplingTest extends ContactreesTest {
 
             RealScalarParam<PositiveReal> birthRate = new RealScalarParam<>(1.0, PositiveReal.INSTANCE);
             birthRate.setID("birthRate");
-            RealScalarParam<NonNegativeReal> convRate = new RealScalarParam<>(CONV_RATE, NonNegativeReal.INSTANCE);
-            convRate.setID("conversionRate");
+            RealVectorParam<NonNegativeReal> convRates = new RealVectorParam<>(new double[] {CONV_RATE}, NonNegativeReal.INSTANCE);
+            convRates.setID("conversionRates");
             RealScalarParam<UnitInterval> pMove = new RealScalarParam<>(P_MOVE, UnitInterval.INSTANCE);
             pMove.setID("pMove");
 
@@ -169,10 +170,10 @@ public class NetworkSamplingTest extends ContactreesTest {
 
             networkPrior = new ConversionPrior();
             if (option == Option.INDIRECT_EXPLICIT)
-                networkPrior.initByName("network", acg, "conversionRate", convRate,
+                networkPrior.initByName("network", acg, "conversionRates", convRates,
                         "clonalFramePrior", indirectPrior);
             else
-                networkPrior.initByName("network", acg, "conversionRate", convRate);
+                networkPrior.initByName("network", acg, "conversionRates", convRates);
             networkPrior.setID("networkPrior");
 
             movePrior = new ConversionMovePrior();

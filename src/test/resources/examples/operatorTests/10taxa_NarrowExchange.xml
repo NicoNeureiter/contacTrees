@@ -34,33 +34,33 @@
         </plate>
         
         <stateNode id="pMove" estimate="false" value="$(pMove)" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
-        <stateNode id="conversionRate" estimate="false" value="$(convRate)" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+        <stateNode id="conversionRates" estimate="false" value="$(convRate)" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
         <stateNode id="birthRate" estimate="false" value="$(birthRate)" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
     </state>
 
     <distribution id="prior" spec="beast.base.inference.CompoundDistribution">
         <distribution id="YuleModel" spec="beast.base.spec.evolution.speciation.YuleModel" tree="@acg" birthDiffRate="@birthRate" conditionalOnRoot="false"/>
-        <distribution id="ACGYulePrior.t" spec="contactrees.model.ConversionPrior" network="@acg" conversionRate="@conversionRate"/>
+        <distribution id="ConversionPrior.t:treeSim" spec="contactrees.model.ConversionPrior" network="@acg" conversionRates="@conversionRates"/>
         <distribution id="ConvMovePrior.t:treeSim" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
     </distribution>
 
     <operatorschedule id="schedule" spec="contactrees.test.StationarityTestSchedule" logInterval="$(logInterval)">
         <simulatorOperator id="SimumlaterOperator" spec="contactrees.test.SimulatorOperator" distribution="@prior" state="@state" weight="1"/>
-        <operator id="CFNarrowExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionRate="@conversionRate" pMove="@pMove" blockSet="@allBlocks" isNarrow="true" conversionPrior="@ACGYulePrior.t" weight="1"/>
+        <operator id="CFNarrowExchange.t" spec="CFSubtreeExchange" acg="@acg" conversionPrior="@ConversionPrior.t:treeSim" pMove="@pMove" blockSet="@allBlocks" isNarrow="true" weight="1"/>
     </operatorschedule>
     
     <logger id="screenlog" logEvery="$(logInterval)">
         <log idref="prior"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
         <log idref="pMove"/>
-        <log idref="conversionRate"/>
+        <log idref="conversionRates"/>
     </logger>
 
     <logger logEvery="$(logInterval)" fileName="$(filebase).stats">
         <log idref="prior"/>
         <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
         <log idref="pMove"/>
-        <log idref="conversionRate"/>
+        <log idref="conversionRates"/>
     </logger>
 
     <logger logEvery="$(logInterval)" fileName="$(filebase).trees">
