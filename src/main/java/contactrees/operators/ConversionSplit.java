@@ -49,15 +49,12 @@ public class ConversionSplit extends ConversionCreationOperator {
         Conversion conv = acg.getConversions().getRandomConversion();
         // Create the duplicate
         Conversion convNew = acg.addDuplicateConversion(conv);
-        // Update Hastings ratio:
-        //        logHGF -= Math.log(1.0/nConv);
-        //        logHGF += Math.log(1.0/((nConv+1)*nConv));
-        logHGF -= Math.log(nConv+1);
-
-
-
         if (flipInput.get())
             flipDirection(convNew);
+
+        // Hastings ratio: pick conv (1/nConv) vs. reverse merge picking (conv, convNew) (1/|pairs|)
+        logHGF -= Math.log(1.0/nConv);
+        logHGF += Math.log(1.0/getConversionPairs().size());
 
         // Sample new height uniformly on the current lineages
         double hMin = Math.max(conv.getNode1().getHeight(),
@@ -122,8 +119,9 @@ public class ConversionSplit extends ConversionCreationOperator {
         Conversion conv1 = convPairs.get(iPair).first();
         Conversion conv2 = convPairs.get(iPair).second();
 
-        // Update
+        // Hastings ratio: pick pair (1/|pairs|) vs. reverse split picking conv1 (1/(nConv-1))
         logHGF -= Math.log(1.0 / convPairs.size());
+        logHGF += Math.log(1.0 / (nConv - 1));
 
 //        // Choose two random conversions
 //        Conversion conv1 = acg.getConversions().getRandomConversion();
