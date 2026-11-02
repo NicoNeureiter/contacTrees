@@ -690,7 +690,7 @@ public class ConversionPrior extends Distribution {
         	rateSum += rates[i];
         }
         if (rateSum == 0.0) {
-        	return Double.NEGATIVE_INFINITY;
+        	return Double.POSITIVE_INFINITY;
         }
         // Otherwise, populate lists of starting heights, lineage counts, 
         // and weighted volumes for candidate intervals, 
