@@ -338,10 +338,21 @@ public class ConversionPrior extends Distribution {
     }
     
     /**
+     * Recomputes the internal arrays from the current state.
+     * @return false if the current state is invalid.
+     */
+    protected boolean update() {
+        return !updateTimes().isInfinite()
+                && !updateClonalFrameLengths().isInfinite()
+                && !updateRatesAndExpectedConversions().isInfinite();
+    }
+
+    /**
      * Returns an array containing this prior's epoch start times.
      * @return A list containing this prior's epoch start times.
      */
     public double[] getTimes() {
+    	update();
     	return times;
     }
     
@@ -350,6 +361,7 @@ public class ConversionPrior extends Distribution {
      * @return An array containing this prior's clonal frame lengths by epoch.
      */
     public double[] getClonalFrameLengths() {
+    	update();
     	return clonalFrameLengths;
     }
     
@@ -358,6 +370,7 @@ public class ConversionPrior extends Distribution {
      * @return An array containing this prior's conversion rates by epoch.
      */
     public double[] getRates() {
+    	update();
     	return rates;
     }
     
@@ -366,6 +379,7 @@ public class ConversionPrior extends Distribution {
      * @return An array containing this prior's expected numbers of conversions by epoch.
      */
     public double[] getExpectedConversions() {
+    	update();
     	return expectedConversions;
     }
 
@@ -373,18 +387,7 @@ public class ConversionPrior extends Distribution {
     public double calculateLogP() {
     	// First, update the internal arrays and exit early 
     	// if any of their corresponding inputs are currently invalid:
-    	Double timesLogP = updateTimes();
-        if (timesLogP.isInfinite()) {
-        	logP = Double.NEGATIVE_INFINITY;
-        	return logP;
-        }
-        Double clonalFrameLengthsLogP = updateClonalFrameLengths();
-        if (clonalFrameLengthsLogP.isInfinite()) {
-        	logP = Double.NEGATIVE_INFINITY;
-        	return logP;
-        }
-    	Double ratesAndExpectedConversionsLogP = updateRatesAndExpectedConversions();
-        if (ratesAndExpectedConversionsLogP.isInfinite()) {
+        if (!update()) {
         	logP = Double.NEGATIVE_INFINITY;
         	return logP;
         }
@@ -650,6 +653,7 @@ public class ConversionPrior extends Distribution {
      */
     private void generateConversions() {
         acg.removeAllConversions();
+        update();
 
         // The total expected number of conversions 
         // is the sum of each epoch's expected number of conversions:
@@ -679,6 +683,7 @@ public class ConversionPrior extends Distribution {
      */
     public double attachEdge(Conversion conv) {
         double logQ = 0.0;
+        update();
         // As an edge case, if all conversion rates are zero, then no edge can be attached:
         double rateSum = 0.0;
         for (int i = 0; i < rates.length; i++) {
@@ -765,6 +770,7 @@ public class ConversionPrior extends Distribution {
     public double getEdgeAttachmentProb(Conversion conv) {
         double logQ = 0.0;
         double height = conv.getHeight();
+        update();
         // As an edge case, if all conversion rates are zero, then no edge can be attached:
         double rateSum = 0.0;
         for (int i = 0; i < rates.length; i++) {
