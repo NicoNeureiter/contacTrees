@@ -1382,7 +1382,7 @@
     <log idref="likelihood"/>
     <log idref="prior"/>
     <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
-    <log spec="ConversionPriorLogger" conversionPrior="@ConvPrior" logTimes="false" logRates="true" logExpectedSubstitutions="false" logProbability="false"/>
+    <log spec="ConversionPriorLogger" conversionPrior="@ConvPrior" logTimes="false" logRates="true" logExpectedConversions="false"/>
     <log idref="pMove"/>
     <log idref="clockRate.slow"/>
     <log idref="clockRate.medium"/>
@@ -1399,7 +1399,7 @@
     <log idref="likelihood"/>
     <log idref="prior"/>
     <log spec="ACGStatsLogger" network="@acg" blockSet="@allBlocks"/>
-    <log spec="ConversionPriorLogger" conversionPrior="@ConvPrior" logTimes="false" logRates="true" logExpectedSubstitutions="false" logProbability="false"/>
+    <log spec="ConversionPriorLogger" conversionPrior="@ConvPrior" logTimes="false" logRates="true" logExpectedConversions="false"/>
     <log idref="pMove"/>
     <log idref="clockRate.slow"/>
     <log idref="clockRate.medium"/>
