@@ -433,6 +433,9 @@ public class ConversionPrior extends Distribution {
                 return logP;
         	}
             logP += Math.log(conversionRate);
+            // With linear growth, the rate is split over the k-1 possible destination lineages:
+            if (linearContactGrowthInput.get())
+                logP -= Math.log(acg.getLineagesAtHeight(convHeight).size() - 1);
         }
         assert convQueue.isEmpty();  // We iterated through all conversions end removed them from `convs`
 

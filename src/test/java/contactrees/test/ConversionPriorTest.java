@@ -65,8 +65,12 @@ public class ConversionPriorTest extends ContactreesTest {
         Conversion conv2 = new Conversion(node4, node3, 2.5, acg, 2);
         acg.addConversion(conv2);
         assertEquals(Math.log(gamma_0) + Math.log(gamma_1) - (5.0)*gamma_1 - (2.0)*gamma_0, prior.calculateLogP(), 0.0);
+        // Add a conversion where k=3, so the rate is split over k-1=2 destination lineages:
+        Conversion conv3 = new Conversion(node2, node3, 0.5, acg, 3);
+        acg.addConversion(conv3);
+        assertEquals(Math.log(gamma_1/2) + Math.log(gamma_0) + Math.log(gamma_1) - (5.0)*gamma_1 - (2.0)*gamma_0, prior.calculateLogP(), 1e-12);
 	}
-	
+
 	@Test
 	public void MultipleEpochsExpectedConversionInputTest() {
 		double gamma_0 = 0.25; // the conversion rate in the earliest epoch
