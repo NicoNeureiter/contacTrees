@@ -213,7 +213,7 @@ public class ACGOperatorDetailedBalanceTest extends DetailedBalanceTest<Conversi
                 ConversionPrior convPrior = conversionPrior(acg);
                 AddRemoveConversion op = new AddRemoveConversion();
                 op.initByName("acg", acg, "blockSet", blockSet,
-                        "pMove", pMoveParam(), "conversionRates", conversionRatesParam(),
+                        "pMove", pMoveParam(),
                         "conversionPrior", convPrior, "weight", 1.0);
                 return op;
             }
@@ -234,7 +234,7 @@ public class ACGOperatorDetailedBalanceTest extends DetailedBalanceTest<Conversi
             ACGOperator buildOperator(ConversionGraph acg, BlockSet blockSet) {
                 ConversionPrior convPrior = conversionPrior(acg);
                 CFSubtreeSlide op = new CFSubtreeSlide();
-                op.initByName("acg", acg, "conversionRates", conversionRatesParam(), "pMove", pMoveParam(),
+                op.initByName("acg", acg, "pMove", pMoveParam(),
                         "blockSet", blockSet, "conversionPrior", convPrior,
                         "scaleFactor", 0.8, "optimise", false, "weight", 1.0);
                 return op;
@@ -255,7 +255,7 @@ public class ACGOperatorDetailedBalanceTest extends DetailedBalanceTest<Conversi
             ACGOperator buildOperator(ConversionGraph acg, BlockSet blockSet) {
                 ConversionPrior convPrior = conversionPrior(acg);
                 CFWilsonBalding op = new CFWilsonBalding();
-                op.initByName("acg", acg, "conversionRates", conversionRatesParam(), "pMove", pMoveParam(),
+                op.initByName("acg", acg, "pMove", pMoveParam(),
                         "blockSet", blockSet, "conversionPrior", convPrior,
                         "alpha", ALPHA, "weight", 1.0);
                 return op;

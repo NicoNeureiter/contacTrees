@@ -38,7 +38,7 @@
 
 	<operatorschedule id="schedule" spec="contactrees.test.StationarityTestSchedule" logInterval="$(logInterval)">
 	 	<simulatorOperator id="SimumlaterOperator" spec="contactrees.test.SimulatorOperator" distribution="@prior" state="@state" weight="1"/>
-	 	<operator id="ConversionSplit.t" spec="ConversionSplit" acg="@acg" weight="1" blockSet="@allBlocks" conversionRate="@conversionRate" pMove="@pMove"/> 
+	 	<operator id="ConversionSplit.t" spec="ConversionSplit" acg="@acg" weight="1" blockSet="@allBlocks" conversionPrior="@ConversionPrior.t:treeSim" pMove="@pMove"/> 
 	</operatorschedule>
 	
     <logger id="screenlog" logEvery="$(logInterval)">
