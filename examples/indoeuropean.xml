@@ -428,7 +428,9 @@
       <distribution id="ConvPrior" spec="contactrees.model.ConversionPrior" network="@acg" expectedConversions="@expectedConversions" linearContactGrowth="true" upperConvCountBound="50"/>
 
       <distribution id="ConvMovePrior" spec="ConversionMovePrior" network="@acg" blockSet="@allBlocks" pMove="@pMove"/>
-      <distribution id="prior:expectedConversions" spec="Exponential" mean="0.1" param="@expectedConversions"/>
+      <distribution id="prior:expectedConversions" spec="beast.base.spec.inference.distribution.IID" param="@expectedConversions">
+          <distr spec="Exponential" mean="0.1"/>
+      </distribution>
       <distribution id="prior:pMove" spec="TruncatedReal" lower="0.0" upper="0.4" param="@pMove">
         <distribution id="prior:pMove:distr" spec="Beta" alpha="2" beta="16" param="@pMove" />
       </distribution>
