@@ -490,6 +490,8 @@ public class ConversionPrior extends Distribution {
             maybeAddInputToConditions(conditions, conversionRatesInput);
         else
             maybeAddInputToConditions(conditions, expectedConversionsInput);
+        maybeAddInputToConditions(conditions, conversionRateChangeTimesInput);
+        maybeAddInputToConditions(conditions, originInput);
         return conditions;
     }
 
