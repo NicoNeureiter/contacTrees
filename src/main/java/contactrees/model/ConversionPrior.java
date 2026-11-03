@@ -67,7 +67,10 @@ public class ConversionPrior extends Distribution {
             "The expected number of conversions in each epoch."
             + "If a single number is specified, then a single epoch containing the entire tree will be assumed."
             + "The expected numbers of conversions by epoch should be specified in forward time, starting from the epoch farthest in the past and moving towards the epoch ending in the present."
-            + "If more than one rate is specified, then the times at which the epochs change can be specified in the conversionRateChangeTimes input.",
+            + "If more than one rate is specified, then the times at which the epochs change can be specified in the conversionRateChangeTimes input."
+            + "Note: an epoch lying entirely above the root has no clonal frame, so states where this happens get zero prior density. "
+            + "If the root or origin is estimated, this truncates the tree prior to trees whose root is above the relevant change times; "
+            + "use conversionRates to avoid this.",
             Validate.XOR, conversionRatesInput);
     
     final public Input<RealVector<PositiveReal>> conversionRateChangeTimesInput = new Input<>(
@@ -655,7 +658,9 @@ public class ConversionPrior extends Distribution {
      */
     private void generateConversions() {
         acg.removeAllConversions();
-        update();
+        if (!update())
+            throw new IllegalStateException("Cannot simulate conversions for " + getID() + ": the sampled state "
+                    + "has zero prior density (e.g. a positive expected number of conversions in an epoch above the root).");
 
         // The total expected number of conversions 
         // is the sum of each epoch's expected number of conversions:
