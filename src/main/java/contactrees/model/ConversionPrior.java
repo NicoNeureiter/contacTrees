@@ -49,46 +49,33 @@ public class ConversionPrior extends Distribution {
             Input.Validate.REQUIRED);
     
     final public Input<RealScalar<PositiveReal>> originInput = new Input<>(
-    		"origin",
-    		"The height of the origin of the underlying transmission process."
-    		+ "This is used for measuring the boundaries of epochs in forward time if multiple conversion rates are specified."
-    		+ "If specified, it must not be less than the height of the tree."
-    		+ "If not specified, the height of the tree's root (i.e., the MRCA of all taxa) is used instead.");
+            "origin",
+            "Height of the origin, from which forward change times are measured. "
+            + "Must not be below the root. Defaults to the root height.");
 
     final public Input<RealVector<NonNegativeReal>> conversionRatesInput = new Input<>(
             "conversionRates",
-            "Epoch-dependent rates at which a pair of lineages will get in contact and form a conversion."
-            + "If a single rate is specified, then a single epoch containing the entire tree will be assumed."
-            + "The conversion rates should be specified in forward time, starting from the epoch farthest in the past and moving towards the epoch ending in the present."
-            + "If more than one rate is specified, then the times at which the epochs change can be specified in the conversionRateChangeTimes input.");
-    
+            "Conversion rate in each epoch, oldest epoch first "
+            + "(youngest first if timesAreAges).");
+
     final public Input<RealVector<NonNegativeReal>> expectedConversionsInput = new Input<>(
             "expectedConversions",
-            "The expected number of conversions in each epoch."
-            + "If a single number is specified, then a single epoch containing the entire tree will be assumed."
-            + "The expected numbers of conversions by epoch should be specified in forward time, starting from the epoch farthest in the past and moving towards the epoch ending in the present."
-            + "If more than one rate is specified, then the times at which the epochs change can be specified in the conversionRateChangeTimes input."
-            + "Note: an epoch lying entirely above the root has no clonal frame, so states where this happens get zero prior density. "
-            + "If the root or origin is estimated, this truncates the tree prior to trees whose root is above the relevant change times; "
-            + "use conversionRates to avoid this.",
+            "Expected number of conversions in each epoch, ordered as conversionRates. "
+            + "A positive value for an epoch entirely above the root has zero density, which truncates the tree prior "
+            + "if the root or origin is estimated.",
             Validate.XOR, conversionRatesInput);
     
     final public Input<RealVector<PositiveReal>> conversionRateChangeTimesInput = new Input<>(
             "conversionRateChangeTimes",
-            "The times specifying when conversion rate changes occur."
-            + "The times can be specified in forward time (from the origin/root to the present) or in backward time depending on the reverseChangeTimes input."
-            + "They can be specified in absolute heights or in proportions of the tree's total height (or the origin height, if specified) depending on the relativeChangeTimes input."
-            + "They do not have to be specified in order, and they can be estimated during the analysis."
-            + "If the conversionRates input consists of a single value, this input is ignored."
-            + "If specified, this input's dimension must be one less than the dimension of the conversionRates input."
-            + "If not specified, the change times are distributed evenly over the height of the tree (or of the origin, if specified).");
-    
-    final public Input<Boolean> relativeChangeTimesInput =
-            new Input<Boolean>("relativeChangeTimes", "True if the conversion rate change times are specified relative to tree height (or the origin height, if specified).", false);
-    
-    final public Input<Boolean> reverseChangeTimesInput =
-            new Input<Boolean>("reverseChangeTimes", "True if the time arrays are given in backwards time (measured in time before the present)." +
-                    "Note that the rate array must still be given in forward time (from the epoch farthest in the past to the epoch ending in the present).", false);
+            "Times at which the conversion rate changes (one fewer than the rates, in any order). "
+            + "Measured forward from the origin unless timesAreAges. "
+            + "Defaults to equally spaced times between the present and the origin.");
+
+    final public Input<Boolean> timesAreRelativeInput = new Input<>("timesAreRelative",
+            "True if change times are proportions of the origin height.", false);
+
+    final public Input<Boolean> timesAreAgesInput = new Input<>("timesAreAges",
+            "True if change times are ages (before the present) instead of times after the origin.", false);
     
     final public Input<Integer> lowerCCBoundInput = new Input<>("lowerConvCountBound",
             "Lower bound on conversion count.", 0);
@@ -184,9 +171,9 @@ public class ConversionPrior extends Distribution {
             return 0.0;
 		}
 		// Otherwise, ensure that the specified change times are valid:
-		Boolean relative = relativeChangeTimesInput.get();
-		Boolean reverse = reverseChangeTimesInput.get();
-		if (!reverse) {
+		Boolean relative = timesAreRelativeInput.get();
+		Boolean ages = timesAreAgesInput.get();
+		if (!ages) {
 			// If change times are specified in forward time, ensure that they are all strictly less than the tree height:
 			if (relative) {
 				for (int i = 0; i < conversionRateChangeTimesInput.get().size(); i++) {
@@ -207,7 +194,7 @@ public class ConversionPrior extends Distribution {
 		ArrayList<Double> conversionRateChangeTimes = new ArrayList<Double>();
 		for (int i = 0; i < conversionRateChangeTimesInput.get().size(); i++) {
     		double t = conversionRateChangeTimesInput.get().get(i) * (relative ? maxTime : 1);
-    		if (!reverse) {
+    		if (!ages) {
     			t = maxTime - t;
     		}
     		conversionRateChangeTimes.add(t);
@@ -309,9 +296,8 @@ public class ConversionPrior extends Distribution {
             	}
         	}
         	for (int i = 0; i < rates.length; i++) {
-        		// The rates are always specified from the highest epoch to the lowest, 
-        		// so we populate the internal array in reverse order:
-        		rates[i] = conversionRatesInput.get().get(rates.length - i - 1);
+        		// The internal arrays go from the present backwards, like the input if timesAreAges:
+        		rates[i] = conversionRatesInput.get().get(timesAreAgesInput.get() ? i : rates.length - i - 1);
         		expectedConversions[i] = rates[i] * clonalFrameLengths[i];
         	}
         	return 0.0;
@@ -328,9 +314,8 @@ public class ConversionPrior extends Distribution {
         	}
     	}
     	for (int i = 0; i < expectedConversions.length; i++) {
-    		// The expected numbers of conversions are always specified from the highest epoch to the lowest, 
-    		// so we populate the internal array in reverse order:
-    		expectedConversions[i] = expectedConversionsInput.get().get(expectedConversions.length - i - 1);
+    		// The internal arrays go from the present backwards, like the input if timesAreAges:
+    		expectedConversions[i] = expectedConversionsInput.get().get(timesAreAgesInput.get() ? i : expectedConversions.length - i - 1);
     		// The above check ensures that the expected number of conversions never exceeds zero 
     		// when the total clonal frame length is zero,
     		// so a division by zero should only occur when the expected number of conversions is also zero;

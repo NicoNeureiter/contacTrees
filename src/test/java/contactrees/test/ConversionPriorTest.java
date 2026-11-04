@@ -42,15 +42,13 @@ public class ConversionPriorTest extends ContactreesTest {
 		ConversionGraph acg = getACGFromNewick(newick);
         // Initialize the prior:
 		ConversionPrior prior = new ConversionPrior();
-		prior.initByName("network", acg, "linearContactGrowth", "true", "conversionRateChangeTimes", "2.0", "conversionRates", "0.25 0.5", "reverseChangeTimes", "true");
+		prior.initByName("network", acg, "linearContactGrowth", "true", "conversionRateChangeTimes", "2.0", "conversionRates", "0.5 0.25", "timesAreAges", "true");
 
 		double[] times = prior.getTimes();
 		double[] rates = prior.getRates();
 		double[] clonalFrameLengths = prior.getClonalFrameLengths();
 		double[] expectedConversions = prior.getExpectedConversions();
-		// The internal times array should consist of change times from lowest to highest,
-		// and all other internal arrays should be reversed 
-		// so they proceed from the lowest epoch to the highest:
+		// The internal arrays go from the present backwards, like the values when timesAreAges:
 		assertArrayEquals(new double[] {2.0}, times, 0.0);
 		assertArrayEquals(new double[] {0.5, 0.25}, rates, 0.0);
 		assertArrayEquals(new double[] {5.0, 2.0}, clonalFrameLengths, 0.0);
@@ -80,15 +78,13 @@ public class ConversionPriorTest extends ContactreesTest {
 		ConversionGraph acg = getACGFromNewick(newick);
         // Initialize the prior:
 		ConversionPrior prior = new ConversionPrior();
-		prior.initByName("network", acg, "linearContactGrowth", "true", "conversionRateChangeTimes", "2.0", "expectedConversions", "0.5 2.5", "reverseChangeTimes", "true");
+		prior.initByName("network", acg, "linearContactGrowth", "true", "conversionRateChangeTimes", "2.0", "expectedConversions", "2.5 0.5", "timesAreAges", "true");
 
 		double[] times = prior.getTimes();
 		double[] rates = prior.getRates();
 		double[] clonalFrameLengths = prior.getClonalFrameLengths();
 		double[] expectedConversions = prior.getExpectedConversions();
-		// The internal times array should consist of change times from lowest to highest,
-		// and all other internal arrays should be reversed 
-		// so they proceed from the lowest epoch to the highest:
+		// The internal arrays go from the present backwards, like the values when timesAreAges:
 		assertArrayEquals(new double[] {2.0}, times, 0.0);
 		assertArrayEquals(new double[] {0.5, 0.25}, rates, 0.0);
 		assertArrayEquals(new double[] {5.0, 2.0}, clonalFrameLengths, 0.0);
@@ -114,15 +110,13 @@ public class ConversionPriorTest extends ContactreesTest {
 		ConversionGraph acg = getACGFromNewick(newick);
         // Initialize the prior:
 		ConversionPrior prior = new ConversionPrior();
-		prior.initByName("network", acg, "linearContactGrowth", "false", "conversionRateChangeTimes", "2.0", "conversionRates", "0.25 0.5", "reverseChangeTimes", "true");
+		prior.initByName("network", acg, "linearContactGrowth", "false", "conversionRateChangeTimes", "2.0", "conversionRates", "0.5 0.25", "timesAreAges", "true");
 
 		double[] times = prior.getTimes();
 		double[] rates = prior.getRates();
 		double[] clonalFrameLengths = prior.getClonalFrameLengths();
 		double[] expectedConversions = prior.getExpectedConversions();
-		// The internal times array should consist of change times from lowest to highest,
-		// and all other internal arrays should be reversed 
-		// so they proceed from the lowest epoch to the highest:
+		// The internal arrays go from the present backwards, like the values when timesAreAges:
 		assertArrayEquals(new double[] {2.0}, times, 0.0);
 		assertArrayEquals(new double[] {0.5, 0.25}, rates, 0.0);
 		assertArrayEquals(new double[] {8.0, 2.0}, clonalFrameLengths, 0.0);
@@ -178,7 +172,7 @@ public class ConversionPriorTest extends ContactreesTest {
 				ConversionGraph acg = getACGFromNewick(newick);
 				// Initialize the prior:
 				ConversionPrior prior = new ConversionPrior();
-				prior.initByName("network", acg, "relativeChangeTimes", "true", "conversionRateChangeTimes", "0.25 0.5", "conversionRates", "0.25 0.5 0.25");
+				prior.initByName("network", acg, "timesAreRelative", "true", "conversionRateChangeTimes", "0.25 0.5", "conversionRates", "0.25 0.5 0.25");
 
 				double[] times = prior.getTimes();
 				// The relative times should be proportions of the root's height,
@@ -193,22 +187,24 @@ public class ConversionPriorTest extends ContactreesTest {
 				ConversionGraph acg = getACGFromNewick(newick);
 				// Initialize the prior:
 				ConversionPrior prior = new ConversionPrior();
-				prior.initByName("network", acg, "origin", "6.0", "relativeChangeTimes", "true", "conversionRateChangeTimes", "0.25 0.5", "conversionRates", "0.25 0.5 0.25");
+				prior.initByName("network", acg, "origin", "6.0", "timesAreRelative", "true", "conversionRateChangeTimes", "0.25 0.5", "conversionRates", "0.1 0.2 0.3");
 
 				double[] times = prior.getTimes();
 				// The relative times should be proportions of the origin's height,
 				// measured forwards in time from the origin:
 				assertArrayEquals(new double[] {3.0, 4.5}, times, 0.0);
+				// Forward time: values are oldest first, internal arrays youngest first:
+				assertArrayEquals(new double[] {0.3, 0.2, 0.1}, prior.getRates(), 0.0);
 	}
 	
 	@Test
-	public void MultipleEpochsRelativeChangeTimesReverseChangeTimesNoOriginTest() {
+	public void MultipleEpochsRelativeChangeTimesTimesAreAgesNoOriginTest() {
 		// Setup the initial tree topology
 				String newick = "((1:1.0,2:1.0)4:2.0,3:3.0)5:0.0;";
 				ConversionGraph acg = getACGFromNewick(newick);
 				// Initialize the prior:
 				ConversionPrior prior = new ConversionPrior();
-				prior.initByName("network", acg, "reverseChangeTimes", "true", "relativeChangeTimes", "true", "conversionRateChangeTimes", "0.25 0.5", "conversionRates", "0.25 0.5 0.25");
+				prior.initByName("network", acg, "timesAreAges", "true", "timesAreRelative", "true", "conversionRateChangeTimes", "0.25 0.5", "conversionRates", "0.25 0.5 0.25");
 
 				double[] times = prior.getTimes();
 				// The relative times should be proportions of the root's height,
@@ -217,18 +213,20 @@ public class ConversionPriorTest extends ContactreesTest {
 	}
 	
 	@Test
-	public void MultipleEpochsRelativeChangeTimesReverseChangeTimesWithOriginTest() {
+	public void MultipleEpochsRelativeChangeTimesTimesAreAgesWithOriginTest() {
 		// Setup the initial tree topology
 				String newick = "((1:1.0,2:1.0)4:2.0,3:3.0)5:0.0;";
 				ConversionGraph acg = getACGFromNewick(newick);
 				// Initialize the prior:
 				ConversionPrior prior = new ConversionPrior();
-				prior.initByName("network", acg, "reverseChangeTimes", "true", "origin", "6.0", "relativeChangeTimes", "true", "conversionRateChangeTimes", "0.25 0.5", "conversionRates", "0.25 0.5 0.25");
+				prior.initByName("network", acg, "timesAreAges", "true", "origin", "6.0", "timesAreRelative", "true", "conversionRateChangeTimes", "0.25 0.5", "conversionRates", "0.1 0.2 0.3");
 
 				double[] times = prior.getTimes();
 				// The relative times should be proportions of the origin's height,
 				// measured backwards in time from the present:
 				assertArrayEquals(new double[] {1.5, 3.0}, times, 0.0);
+				// Ages: values are youngest first, like the internal arrays:
+				assertArrayEquals(new double[] {0.1, 0.2, 0.3}, prior.getRates(), 0.0);
 	}
 
 	@Test
