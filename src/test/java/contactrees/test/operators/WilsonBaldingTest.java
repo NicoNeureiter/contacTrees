@@ -33,6 +33,7 @@ import beast.base.spec.domain.PositiveReal;
 import beast.base.spec.domain.UnitInterval;
 import beast.base.spec.evolution.tree.coalescent.ConstantPopulation;
 import beast.base.spec.inference.parameter.RealScalarParam;
+import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.evolution.tree.TreeIntervals;
 import beast.base.util.Randomizer;
 import beastfx.app.tools.TreeTraceAnalysis;
@@ -153,19 +154,19 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 
 
 		// Set up operator:
-		RealScalarParam<?> conversionRate = new RealScalarParam<>(0.2, NonNegativeReal.INSTANCE);
-		conversionRate.setID("conversionRate");
+		RealVectorParam<?> conversionRates = new RealVectorParam<>(new double[] {0.2}, NonNegativeReal.INSTANCE);
+		conversionRates.setID("conversionRates");
 		RealScalarParam<?> pMove = new RealScalarParam<>(0.05, UnitInterval.INSTANCE);
 		pMove.setID("pMove");
 
 		// Set up state:
 		State state = new State();
-		state.initByName("stateNode", acg, "stateNode", conversionRate, "stateNode", pMove, "experimental", true);
+		state.initByName("stateNode", acg, "stateNode", conversionRates, "stateNode", pMove, "experimental", true);
 		
         ConversionPrior convPrior = new ConversionPrior();
         convPrior.initByName(
                 "network", acg,
-                "conversionRate", conversionRate,
+                "conversionRates", conversionRates,
                 "linearContactGrowth", true
         );
 
@@ -177,8 +178,7 @@ public class WilsonBaldingTest extends contactrees.test.ContactreesTest {
 		
 		
 		CFWilsonBalding wilsonBalding = new CFWilsonBalding();
-		wilsonBalding.initByName("weight", "1", "acg", acg, "alpha", "0.1", 
-								 "conversionRate", conversionRate, 
+		wilsonBalding.initByName("weight", "1", "acg", acg, "alpha", "0.1",
 								 "pMove", pMove,
 								 "blockSet", blockSet,
 								 "conversionPrior", convPrior);

@@ -39,7 +39,7 @@ open module contactrees {
         contactrees.model.BetaBinomialMovePrior,
         contactrees.model.ConversionMovePrior,
         contactrees.model.ConversionPrior,
-        contactrees.model.ConversionRate,
+        contactrees.model.ConversionPriorLogger,
         contactrees.model.FreezableClock,
         contactrees.model.likelihood.CTreeLikelihood,
         contactrees.model.SimulatedACGWithBlocks,
