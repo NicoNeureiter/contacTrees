@@ -94,6 +94,8 @@ public class ConvertedEdgeSlide extends ACGOperator {
             return Double.NEGATIVE_INFINITY;
         }
         
+        boolean sameBranches = (newNode1 == conv.getNode1() && newNode2 == conv.getNode2());
+
         // Write changes back to recombination object
         conv.setHeight(newHeight);
         conv.setNode1(newNode1);
@@ -102,7 +104,10 @@ public class ConvertedEdgeSlide extends ACGOperator {
         assert !acg.isInvalid() : "CESlide produced invalid state";
 
         // Only the trees following the conversion can change
-        updateMarginalTrees(treesBorrowing(conv));
+        if (sameBranches)
+            updateMarginalTreesAfterConversionHeightChange(conv, oldHeight);
+        else
+            updateMarginalTrees(treesBorrowing(conv));
         
         return logHR;
     }

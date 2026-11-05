@@ -85,23 +85,81 @@ public abstract class ACGOperator extends Operator {
     }
 
     /**
-     * Update the given (affected) marginal trees and mark all others as up to date.
+     * Update the given (affected) marginal trees and mark all others as unaffected. Only for
+     * proposals that change nothing but conversions: a tree whose block follows none of the
+     * changed conversions keeps its structure and its branch rates.
      */
     protected void updateMarginalTrees(Set<MarginalTree> affected) {
         for (MarginalTree tree : acg.getMarginalTrees()) {
             if (affected.contains(tree))
                 tree.ensureUpToDate();
             else
-                tree.markUpToDate();
+                tree.markUnaffected();
         }
     }
 
     /**
-     * Mark all marginal trees as up to date, for edits that cannot affect any of them.
+     * Mark all marginal trees as unaffected, for edits that cannot affect any of them (e.g. adding
+     * a conversion that no block follows).
      */
     protected void markAllMarginalTreesUpToDate() {
         for (MarginalTree tree : acg.getMarginalTrees())
-            tree.markUpToDate();
+            tree.markUnaffected();
+    }
+
+    /**
+     * Update the marginal trees after a conversion changed its height but kept its CF branches
+     * (node1 and node2). In a tree that follows the conversion, the topology is unchanged if the
+     * conversion did not pass another conversion of the block on one of its branches; then only
+     * its height is updated. Otherwise the tree is reswept. Trees that do not follow the
+     * conversion are unaffected.
+     */
+    protected void updateMarginalTreesAfterConversionHeightChange(Conversion conv, double oldHeight) {
+        double lower = Math.min(oldHeight, conv.getHeight());
+        double upper = Math.max(oldHeight, conv.getHeight());
+        boolean insideBranches = isStrictlyInsideBranches(conv);
+        for (MarginalTree tree : acg.getMarginalTrees()) {
+            if (!tree.block.isAffected(conv)) {
+                tree.markUnaffected();
+            } else if (insideBranches && !passesBlockConversion(tree, conv, lower, upper)) {
+                tree.updateCreatorHeight(conv);
+                tree.markUpToDate(lower);
+            } else {
+                tree.ensureUpToDate();
+            }
+        }
+    }
+
+    /**
+     * @return true iff the conversion lies strictly between the bottom and the top of both its
+     * branches (no tie with a CF event on them).
+     */
+    protected static boolean isStrictlyInsideBranches(Conversion conv) {
+        double h = conv.getHeight();
+        Node n1 = conv.getNode1(), n2 = conv.getNode2();
+        return h > n1.getHeight() && h > n2.getHeight()
+                && (n1.isRoot() || h < n1.getParent().getHeight())
+                && (n2.isRoot() || h < n2.getParent().getHeight());
+    }
+
+    /**
+     * @return true iff another conversion followed by the tree's block is attached to one of the
+     * branches of conv within [lower, upper].
+     */
+    protected boolean passesBlockConversion(MarginalTree tree, Conversion conv, double lower, double upper) {
+        Node n1 = conv.getNode1(), n2 = conv.getNode2();
+        for (int id : tree.block.getConversionIDs()) {
+            if (id == conv.getID())
+                continue;
+            Conversion other = acg.getConversions().get(id);
+            double h = other.getHeight();
+            if (h < lower || h > upper)
+                continue;
+            Node o1 = other.getNode1(), o2 = other.getNode2();
+            if (o1 == n1 || o1 == n2 || o2 == n1 || o2 == n2)
+                return true;
+        }
+        return false;
     }
 
     /**

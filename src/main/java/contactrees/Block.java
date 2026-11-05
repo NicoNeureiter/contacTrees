@@ -32,6 +32,15 @@ public class Block extends StateNode {
     // Version of the current state (see ConversionGraph#getVersion()).
     protected long version = ConversionGraph.nextVersion(), storedVersion = version;
 
+    // The most recent consecutive edits that added or removed a single move, for partial
+    // updates of the marginal trees (see getLowestChangeSince): the version before each edit
+    // and the height of its conversion. Any other change of the version breaks the chain.
+    static final int EDIT_HISTORY = 8;
+    protected final long[] editFromVersion = new long[EDIT_HISTORY];
+    protected final double[] editHeight = new double[EDIT_HISTORY];
+    protected int nEdits = 0;
+    protected long editsEndVersion = -1;
+
     // Marginal trees following this block.
     protected final List<MarginalTree> marginalTrees = new ArrayList<>();
 
@@ -72,6 +81,7 @@ public class Block extends StateNode {
      * @param The new conversion.
      */
     public void addMove(Conversion conv) {
+        long before = version;
         startEditing(null);
         assert conv != null;
         assert convIDs != null;
@@ -79,6 +89,7 @@ public class Block extends StateNode {
 
         convIDs.add(conv.getID());
         convIDSet.add(conv.getID());
+        recordEdit(before, conv.getHeight());
     }
 
 
@@ -87,11 +98,52 @@ public class Block extends StateNode {
      * @param The conversion to be removed.
      */
     public void removeMove(Conversion conv) {
+        long before = version;
         startEditing(null);
         Integer cID = conv.getID();
         convIDs.remove(cID);
         convIDSet.remove(cID);
         assert !convIDs.contains(cID);
+        recordEdit(before, conv.getHeight());
+    }
+
+    private void recordEdit(long before, double height) {
+        if (editsEndVersion != before)
+            nEdits = 0;
+        if (nEdits == EDIT_HISTORY) {
+            System.arraycopy(editFromVersion, 1, editFromVersion, 0, EDIT_HISTORY - 1);
+            System.arraycopy(editHeight, 1, editHeight, 0, EDIT_HISTORY - 1);
+            nEdits--;
+        }
+        editFromVersion[nEdits] = before;
+        editHeight[nEdits] = height;
+        nEdits++;
+        editsEndVersion = version;
+    }
+
+    /**
+     * The lowest height at which this block changed since the given version, if all changes since
+     * then added or removed single moves (and are still recorded).
+     *
+     * A move over a conversion at height h only changes the marginal tree above h, provided the
+     * conversion graph itself is unchanged.
+     *
+     * @param since a version of this block
+     * @return the lowest height of the moves added or removed since that version, or
+     *         -infinity if the changes since that version are not known
+     */
+    public double getLowestChangeSince(long since) {
+        if (since == version)
+            return Double.POSITIVE_INFINITY;
+        if (editsEndVersion != version)
+            return Double.NEGATIVE_INFINITY;
+        double lowest = Double.POSITIVE_INFINITY;
+        for (int i = nEdits - 1; i >= 0; i--) {
+            lowest = Math.min(lowest, editHeight[i]);
+            if (editFromVersion[i] == since)
+                return lowest;
+        }
+        return Double.NEGATIVE_INFINITY;
     }
 
     /**

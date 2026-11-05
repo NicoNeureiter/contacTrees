@@ -34,6 +34,7 @@ import beast.base.spec.inference.parameter.RealScalarParam;
 import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.util.Randomizer;
 import contactrees.Block;
+import contactrees.MarginalNode;
 import contactrees.MarginalTree;
 import contactrees.model.ConversionMovePrior;
 import contactrees.model.FreezableClock;
@@ -41,6 +42,7 @@ import contactrees.model.ConversionPrior;
 import contactrees.model.likelihood.CTreeLikelihood;
 import contactrees.model.likelihood.SharedTransitionMatrixCache;
 import contactrees.operators.ACGScaler;
+import contactrees.operators.ACGTipDatesRandomWalker;
 import contactrees.operators.AddRemoveConversion;
 import contactrees.operators.AddRemoveConversionGibbs;
 import contactrees.operators.CFConversionSwap;
@@ -139,7 +141,7 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
      */
     @Test
     public void testRelaxedClockCachesStayConsistent() throws Exception {
-        runChain(15000, false, 17, false, true);
+        runChain(15000, false, 23, false, true);
         for (MarginalTree tree : trees)
             assertTrue(tree.getPathBranches(0) != null);
     }
@@ -263,7 +265,11 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         // Likelihoods
         List<Distribution> likelihoodList = new ArrayList<>();
         for (Block block : randomBlockSet.getBlocks()) {
-            MarginalTree tree = newMarginalTree(randomAcg, block);
+            // validate: every partial resweep is checked against a full sweep
+            MarginalTree tree = new MarginalTree();
+            tree.initByName("network", randomAcg, "block", block, "nodetype", MarginalNode.class.getName(),
+                    "validate", true);
+            tree.setID("mtree." + block.getID());
             CTreeLikelihood likelihood = new CTreeLikelihood();
             likelihood.initByName("data", alignment, "tree", tree, "siteModel", siteModel, "branchRateModel", clock);
             likelihood.setID("treeLikelihood." + block.getID());
@@ -338,6 +344,7 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         operators.add(op(new GibbsSampleMovesPerConversion(), "acg", randomAcg, "pMove", pMove,
                 "blockSet", randomBlockSet, "treeLikelihood", likelihoods, "mcmcmc", true));
         operators.add(op(new ResampleBorrowings(), "acg", randomAcg, "pMove", pMove, "blockSet", randomBlockSet));
+        operators.add(op(new ACGTipDatesRandomWalker(), "tree", randomAcg, "windowSize", 0.1));
         ScaleOperator clockScaler = new ScaleOperator();
         clockScaler.initByName("parameter", clockRate, "scaleFactor", 0.97, "weight", 1.0, "optimise", false);
         clockScaler.setID("ClockRateScaler");
@@ -368,6 +375,10 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         mcmc.run();
 
         assertTrue(nChecks >= (long) chainLength * trees.size());
+        long partial = 0;
+        for (MarginalTree tree : trees)
+            partial += tree.nPartialResweeps;
+        assertTrue("no partial resweeps", partial > 0);
         // The short debug-mode run is too short for every operator to be accepted
         for (Operator operator : operators)
             assertTrue(operator.getID() + " was never accepted", debug ||
