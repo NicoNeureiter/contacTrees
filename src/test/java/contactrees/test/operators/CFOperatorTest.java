@@ -66,7 +66,7 @@ public class CFOperatorTest extends ContactreesTest {
 
 	public class CollapseExpandOperator extends CFOperator {
 		@Override
-		public double proposal() {
+		public double doProposal() {
 			double logHGF = 0.0;
 			
 			int nConvs = acg.getConvCount();
@@ -107,12 +107,12 @@ public class CFOperatorTest extends ContactreesTest {
         boolean checkedBorrowingState = false;
 
         @Override
-        public double proposal() {
+        public double doProposal() {
             return collapseConversions(node1, node2, 0.2);
         }
 
         @Override
-        public double getBorrowingsProbGibbs(Conversion conv, boolean mtreesChanged) {
+        public double getBorrowingsProbGibbs(Conversion conv) {
             checkedBorrowingState = true;
             assert conv.isValid() : "Borrowing probability evaluated on invalid conversion " + conv.getID();
             for (Conversion other : acg.getConversions()) {

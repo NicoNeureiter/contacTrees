@@ -6,6 +6,7 @@ package contactrees;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import org.w3c.dom.Node;
@@ -24,12 +25,46 @@ public class Block extends StateNode {
 
     // The indices (in the ConversionList) of the conversions affecting this block.
     List<Integer> convIDs, convIDsStored;
-    protected boolean aheadOfMTree;
+
+    // The same IDs as a set, for O(1) membership queries.
+    protected HashSet<Integer> convIDSet = new HashSet<>();
+
+    // Version of the current state (see ConversionGraph#getVersion()).
+    protected long version = ConversionGraph.nextVersion(), storedVersion = version;
+
+    // Marginal trees following this block.
+    protected final List<MarginalTree> marginalTrees = new ArrayList<>();
 
     @Override
     public void initAndValidate() {
         convIDs = new ArrayList<Integer>();
         convIDsStored = new ArrayList<>();
+        convIDSet.clear();
+        version = ConversionGraph.nextVersion();
+    }
+
+    private void rebuildIDSet() {
+        convIDSet.clear();
+        convIDSet.addAll(convIDs);
+    }
+
+    /**
+     * @return the version of the current state of this block.
+     */
+    public long getVersion() {
+        return version;
+    }
+
+    public void registerMarginalTree(MarginalTree tree) {
+        if (!marginalTrees.contains(tree))
+            marginalTrees.add(tree);
+    }
+
+    /**
+     * @return the marginal trees following this block.
+     */
+    public List<MarginalTree> getMarginalTrees() {
+        return marginalTrees;
     }
 
     /**
@@ -40,9 +75,10 @@ public class Block extends StateNode {
         startEditing(null);
         assert conv != null;
         assert convIDs != null;
-        assert !convIDs.contains(conv.getID());
+        assert !convIDSet.contains(conv.getID());
 
         convIDs.add(conv.getID());
+        convIDSet.add(conv.getID());
     }
 
 
@@ -54,6 +90,7 @@ public class Block extends StateNode {
         startEditing(null);
         Integer cID = conv.getID();
         convIDs.remove(cID);
+        convIDSet.remove(cID);
         assert !convIDs.contains(cID);
     }
 
@@ -63,6 +100,7 @@ public class Block extends StateNode {
     public void removeAllMoves() {
         startEditing(null);
         convIDs.clear();
+        convIDSet.clear();
     }
 
     /**
@@ -71,7 +109,7 @@ public class Block extends StateNode {
      * @return "true" iff the block moved over the conversion.
      */
     public boolean isAffected(Conversion conv) {
-        return convIDs.contains(conv.getID());
+        return convIDSet.contains(conv.getID());
     }
 
     public int countMoves() {
@@ -113,6 +151,7 @@ public class Block extends StateNode {
         copy.setID(getID());
         copy.convIDs = Util.deepCopyIntegers(convIDs);
         copy.convIDsStored = Util.deepCopyIntegers(convIDsStored);
+        copy.rebuildIDSet();
 
         return copy;
     }
@@ -123,19 +162,23 @@ public class Block extends StateNode {
         block.setID(getID());
         block.convIDs = Util.deepCopyIntegers(convIDs);
         block.convIDsStored = Util.deepCopyIntegers(convIDsStored);
+        block.rebuildIDSet();
+        block.version = ConversionGraph.nextVersion();
     }
 
     @Override
     public void assignFrom(StateNode other) {
-        aheadOfMTree = true;
         final Block block = (Block) other;
         setID(block.getID());
         convIDs = Util.deepCopyIntegers(block.convIDs);
         convIDsStored = Util.deepCopyIntegers(block.convIDsStored);
+        rebuildIDSet();
+        version = ConversionGraph.nextVersion();
     }
 
     @Override
     protected void store() {
+        storedVersion = version;
         convIDsStored.clear();
         for (int i=0; i<convIDs.size(); i++) {
             convIDsStored.add(convIDs.get(i));
@@ -147,24 +190,14 @@ public class Block extends StateNode {
         List<Integer> tmp = convIDs;
         convIDs = convIDsStored;
         convIDsStored = tmp;
-
-        // Marginal trees are not stored/restored
-        //  => restore leads to out-dated MTree
-        aheadOfMTree = true;
+        rebuildIDSet();
+        version = storedVersion;
     }
 
     @Override
     public void startEditing(Operator operator) {
-        aheadOfMTree = true;
         super.startEditing(operator);
-    }
-
-    public void updatedMarginalTree() {
-        aheadOfMTree = false;
-    }
-
-    public boolean isAheadOfMarginalTree() {
-        return aheadOfMTree;
+        version = ConversionGraph.nextVersion();
     }
 
     @Override
@@ -179,12 +212,10 @@ public class Block extends StateNode {
     @Override
     public void setEverythingDirty(boolean isDirty) {
         setSomethingIsDirty(isDirty);
-    }
-
-    @Override
-    public void setSomethingIsDirty(final boolean isDirty) {
-        aheadOfMTree = true;
-        super.setSomethingIsDirty(isDirty);
+        if (isDirty) {
+            for (MarginalTree tree : marginalTrees)
+                tree.makeAllDirty();
+        }
     }
 
     @Override
@@ -207,6 +238,8 @@ public class Block extends StateNode {
                 convIDs.add(Integer.parseInt(convID));
             }
         }
+        rebuildIDSet();
+        version = ConversionGraph.nextVersion();
     }
 
     public Block() {

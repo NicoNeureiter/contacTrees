@@ -39,7 +39,7 @@ public class ResampleBorrowings extends ACGOperator {
     }
 
     @Override
-    public double proposal() {
+    public double doProposal() {
         double logHGF = 0.0;
 
         if (acg.getConvCount() == 0) {

@@ -32,9 +32,9 @@ public class GibbsSampleMovesPerBlock extends BorrowingOperator {
     }
 
     @Override
-    public double proposal() {
+    public double doProposal() {
         for (Conversion conv : acg.getConversions()) {
-            sampleBlockMove(conv, treeLH, false);
+            sampleBlockMove(conv, treeLH);
         }
 
         return Double.POSITIVE_INFINITY;

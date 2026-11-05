@@ -1,279 +1,347 @@
 package contactrees;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import beast.base.core.Input;
-import beast.base.inference.CalculationNode;
-import beast.base.inference.StateNode;
-import beast.base.spec.evolution.branchratemodel.Base;
-import beast.base.spec.evolution.branchratemodel.StrictClockModel;
 import beast.base.evolution.branchratemodel.BranchRateModel;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
+import beast.base.inference.Operator;
+import beast.base.inference.StateNode;
 import contactrees.CFEventList.Event;
 import contactrees.CFEventList.EventType;
 
 
 /**
- * A calculation node extracting the marginal tree for a block from the ACG.
- * The resulting marginal trees are the basis for the likelihood computation
- * of the corresponding block.
+ * The marginal tree of one block: the tree that the block's sites evolve along, given the
+ * clonal frame (CF) of the conversion graph and the conversions the block moves over.
+ *
+ * <h2>Creators and stable node numbers</h2>
+ * Every internal marginal node is produced by exactly one <i>creator</i>: either a CF
+ * coalescence whose two child branches both carry the block, or a conversion the block
+ * moves over whose two endpoint branches are both occupied at its height. Leaves are
+ * identified with the CF leaves (same node numbers). A creator keeps its marginal node
+ * number for as long as it keeps firing, so cached partials of untouched subtrees stay valid
+ * across updates. The forward mapping (creator to node number) and the inverse mapping are kept
+ * here, per marginal tree.
+ *
+ * <h2>Heights</h2>
+ * Marginal node heights are the creator heights (no rolling out of branch rates). Branch
+ * rates are supplied to the likelihood by {@link contactrees.model.MarginalClockModel}.
+ *
+ * <h2>Updates and caching</h2>
+ * The structure is (re)derived by {@link #resweep()}: a sweep over the CF events and the block's
+ * conversions computes the firing creators, which are then reconciled with the current tree.
+ * Only node numbers whose children or height changed are written and flagged dirty. The first
+ * modification within an MCMC proposal takes a snapshot, which {@link #restore()} reinstates
+ * exactly; {@link #store()} is a no-op because BEAST calls it after the proposal.
+ * Trees notice changes of the conversion graph or block through version numbers
+ * ({@link ConversionGraph#getVersion()}, {@link Block#getVersion()}); a tree that does not
+ * reflect the current versions resweeps itself on demand ({@link #ensureUpToDate()}).
  *
  * @author Nico Neureiter
  */
-
 public class MarginalTree extends Tree {
 
     public Input<ConversionGraph> networkInput = new Input<>(
             "network",
-            "The conversion graph (network) from which the marginal tree is sampled.",
+            "The conversion graph (network) from which the marginal tree is derived.",
             Input.Validate.REQUIRED);
     public Input<Block> blockInput = new Input<>(
             "block",
-            "The block object cinitArraysontaining the moves this marginal tree follows along the conversion graph.",
+            "The block object containing the moves this marginal tree follows along the conversion graph.",
             Input.Validate.REQUIRED);
     public Input<BranchRateModel> branchRateModelInput = new Input<>(
             "branchRateModel",
-            "The branch rate model for rolling out the branch lengths of the marginal tree (if not given, a strict clock is assumed).",
-            new StrictClockModel());
-    public Input<ArrayList<String>> frozenTaxaInput = new Input<>(
-            "frozenTaxa",
-            "Taxa for which the last branch should have a fixed branch rate of 0.",
-            new ArrayList<>());
+            "No longer supported: marginal trees keep their true heights. Put the clock model "
+            + "on the CTreeLikelihood instead.");
+    public Input<Boolean> validateInput = new Input<>(
+            "validate",
+            "Check the marginal tree against a from-scratch sweep whenever it is used (slow, for debugging).",
+            false);
+
+    /** Creator kinds stored in {@link #creatorKind}. */
+    public static final byte CREATOR_NONE = 0;
+    public static final byte CREATOR_LEAF = 1;
+    public static final byte CREATOR_CF = 2;
+    public static final byte CREATOR_CONVERSION = 3;
 
     public ConversionGraph acg;
     public Block block;
-    protected BranchRateModel branchRateModel;
-    protected boolean hasBranchRates;
-    protected ArrayList<String> frozenTaxa;
+    protected boolean validate;
 
-    protected boolean outdated;
-    protected boolean manuallyUpdated = false;
-    protected String lastBlockState;
-    protected boolean changed = true;
-    protected boolean[] isFree;
-    protected int nextNonLeafNr;
-    ArrayList<MarginalNode> activeCFlineages = new ArrayList<>();
+    protected int nLeaves;
+    protected int nCFNodes;
 
-    protected boolean customdebug = false;
+    /* Forward and inverse creator mapping. */
+    /** CF node nr -> marginal node nr (leaves map to themselves, -1 if the CF node does not coalesce here). */
+    protected int[] cfToMarg;
+    /** Conversion ID -> marginal node nr, for conversions that create a node in this tree. */
+    protected HashMap<Integer, Integer> convToMarg = new HashMap<>();
+    /** Marginal node nr -> creator kind / creator key (CF node nr or conversion ID). */
+    protected byte[] creatorKind;
+    protected int[] creatorKey;
+    /** Internal node numbers released during a reconcile and not yet reclaimed. */
+    protected int[] freeStack;
+    protected int freeTop;
 
-    public void setManuallyUpdated() {
-        manuallyUpdated = true;
-    }
+    /** Versions of the conversion graph and block that this tree currently reflects. */
+    protected long reflectedAcgVersion = -1, reflectedBlockVersion = -1;
 
-    public void setBranchRateModel(Base brm) {
-        branchRateModelInput.setValue(brm, this);
-        branchRateModel = brm;
-        hasBranchRates = (branchRateModel != null);
-    }
+    /* Proposal bookkeeping. */
+    /** Structure or mapping changed in the current proposal (a snapshot exists). */
+    protected boolean touched = false;
+    /** The reflected versions changed in the current proposal (their old values are saved). */
+    protected boolean versionsTouched = false;
+    /** All nodes are flagged dirty (initialisation or setEverythingDirty(true)). */
+    protected boolean allDirty = false;
+    /** Suppresses snapshots and proposal registration while initialising. */
+    protected boolean initialising = false;
+    /**
+     * True once BEAST stored this tree as a calculation node, i.e. the tree is on the path to the
+     * posterior and BEAST accepts/restores it (and recomputes its likelihood) after each proposal.
+     * Unmanaged trees (e.g. used only by Gibbs operators) never clear their dirty flags, so their
+     * likelihood recomputes the right nodes when it is next evaluated.
+     */
+    protected boolean managed = false;
+    /** Node flags were set and not yet cleared (beyond the current proposal). */
+    protected boolean flagsPending = false;
+    /** Registered in the conversion graph's list of trees modified in the current proposal. */
+    boolean inModifiedList = false;
+
+    /* Snapshot of the pre-proposal state. */
+    protected int[] sParent, sLeft, sRight, sCreatorKey, sCfToMarg;
+    protected byte[] sCreatorKind;
+    protected double[] sHeight;
+    protected HashMap<Integer, Integer> sConvToMarg = new HashMap<>();
+    protected int sRoot;
+    protected long sAcgVersion, sBlockVersion;
+
+    /* Scratch space for the sweep. One record per firing creator, in firing order. */
+    protected int[] activeLineage;
+    protected byte[] recKind;
+    protected int[] recKey, recChildA, recChildB, recNr;
+    protected double[] recHeight;
+    protected int nRecords;
+    protected boolean[] keepNr;
+    protected final ArrayList<Conversion> sortedConvs = new ArrayList<>();
+
+    /** Counters for diagnostics and tests. */
+    public long nResweeps = 0, nNodesWritten = 0;
 
     @Override
     public void initAndValidate() {
-
         acg = networkInput.get();
         block = blockInput.get();
-        frozenTaxa = frozenTaxaInput.get();
+        validate = validateInput.get();
 
-        branchRateModel = branchRateModelInput.get();
-//        hasBranchRates = !(branchRateModel instanceof StrictClockModel);
-        hasBranchRates = (branchRateModel != null);
+        if (branchRateModelInput.get() != null) {
+            throw new IllegalArgumentException("MarginalTree " + getID() + ": the branchRateModel input "
+                    + "is no longer supported. Marginal trees keep their true heights; put the clock "
+                    + "model on the CTreeLikelihood (it is wrapped in a MarginalClockModel).");
+        }
 
-        // Initialize to clonal frame of acg
+        // Initialise the node objects as a copy of the clonal frame
         String beastID = ID;
         assignFrom(acg);
         setID(beastID);
 
         super.initAndValidate();
-        activeCFlineages = new ArrayList<>();
-        for (int i=0; i<acg.getNodeCount(); i++)
-            activeCFlineages.add(null);
 
-        recalculate();
-        makeOutdated();
-    }
+        nLeaves = acg.getLeafNodeCount();
+        nCFNodes = acg.getNodeCount();
+        if (getNodeCount() != nCFNodes)
+            throw new IllegalStateException("MarginalTree " + getID() + ": node count does not match the conversion graph.");
 
-    @Override
-    public boolean requiresRecalculation() {
-        outdated = checkOutdated();
-        changed = outdated;
+        initMapping();
 
-        if (outdated) {
-            recalculate();
+        acg.registerMarginalTree(this);
+        block.registerMarginalTree(this);
 
-            if (manuallyUpdated) {
-                manuallyUpdated = false;
-                return false;
-            } else
-                return true;
-
-
-        } else {
-            if (customdebug) {
-                String oldNewick = root.toNewick();
-                recalculate();
-                String newNewick = root.toNewick();
-                assert oldNewick == newNewick;
-            }
-            return false;
+        initialising = true;
+        try {
+            resweep();
+        } finally {
+            initialising = false;
         }
+        touched = false;
+        versionsTouched = false;
+        makeAllDirty();
     }
 
-    public void makeOutdated() {
-        outdated = true;
-        setEverythingDirty(true);
-        manuallyUpdated = false;
-    }
-
-    @Override
-    public boolean somethingIsDirty() {
-        return this.changed;
-    }
-
-    public boolean checkOutdated() {
-        if (acg.somethingIsDirty())
-            return true;
-
-        if (block.isAheadOfMarginalTree())
-            return true;
-
-        if (branchRateModel instanceof CalculationNode brm && brm.somethingIsDirty()) {
-            return true;
+    protected void initMapping() {
+        int nNodes = getNodeCount();
+        cfToMarg = new int[nCFNodes];
+        Arrays.fill(cfToMarg, -1);
+        creatorKind = new byte[nNodes];
+        creatorKey = new int[nNodes];
+        for (int i = 0; i < nLeaves; i++) {
+            cfToMarg[i] = i;
+            creatorKind[i] = CREATOR_LEAF;
+            creatorKey[i] = i;
         }
+        convToMarg.clear();
 
-        return outdated;
+        // All internal node numbers start out free
+        freeStack = new int[Math.max(nNodes - nLeaves, 0)];
+        freeTop = 0;
+        for (int nr = nNodes - 1; nr >= nLeaves; nr--)
+            freeStack[freeTop++] = nr;
+
+        sParent = new int[nNodes];
+        sLeft = new int[nNodes];
+        sRight = new int[nNodes];
+        sHeight = new double[nNodes];
+        sCreatorKind = new byte[nNodes];
+        sCreatorKey = new int[nNodes];
+        sCfToMarg = new int[nCFNodes];
+
+        int nInternal = Math.max(nLeaves - 1, 0);
+        activeLineage = new int[nCFNodes];
+        recKind = new byte[nInternal];
+        recKey = new int[nInternal];
+        recChildA = new int[nInternal];
+        recChildB = new int[nInternal];
+        recNr = new int[nInternal];
+        recHeight = new double[nInternal];
+        keepNr = new boolean[nNodes];
     }
 
+    /*
+     * Version tracking and lazy fallback
+     */
 
-    public int getNextFreeIndex() {
-        // Skip all indices that have been used
-        while (!isFree[nextNonLeafNr])
-            nextNonLeafNr += 1;
-
-        // Once we return the index, it will be marked as used up
-        isFree[nextNonLeafNr] = false;
-
-        // Return the index
-        return nextNonLeafNr;
+    /**
+     * @return true iff this tree reflects the current versions of the conversion graph and the block.
+     */
+    public boolean isUpToDate() {
+        return reflectedAcgVersion == acg.getVersion() && reflectedBlockVersion == block.getVersion();
     }
 
-    public void recalculate() {
-        startEditing(null);
-        if (customdebug) System.out.print("*");
+    /**
+     * Bring the tree up to date with the conversion graph and the block, resweeping if necessary.
+     */
+    public void ensureUpToDate() {
+        if (!isUpToDate())
+            resweep();
+    }
 
+    /**
+     * Declare that this tree reflects the current conversion graph and block, without changing it.
+     * Operators call this for trees they know to be unaffected by their changes.
+     */
+    public void markUpToDate() {
+        long acgVersion = acg.getVersion();
+        long blockVersion = block.getVersion();
+        if (reflectedAcgVersion == acgVersion && reflectedBlockVersion == blockVersion)
+            return;
+        beginVersionChange();
+        reflectedAcgVersion = acgVersion;
+        reflectedBlockVersion = blockVersion;
+    }
+
+    /*
+     * The sweep
+     */
+
+    /**
+     * Recompute the structure from the conversion graph and the block, and reconcile it with the
+     * current tree: creators keep their node numbers, only changed nodes are written and flagged.
+     */
+    public void resweep() {
+        nResweeps++;
+        computeStructure();
+        reconcile();
+        markUpToDate();
+    }
+
+    /**
+     * Sweep through the CF events and the block's conversions (from the leaves to the root) and
+     * record every firing creator in the scratch arrays. Lineages are identified by the node at
+     * their bottom: leaf nr for leaves, nLeaves + record index for internal nodes.
+     */
+    protected void computeStructure() {
         List<Event> cfEvents = acg.getCFEvents();
-        activeCFlineages.replaceAll((oldNode) -> {
-            return null;
-        });
-        List<Conversion> convs = getBlockConversions();
-        convs.sort((c1, c2) -> {
-            if (c1.height < c2.height)
-                return -1;
+        List<Conversion> convs = getSortedBlockConversions();
 
-            if (c1.height > c2.height)
-                return 1;
-
-            return 0;
-        });
-
+        Arrays.fill(activeLineage, -1);
+        nRecords = 0;
         int iConv = 0;
-        int nLeafs = acg.getLeafNodeCount();
-
-        nextNonLeafNr = nLeafs;
 
         for (int iEvent = 0; iEvent < cfEvents.size(); iEvent++) {
             Event event = cfEvents.get(iEvent);
             Node node = event.getNode();
+            int nodeNr = node.getNr();
 
-            // Process the current CF-event
-            switch (event.getType()) {
-                case SAMPLE:
-                    MarginalNode marginalLeaf = registerLeafNode(node);
-                    activeCFlineages.set(node.getNr(), marginalLeaf);
-                    break;
+            if (event.getType() == EventType.SAMPLE) {
+                activeLineage[nodeNr] = nodeNr;
+            } else {
+                int left = node.getChild(0).getNr();
+                int right = node.getChild(1).getNr();
+                int lineageLeft = activeLineage[left];
+                int lineageRight = activeLineage[right];
 
-                case COALESCENCE:
-                    Node left = node.getChild(0);
-                    Node right = node.getChild(1);
-
-                    if (activeCFlineages.get(left.getNr()) != null && activeCFlineages.get(right.getNr()) != null) {
-                        // Create a new marginal node at the coalescence event
-                        MarginalNode marginalNode = registerNode(node, activeCFlineages, nextNonLeafNr++);
-
-                        // Remove the old and add the new marginal node to the active lineages.
-                        activeCFlineages.set(left.getNr(), null);
-                        activeCFlineages.set(right.getNr(), null);
-                        activeCFlineages.set(node.getNr(), marginalNode);
-                    } else {
-                        // Only one side is active -> no coalescence in marginal tree (i.e. no marginal node)
-
-                        if (activeCFlineages.get(left.getNr()) != null) {
-                            MarginalNode marginalLeft = activeCFlineages.get(left.getNr());
-                            updateTimeLength(node.getHeight(), left, marginalLeft);
-
-                            activeCFlineages.set(left.getNr(), null);
-                            activeCFlineages.set(node.getNr(), marginalLeft);
-                            break;
-                        }
-
-                        if (activeCFlineages.get(right.getNr()) != null) {
-                            MarginalNode marginalRight = activeCFlineages.get(right.getNr());
-                            updateTimeLength(node.getHeight(), right, marginalRight);
-
-                            activeCFlineages.set(right.getNr(), null);
-                            activeCFlineages.set(node.getNr(), marginalRight);
-                            break;
-                        }
-                    }
-                    break;
-            }
-
-            // Process all conversion below the next CF-event
-            while (iConv < convs.size() &&
-                    (event.node.isRoot() || isBelowNextCFEvent(convs.get(iConv), cfEvents.get(iEvent + 1)))) {
-
-                Conversion conv = convs.get(iConv++);
-                Node node1 = conv.getNode1();
-                Node node2 = conv.getNode2();
-
-                if ((activeCFlineages.get(node1.getNr()) != null) && (activeCFlineages.get(node2.getNr()) != null)) {
-                    // Both lineages at the conversion are active --> coalescence in the marginal tree
-
-                    // Create a MarginalNode at the point of the conversion and add it as a new lineage
-                    MarginalNode convNode = registerNode(conv, activeCFlineages, nextNonLeafNr++);
-
-                    // Remove child lineages and add new one
-                    activeCFlineages.set(node1.getNr(), null);
-                    activeCFlineages.set(node2.getNr(), null);
-                    activeCFlineages.set(node2.getNr(), convNode);
-                } else {
-                    // node1 or node2 already moved away (overshadowed by another conversion)
-
-                    if (activeCFlineages.get(node1.getNr()) != null) {
-                        // node1 passes conversion, but node2 branched away --> CF lineage of node2 is continued by node1
-                        MarginalNode margNode1 = activeCFlineages.get(node1.getNr());
-                        updateTimeLength(conv.getHeight(), node1, margNode1);
-
-                        activeCFlineages.set(node1.getNr(), null);
-                        activeCFlineages.set(node2.getNr(), margNode1);
-                    }
-                    // else: node1 already branched away --> conversion has no effect
+                if (lineageLeft >= 0 && lineageRight >= 0) {
+                    // Both children carry the block: the CF node is a marginal coalescence
+                    int lineage = addRecord(CREATOR_CF, nodeNr, node.getHeight(), lineageLeft, lineageRight);
+                    activeLineage[left] = -1;
+                    activeLineage[right] = -1;
+                    activeLineage[nodeNr] = lineage;
+                } else if (lineageLeft >= 0) {
+                    activeLineage[left] = -1;
+                    activeLineage[nodeNr] = lineageLeft;
+                } else if (lineageRight >= 0) {
+                    activeLineage[right] = -1;
+                    activeLineage[nodeNr] = lineageRight;
                 }
             }
+
+            // Process all conversions below the next CF event
+            while (iConv < convs.size() &&
+                    (node.isRoot() || isBelowNextCFEvent(convs.get(iConv), cfEvents.get(iEvent + 1)))) {
+                Conversion conv = convs.get(iConv++);
+                int nr1 = conv.getNode1().getNr();
+                int nr2 = conv.getNode2().getNr();
+                int lineage1 = activeLineage[nr1];
+                int lineage2 = activeLineage[nr2];
+
+                if (lineage1 >= 0 && lineage2 >= 0) {
+                    // Both lineages are active: coalescence at the conversion, continuing on node2
+                    int lineage = addRecord(CREATOR_CONVERSION, conv.getID(), conv.getHeight(), lineage1, lineage2);
+                    activeLineage[nr1] = -1;
+                    activeLineage[nr2] = lineage;
+                } else if (lineage1 >= 0) {
+                    // The lineage of node1 jumps to the (empty) branch of node2
+                    activeLineage[nr1] = -1;
+                    activeLineage[nr2] = lineage1;
+                }
+                // else: node1 already left this branch, the conversion has no effect
+            }
         }
 
-        // A single active CF lineage (the root) should remain:;
-        MarginalNode newRoot = activeCFlineages.get(acg.getRoot().getNr());
-        setRootOnly(newRoot);
-
-        if (hasBranchRates) {
-            rollOutTime(newRoot, newRoot.getHeight());
+        if (nRecords != Math.max(nLeaves - 1, 0)) {
+            throw new IllegalStateException("MarginalTree " + getID() + ": sweep produced " + nRecords
+                    + " internal nodes, expected " + (nLeaves - 1) + ".");
         }
+    }
 
-        outdated = false;
-//        block.updatedMarginalTree();
-//        lastBlockState = block.toString();
-
+    private int addRecord(byte kind, int key, double height, int childA, int childB) {
+        if (nRecords >= recKind.length) {
+            throw new IllegalStateException("MarginalTree " + getID() + " exceeded its node capacity while "
+                    + "registering " + (kind == CREATOR_CF ? "CF node " : "conversion ") + key
+                    + " at height " + height + ".");
+        }
+        int i = nRecords++;
+        recKind[i] = kind;
+        recKey[i] = key;
+        recHeight[i] = height;
+        recChildA[i] = childA;
+        recChildB[i] = childB;
+        return nLeaves + i;
     }
 
     /**
@@ -282,7 +350,7 @@ public class MarginalTree extends Tree {
      * A conversion exactly at the height of the next CF event only belongs below that event
      * if the event is the coalescence of one of the conversion's own lineages.
      */
-    private boolean isBelowNextCFEvent(Conversion conv, Event nextEvent) {
+    private static boolean isBelowNextCFEvent(Conversion conv, Event nextEvent) {
         double convHeight = conv.getHeight();
         double nextHeight = nextEvent.getHeight();
 
@@ -299,217 +367,33 @@ public class MarginalTree extends Tree {
         return conv.getNode1().getParent() == nextNode || conv.getNode2().getParent() == nextNode;
     }
 
-    public MarginalNode registerLeafNode(Node node) {
-        MarginalNode marginalNode = (MarginalNode) m_nodes[node.getNr()];
-//        if (marginalNode.getHeight() != node.getHeight()) marginalNode.makeDirty(Tree.IS_FILTHY);
-//        else if (marginalNode.getLength() != node.getLength()) marginalNode.makeDirty(Tree.IS_FILTHY);
-        if ((!marginalNode.equalsNode(node))) {
-            marginalNode.setHeight(node.getHeight());
-            marginalNode.makeDirty(Tree.IS_FILTHY);
-        }
-        marginalNode.lastEventHeight = node.getHeight();
-        marginalNode.setID(node.getID());
-        marginalNode.timeLength = 0;
-
-        return marginalNode;
-    }
-
-    public MarginalNode registerNode(Node node, ArrayList<MarginalNode> activeCFlineages, int nodeNr) {
-        Node left = node.getChild(0);
-        Node right = node.getChild(1);
-        double height = node.getHeight();
-        MarginalNode newLeft = activeCFlineages.get(left.getNr());
-        MarginalNode newRight = activeCFlineages.get(right.getNr());
-
-        if (nodeNr >= m_nodes.length) {
-            throw binaryMergeCapacityError(nodeNr, newLeft, newRight,
-                "coalescence at node " + node.getNr() + " height=" + height);
-        }
-
-        // Take the old marginal node from the given index
-        MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
-        Node oldLeft = marginalNode.getLeft();
-        Node oldRight = marginalNode.getRight();
-
-        // Mark the node as filthy if one of the children changed
-        if (oldLeft.getNr() != newLeft.getNr())
-            marginalNode.makeDirty(Tree.IS_FILTHY);
-
-        if (oldRight.getNr() != newRight.getNr())
-            marginalNode.makeDirty(Tree.IS_FILTHY);
-
-        // Mark the node and children as dirty if the height changed
-        if (marginalNode.getHeight() != node.getHeight()) {
-            marginalNode.makeDirty(Tree.IS_FILTHY);
-            List<Node> children = marginalNode.getChildren();
-            if (children.size() > 0) children.get(0).makeDirty(Tree.IS_FILTHY);
-            if (children.size() > 1) children.get(1).makeDirty(Tree.IS_FILTHY);
-        }
-
-        // Update the marginal node and meta information
-        marginalNode.update(height, newLeft, newRight);
-        marginalNode.timeLength = 0;
-        marginalNode.lastEventHeight = height;
-
-        // Update time-length of both children
-        if (hasBranchRates) {
-            updateTimeLength(height, left, newLeft);
-            updateTimeLength(height, right, newRight);
-        }
-
-        return marginalNode;
-    }
-
-    public MarginalNode registerNode(Conversion conv, ArrayList<MarginalNode> activeCFlineages, int nodeNr) {
-        Node left = conv.getNode1();
-        Node right = conv.getNode2();
-        double height = conv.getHeight();
-        MarginalNode marginalLeft = activeCFlineages.get(left.getNr());
-        MarginalNode marginalRight = activeCFlineages.get(right.getNr());
-
-        if (nodeNr >= m_nodes.length) {
-            throw binaryMergeCapacityError(nodeNr, marginalLeft, marginalRight,
-                "conversion " + conv.getID() + " at height=" + height
-                    + " between nodes " + left.getNr() + " and " + right.getNr());
-        }
-
-        // Take the old marginal node from the given index
-        MarginalNode marginalNode = (MarginalNode) m_nodes[nodeNr];
-
-        // Mark the node as filthy if one of the children changed
-        if (marginalNode.getLeft().getNr() != marginalLeft.getNr())
-            marginalNode.makeDirty(Tree.IS_FILTHY);
-        if (marginalNode.getRight().getNr() != marginalRight.getNr())
-            marginalNode.makeDirty(Tree.IS_FILTHY);
-
-        // Mark the node and children as dirty if the height changed
-        if (marginalNode.getHeight() != conv.getHeight()) {
-            marginalNode.makeDirty(Tree.IS_FILTHY);
-            List<Node> children = marginalNode.getChildren();
-            if (children.size() > 0) children.get(0).makeDirty(Tree.IS_FILTHY);
-            if (children.size() > 1) children.get(1).makeDirty(Tree.IS_FILTHY);
-        }
-
-        marginalNode.update(height, marginalLeft, marginalRight);
-        marginalNode.timeLength = 0;
-        marginalNode.lastEventHeight = height;
-
-        // Update time-length of both children
-        if (hasBranchRates) {
-            updateTimeLength(height, left, marginalLeft);
-            updateTimeLength(height, right, marginalRight);
-        }
-
-//        marginalNode.makeDirty(Tree.IS_FILTHY);
-
-        return marginalNode;
-    }
-
     /**
-     * Build a descriptive error for a merge that would write past the end of the node array,
-     * instead of letting it surface as an ArrayIndexOutOfBoundsException. Callers check the
-     * capacity themselves so this (and the context string) is only ever built on the failure
-     * path, not on every registerNode() call.
+     * The block's conversions sorted by height (ties broken by conversion ID, so that the result
+     * does not depend on the order of moves in the block).
      */
-    private IllegalStateException binaryMergeCapacityError(int nodeNr, MarginalNode left, MarginalNode right, String context) {
-        String leftId = left == null ? "null" : Integer.toString(left.getNr());
-        String rightId = right == null ? "null" : Integer.toString(right.getNr());
-        return new IllegalStateException("MarginalTree exceeded node capacity while registering " + context
-                + "; nodeNr=" + nodeNr + ", capacity=" + m_nodes.length
-                + ", leftMarginal=" + leftId + ", rightMarginal=" + rightId
-                + ", sameLineage=" + (left != null && left == right));
-    }
-
-    void updateTimeLength(double parentHeight, Node child, MarginalNode marginalChild) {
-        marginalChild.timeLength += (parentHeight - marginalChild.lastEventHeight) * branchRateModel.getRateForBranch(child);
-        marginalChild.lastEventHeight = parentHeight;
-    }
-
-    /**
-     * Assign new heights to the nodes in the tree by
-     * rolling out the branch time-lengths from the
-     * root down (starting at rootHeight).
-     *
-     * @param root
-     * @param rootHeight
-     */
-    void rollOutTime(MarginalNode root, double rootHeight) {
-        root.setHeight(rootHeight);
-
-        List<Node> children = root.getChildren();
-        if (children.size() > 0) {
-            MarginalNode leftChild = (MarginalNode) children.get(0);
-            rollOutTime(leftChild, rootHeight - leftChild.timeLength);
+    protected List<Conversion> getSortedBlockConversions() {
+        sortedConvs.clear();
+        ConversionList convList = acg.getConversions();
+        List<Integer> cIDs = block.getConversionIDs();
+        for (int i = 0; i < cIDs.size(); i++) {
+            Conversion c = convList.get(cIDs.get(i));
+            validateConversionRef(c);
+            sortedConvs.add(c);
         }
-        if (children.size() > 1) {
-            MarginalNode rightChild = (MarginalNode) children.get(1);
-            rollOutTime(rightChild, rootHeight - rightChild.timeLength);
-        }
-
-////        for (Node childAsNode : root.getChildren()) {
-//        for (int i=0; i< root.getChildren().size(); i++) {
-//            MarginalNode child = (MarginalNode) root.getChildren().get(i);
-//            rollOutTime(child, rootHeight - child.timeLength);
-//        }
+        sortedConvs.sort((c1, c2) -> {
+            int cmp = Double.compare(c1.getHeight(), c2.getHeight());
+            return (cmp != 0) ? cmp : Integer.compare(c1.getID(), c2.getID());
+        });
+        return sortedConvs;
     }
-
-    @Override
-    protected void accept() {
-        super.accept();
-        setEverythingDirty(false);
-    }
-
-    @Override
-    public void store() {}
-
-    @Override
-    public void restore() {
-        postCache = null;
-
-        manuallyUpdated = false;
-        if (customdebug) System.out.print("r");
-        recalculate();
-//        setEverythingDirty(false);
-    }
-
-    protected void initArraysSlim() {
-        // initialise tree-as-array representation + its stored variant
-        m_nodes = new MarginalNode[nodeCount];
-        listMarginalNodes((MarginalNode) root, m_nodes);
-        postCache = null;
-    }
-
-    /**
-     * convert tree to array representation *
-     */
-    void listMarginalNodes(final MarginalNode node, final Node[] nodes) {
-        nodes[node.getNr()] = node;
-        node.setTree(this);
-
-        for (final Node child : node.getChildren()) {
-            listMarginalNodes((MarginalNode) child, nodes);
-        }
-    }
-
-    ArrayList<Conversion> _blockConvs = new ArrayList<>();
 
     /**
      * Obtain the list of conversions which affect this block, i.e. the ones defining this marginal tree.
      *
-     * @return List of relevant conversions.
+     * @return List of relevant conversions (sorted by height).
      */
     public List<Conversion> getBlockConversions() {
-        _blockConvs.clear();
-        ConversionList convList = acg.getConversions();
-        List<Integer> cIDs = block.getConversionIDs();
-
-        for (int i=0; i < cIDs.size(); i++) {
-            Conversion c = convList.get(cIDs.get(i));
-            validateConversionRef(c);
-            _blockConvs.add(c);
-        }
-
-        return _blockConvs;
+        return new ArrayList<>(getSortedBlockConversions());
     }
 
     /**
@@ -527,6 +411,536 @@ public class MarginalTree extends Tree {
         }
     }
 
+    /*
+     * Reconciling the swept structure with the current tree
+     */
+
+    private int lookupNr(byte kind, int key) {
+        if (kind == CREATOR_CF)
+            return cfToMarg[key];
+        Integer nr = convToMarg.get(key);
+        return (nr == null) ? -1 : nr;
+    }
+
+    private int lineageToNr(int lineage) {
+        return (lineage < nLeaves) ? lineage : recNr[lineage - nLeaves];
+    }
+
+    /**
+     * Apply the structure in the scratch records to the tree: release creators that no longer fire,
+     * claim node numbers for new creators, then write (and flag) only what changed.
+     */
+    protected void reconcile() {
+        int nNodes = getNodeCount();
+
+        // 1. Look up existing node numbers of the firing creators
+        Arrays.fill(keepNr, false);
+        for (int i = 0; i < nRecords; i++) {
+            int nr = lookupNr(recKind[i], recKey[i]);
+            recNr[i] = nr;
+            if (nr >= 0)
+                keepNr[nr] = true;
+        }
+
+        // 2. Release all internal nodes whose creator stopped firing
+        for (int nr = nLeaves; nr < nNodes; nr++) {
+            if (creatorKind[nr] != CREATOR_NONE && !keepNr[nr]) {
+                beginModification();
+                if (creatorKind[nr] == CREATOR_CF)
+                    cfToMarg[creatorKey[nr]] = -1;
+                else
+                    convToMarg.remove(creatorKey[nr]);
+                creatorKind[nr] = CREATOR_NONE;
+                freeStack[freeTop++] = nr;
+            }
+        }
+
+        // 3. Claim node numbers for new creators (CF creators prefer their own node number)
+        for (int i = 0; i < nRecords; i++) {
+            if (recNr[i] >= 0)
+                continue;
+            beginModification();
+            int nr = claimFreeNr(recKind[i] == CREATOR_CF ? recKey[i] : -1);
+            recNr[i] = nr;
+            creatorKind[nr] = recKind[i];
+            creatorKey[nr] = recKey[i];
+            if (recKind[i] == CREATOR_CF)
+                cfToMarg[recKey[i]] = nr;
+            else
+                convToMarg.put(recKey[i], nr);
+            keepNr[nr] = false;   // marks "newly claimed" for step 4
+        }
+        assert freeTop == 0 : "Free node numbers left after reconcile";
+
+        // 4. Leaves: heights follow the CF leaves (tip dates)
+        for (int i = 0; i < nLeaves; i++) {
+            Node leaf = m_nodes[i];
+            double h = acg.getNode(i).getHeight();
+            if (leaf.getHeight() != h) {
+                beginModification();
+                ((MarginalNode) leaf).setHeight(h);
+                leaf.makeDirty(Tree.IS_DIRTY);
+                nNodesWritten++;
+            }
+        }
+
+        // 5. Internal nodes: write children and heights where they differ
+        for (int i = 0; i < nRecords; i++) {
+            MarginalNode node = (MarginalNode) m_nodes[recNr[i]];
+            MarginalNode childA = (MarginalNode) m_nodes[lineageToNr(recChildA[i])];
+            MarginalNode childB = (MarginalNode) m_nodes[lineageToNr(recChildB[i])];
+            boolean isNew = !keepNr[recNr[i]];
+
+            Node oldLeft = node.getLeft();
+            Node oldRight = node.getRight();
+            boolean sameChildren = (oldLeft == childA && oldRight == childB)
+                    || (oldLeft == childB && oldRight == childA);
+            boolean sameHeight = node.getHeight() == recHeight[i];
+
+            if (isNew || !sameChildren) {
+                beginModification();
+                if (!(oldLeft == childB && oldRight == childA))
+                    node.update(recHeight[i], childA, childB);
+                node.setHeight(recHeight[i]);
+                childA.setParent(node);
+                childB.setParent(node);
+                node.makeDirty(Tree.IS_FILTHY);
+                childA.makeDirty(Tree.IS_DIRTY);
+                childB.makeDirty(Tree.IS_DIRTY);
+                nNodesWritten++;
+            } else if (!sameHeight) {
+                beginModification();
+                node.setHeight(recHeight[i]);
+                node.makeDirty(Tree.IS_DIRTY);
+                childA.makeDirty(Tree.IS_DIRTY);
+                childB.makeDirty(Tree.IS_DIRTY);
+                nNodesWritten++;
+            }
+        }
+
+        // 6. Root: the last firing creator (or the single leaf)
+        Node newRoot = (nRecords > 0) ? m_nodes[recNr[nRecords - 1]] : m_nodes[0];
+        if (newRoot != root || newRoot.getParent() != null) {
+            beginModification();
+            newRoot.setParent(null);
+            setRootOnly(newRoot);
+            newRoot.makeDirty(Tree.IS_FILTHY);
+        }
+        postCache = null;
+    }
+
+    private int claimFreeNr(int preferred) {
+        if (freeTop == 0) {
+            throw new IllegalStateException("MarginalTree " + getID() + " ran out of internal node numbers.");
+        }
+        if (preferred >= 0) {
+            for (int j = 0; j < freeTop; j++) {
+                if (freeStack[j] == preferred) {
+                    freeStack[j] = freeStack[--freeTop];
+                    return preferred;
+                }
+            }
+        }
+        return freeStack[--freeTop];
+    }
+
+    /*
+     * Direct updates (used by operators that know the topology is unchanged)
+     */
+
+    /**
+     * Set the height of the marginal node created by the given CF node (if it creates one here)
+     * to the CF node's current height. The caller guarantees that the change does not alter the
+     * order of events along the branches of the CF node (i.e. the topology is unchanged).
+     */
+    public void updateCreatorHeight(Node cfNode) {
+        int nr = cfToMarg[cfNode.getNr()];
+        if (nr >= 0)
+            setNodeHeight(nr, cfNode.getHeight());
+    }
+
+    /**
+     * Set the height of the marginal node created by the given conversion (if it creates one
+     * here) to the conversion's current height. Same precondition as {@link #updateCreatorHeight(Node)}.
+     */
+    public void updateCreatorHeight(Conversion conv) {
+        Integer nr = convToMarg.get(conv.getID());
+        if (nr != null)
+            setNodeHeight(nr, conv.getHeight());
+    }
+
+    /**
+     * Set the heights of all marginal nodes to the current heights of their creators. The caller
+     * guarantees that the order of events along every CF branch is unchanged (e.g. scaling all
+     * heights), so the topology stays the same.
+     */
+    public void updateAllHeights() {
+        ConversionList convs = acg.getConversions();
+        for (int nr = 0; nr < getNodeCount(); nr++) {
+            double height;
+            switch (creatorKind[nr]) {
+                case CREATOR_LEAF:
+                case CREATOR_CF:
+                    height = acg.getNode(creatorKey[nr]).getHeight();
+                    break;
+                case CREATOR_CONVERSION:
+                    height = convs.get(creatorKey[nr]).getHeight();
+                    break;
+                default:
+                    throw new IllegalStateException("MarginalTree " + getID() + ": node " + nr + " has no creator.");
+            }
+            setNodeHeight(nr, height);
+        }
+    }
+
+    private void setNodeHeight(int nr, double height) {
+        Node node = m_nodes[nr];
+        if (node.getHeight() == height)
+            return;
+        beginModification();
+        ((MarginalNode) node).setHeight(height);
+        node.makeDirty(Tree.IS_DIRTY);
+        for (Node child : node.getChildren())
+            child.makeDirty(Tree.IS_DIRTY);
+        postCache = null;
+        nNodesWritten++;
+    }
+
+    /*
+     * Mapping queries
+     */
+
+    /** @return the marginal node created by the given CF node, or null. */
+    public MarginalNode getNodeForCFNode(Node cfNode) {
+        int nr = cfToMarg[cfNode.getNr()];
+        return (nr < 0) ? null : (MarginalNode) m_nodes[nr];
+    }
+
+    /** @return the marginal node created by the given conversion, or null. */
+    public MarginalNode getNodeForConversion(Conversion conv) {
+        Integer nr = convToMarg.get(conv.getID());
+        return (nr == null) ? null : (MarginalNode) m_nodes[nr];
+    }
+
+    /** @return the creator kind of the marginal node with the given number. */
+    public byte getCreatorKind(int nr) {
+        return creatorKind[nr];
+    }
+
+    /** @return the creator key (CF node nr or conversion ID) of the marginal node with the given number. */
+    public int getCreatorKey(int nr) {
+        return creatorKey[nr];
+    }
+
+    /*
+     * Snapshot / store / restore / accept
+     */
+
+    /**
+     * Called before the first change of the structure or mapping in the current proposal.
+     */
+    protected void beginModification() {
+        if (touched || initialising)
+            return;
+        takeSnapshot();
+        touched = true;
+        acg.markTreeModified(this);
+    }
+
+    /**
+     * Called before the reflected versions change in the current proposal.
+     */
+    protected void beginVersionChange() {
+        if (versionsTouched || initialising)
+            return;
+        sAcgVersion = reflectedAcgVersion;
+        sBlockVersion = reflectedBlockVersion;
+        versionsTouched = true;
+        acg.markTreeModified(this);
+    }
+
+    protected void takeSnapshot() {
+        int nNodes = getNodeCount();
+        for (int nr = 0; nr < nNodes; nr++) {
+            Node node = m_nodes[nr];
+            sHeight[nr] = node.getHeight();
+            sParent[nr] = (node.getParent() == null) ? -1 : node.getParent().getNr();
+            if (nr >= nLeaves) {
+                sLeft[nr] = node.getLeft().getNr();
+                sRight[nr] = node.getRight().getNr();
+            }
+        }
+        System.arraycopy(creatorKind, 0, sCreatorKind, 0, nNodes);
+        System.arraycopy(creatorKey, 0, sCreatorKey, 0, nNodes);
+        System.arraycopy(cfToMarg, 0, sCfToMarg, 0, nCFNodes);
+        sConvToMarg.clear();
+        sConvToMarg.putAll(convToMarg);
+        sRoot = root.getNr();
+    }
+
+    protected void restoreSnapshot() {
+        int nNodes = getNodeCount();
+        for (int nr = 0; nr < nNodes; nr++) {
+            MarginalNode node = (MarginalNode) m_nodes[nr];
+            node.setHeight(sHeight[nr]);
+            node.setParent(sParent[nr] < 0 ? null : m_nodes[sParent[nr]]);
+            if (nr >= nLeaves)
+                node.update(sHeight[nr], (MarginalNode) m_nodes[sLeft[nr]], (MarginalNode) m_nodes[sRight[nr]]);
+        }
+        // update() sets the children's parent pointers; reinstate the stored ones
+        for (int nr = 0; nr < nNodes; nr++)
+            ((MarginalNode) m_nodes[nr]).setParent(sParent[nr] < 0 ? null : m_nodes[sParent[nr]]);
+
+        System.arraycopy(sCreatorKind, 0, creatorKind, 0, nNodes);
+        System.arraycopy(sCreatorKey, 0, creatorKey, 0, nNodes);
+        System.arraycopy(sCfToMarg, 0, cfToMarg, 0, nCFNodes);
+        HashMap<Integer, Integer> tmp = convToMarg;
+        convToMarg = sConvToMarg;
+        sConvToMarg = tmp;
+        setRootOnly(m_nodes[sRoot]);
+        freeTop = 0;
+        postCache = null;
+    }
+
+    /**
+     * @return true iff the structure of this tree changed in the current proposal.
+     */
+    public boolean hasStructuralChanges() {
+        return touched;
+    }
+
+    /**
+     * @return true iff anything (structure or reflected versions) changed in the current proposal.
+     */
+    public boolean isModifiedInProposal() {
+        return touched || versionsTouched;
+    }
+
+    /**
+     * Flag every node as filthy, e.g. after initialisation or when the whole state is marked dirty.
+     */
+    public void makeAllDirty() {
+        allDirty = true;
+        super.setEverythingDirty(true);
+    }
+
+    @Override
+    public void setEverythingDirty(boolean isDirty) {
+        if (isDirty) {
+            makeAllDirty();
+        } else {
+            allDirty = false;
+            flagsPending = false;
+            super.setEverythingDirty(false);
+        }
+    }
+
+    @Override
+    public boolean requiresRecalculation() {
+        ensureUpToDate();
+        if (validate)
+            checkConsistency("requiresRecalculation");
+        return touched || allDirty || flagsPending;
+    }
+
+    @Override
+    public boolean somethingIsDirty() {
+        ensureUpToDate();
+        return touched || allDirty || flagsPending;
+    }
+
+    @Override
+    public void store() {
+        // Snapshots are taken lazily at the first modification of a proposal
+        // (BEAST calls store() of calculation nodes only after the proposal).
+        managed = true;
+    }
+
+    @Override
+    public void restore() {
+        boolean hadFlags = touched;
+        if (touched)
+            restoreSnapshot();
+        if (versionsTouched) {
+            reflectedAcgVersion = sAcgVersion;
+            reflectedBlockVersion = sBlockVersion;
+        }
+        touched = false;
+        versionsTouched = false;
+        if (managed) {
+            clearFlags();
+        } else if (hadFlags) {
+            flagsPending = true;
+        }
+        if (validate && isUpToDate())
+            checkConsistency("restore");
+    }
+
+    @Override
+    protected void accept() {
+        boolean hadFlags = touched;
+        touched = false;
+        versionsTouched = false;
+        if (managed) {
+            clearFlags();
+        } else if (hadFlags) {
+            flagsPending = true;
+        }
+    }
+
+    /**
+     * Keep the changes of the current proposal without clearing the dirty flags. Used for trees
+     * that BEAST does not accept or restore (see {@link #managed}); if the proposal was in fact
+     * rejected, the version check resweeps the tree when it is next used.
+     */
+    public void commitProposal() {
+        if (touched)
+            flagsPending = true;
+        touched = false;
+        versionsTouched = false;
+    }
+
+    private void clearFlags() {
+        if (touched || allDirty || flagsPending)
+            super.setEverythingDirty(false);
+        allDirty = false;
+        flagsPending = false;
+    }
+
+    /**
+     * @return true iff the cached value of a (BEAST-managed) likelihood on this tree is valid for
+     * the current tree: the tree is up to date and no node is flagged dirty.
+     */
+    public boolean isLikelihoodCacheCurrent() {
+        return managed && isUpToDate() && !touched && !allDirty && !flagsPending;
+    }
+
+    @Override
+    public void startEditing(Operator operator) {
+        // Marginal trees are not part of the state: no StateNode bookkeeping.
+        postCache = null;
+    }
+
+    /*
+     * Validation
+     */
+
+    /**
+     * Compare the tree with a from-scratch sweep of the current conversion graph and block.
+     * Throws an IllegalStateException describing the first mismatch.
+     */
+    public void checkConsistency(String context) {
+        computeStructure();
+
+        Map<Long, Integer> recByCreator = new HashMap<>();
+        for (int i = 0; i < nRecords; i++)
+            recByCreator.put(creatorId(recKind[i], recKey[i]), i);
+
+        for (int i = 0; i < nLeaves; i++) {
+            if (m_nodes[i].getHeight() != acg.getNode(i).getHeight())
+                throw inconsistency(context, "leaf " + i + " has height " + m_nodes[i].getHeight()
+                        + " but CF leaf has " + acg.getNode(i).getHeight());
+        }
+
+        int nInternal = 0;
+        for (int nr = nLeaves; nr < getNodeCount(); nr++) {
+            if (creatorKind[nr] == CREATOR_NONE)
+                throw inconsistency(context, "internal node " + nr + " has no creator");
+            nInternal++;
+            Integer rec = recByCreator.get(creatorId(creatorKind[nr], creatorKey[nr]));
+            if (rec == null)
+                throw inconsistency(context, "node " + nr + " (" + creatorString(nr) + ") does not fire");
+            if (lookupNr(creatorKind[nr], creatorKey[nr]) != nr)
+                throw inconsistency(context, "forward mapping of " + creatorString(nr) + " does not point to node " + nr);
+            Node node = m_nodes[nr];
+            if (node.getHeight() != recHeight[rec])
+                throw inconsistency(context, "node " + nr + " (" + creatorString(nr) + ") has height "
+                        + node.getHeight() + ", expected " + recHeight[rec]);
+            long a = lineageCreatorId(recChildA[rec]);
+            long b = lineageCreatorId(recChildB[rec]);
+            long l = creatorId(creatorKind[node.getLeft().getNr()], creatorKey[node.getLeft().getNr()]);
+            long r = creatorId(creatorKind[node.getRight().getNr()], creatorKey[node.getRight().getNr()]);
+            if (!((a == l && b == r) || (a == r && b == l)))
+                throw inconsistency(context, "node " + nr + " (" + creatorString(nr) + ") has wrong children");
+            if (node.getLeft().getParent() != node || node.getRight().getParent() != node)
+                throw inconsistency(context, "parent pointers below node " + nr + " are inconsistent");
+        }
+        if (nInternal != nRecords)
+            throw inconsistency(context, "tree has " + nInternal + " internal nodes, sweep has " + nRecords);
+
+        Node expectedRoot = (nRecords > 0) ? null : m_nodes[0];
+        if (nRecords > 0) {
+            int rootRec = nRecords - 1;
+            if (creatorId(creatorKind[root.getNr()], creatorKey[root.getNr()]) != creatorId(recKind[rootRec], recKey[rootRec]))
+                throw inconsistency(context, "root is " + creatorString(root.getNr()));
+        } else if (root != expectedRoot) {
+            throw inconsistency(context, "root of single-leaf tree is not the leaf");
+        }
+        if (root.getParent() != null)
+            throw inconsistency(context, "root has a parent");
+    }
+
+    private long lineageCreatorId(int lineage) {
+        if (lineage < nLeaves)
+            return creatorId(CREATOR_LEAF, lineage);
+        int rec = lineage - nLeaves;
+        return creatorId(recKind[rec], recKey[rec]);
+    }
+
+    private static long creatorId(byte kind, int key) {
+        return ((long) kind << 32) | (key & 0xffffffffL);
+    }
+
+    private String creatorString(int nr) {
+        switch (creatorKind[nr]) {
+            case CREATOR_LEAF: return "leaf " + creatorKey[nr];
+            case CREATOR_CF: return "CF node " + creatorKey[nr];
+            case CREATOR_CONVERSION: return "conversion " + creatorKey[nr];
+            default: return "no creator";
+        }
+    }
+
+    private IllegalStateException inconsistency(String context, String message) {
+        return new IllegalStateException("MarginalTree " + getID() + " (block " + block.getID()
+                + ") inconsistent at " + context + ": " + message);
+    }
+
+    /**
+     * Checksum over the structure and the creator mapping, so that BEAST's debug mode
+     * (validateReject) detects restore errors.
+     */
+    @Override
+    public int getChecksum() {
+        int h = root.getNr();
+        for (int nr = 0; nr < getNodeCount(); nr++) {
+            Node node = m_nodes[nr];
+            h = 31 * h + (node.getParent() == null ? -1 : node.getParent().getNr());
+            h = 31 * h + Double.hashCode(node.getHeight());
+            h = 31 * h + creatorKind[nr];
+            h = 31 * h + creatorKey[nr];
+        }
+        return h;
+    }
+
+    /*
+     * Tree plumbing
+     */
+
+    protected void initArraysSlim() {
+        m_nodes = new MarginalNode[nodeCount];
+        listMarginalNodes((MarginalNode) root, m_nodes);
+        postCache = null;
+    }
+
+    void listMarginalNodes(final MarginalNode node, final Node[] nodes) {
+        nodes[node.getNr()] = node;
+        node.setTree(this);
+
+        for (final Node child : node.getChildren()) {
+            listMarginalNodes((MarginalNode) child, nodes);
+        }
+    }
+
     /**
      * copy of all values from existing tree *
      */
@@ -541,7 +955,7 @@ public class MarginalTree extends Tree {
 
         setID(tree.getID());
 
-        root = (MarginalNode) nodes[tree.getRoot().getNr()];
+        root = nodes[tree.getRoot().getNr()];
         root.assignFrom(nodes, tree.getRoot());
         root.setParent(null);
 
@@ -565,15 +979,4 @@ public class MarginalTree extends Tree {
         return root.toString();
     }
 
-
-    /**
-     * Marginal trees are currently implemented as lean calculation
-     * nodes, hence the state can be inconsistent at intermediate stages.
-     */
-    @Override
-    public int getChecksum() {
-        return 0;
-    }
-
 }
-

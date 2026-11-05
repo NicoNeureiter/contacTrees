@@ -4,11 +4,9 @@ import java.util.HashSet;
 
 import beast.base.core.Description;
 import beast.base.core.Input;
-import beast.base.spec.evolution.likelihood.TreeLikelihood;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import contactrees.Conversion;
-import contactrees.MarginalTree;
 import contactrees.util.Util;
 
 /**
@@ -32,23 +30,15 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
     public ConvertedEdgeHopGibbs() { }
 
     @Override
-    public double proposal() {
+    public double doProposal() {
         double logHGF = 0.;
 
         if (acg.getConvCount() == 0)
             return Double.NEGATIVE_INFINITY;
 
-        for (TreeLikelihood tLH : treeLHsInput.get()) {
-            tLH.store();
-            ((MarginalTree) tLH.treeInput.get()).store();
-        }
-
         // Select recombination at random
         Conversion conv = chooseConversion();
         double height = conv.getHeight();
-
-        // Compute back probability
-        logHGF += getBorrowingsProbGibbs(conv, true);
 
         // Choose whether to move departure or arrival point
         boolean moveDeparture = Randomizer.nextBoolean();
@@ -77,21 +67,11 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
         if (candidates.isEmpty())
             return Double.NEGATIVE_INFINITY;
 
-
         Node newNode = Util.sampleFrom(candidates);
         logHGF -= Math.log(1. / candidates.size());
 
-        // Select new attachment point:
-        if (moveDeparture)
-            conv.setNode1(newNode);
-        else
-            conv.setNode2(newNode);
-
-        assert !acg.isInvalid() : "ConvertedEdgeHopGibbs produced invalid state.";
-
-        // Resample affected blocks
-        logHGF -= drawBorrowingsGibbs(conv, true);
-
+        // Probability of the back move. Computed (and a missing back move rejected) before any
+        // Gibbs work, so that a direct reject leaves the likelihoods untouched.
         if (nClosest > 0) {
             HashSet<Node> candidatesBack = Util.getClosestRelatives(newNode, height, nClosest+1);
 
@@ -107,13 +87,25 @@ public class ConvertedEdgeHopGibbs extends ConversionCreationOperator {
             logHGF += Math.log(1. / candidates.size());
         }
 
-        for (TreeLikelihood tLH : treeLHsInput.get()) {
-            tLH.restore();
-            ((MarginalTree) tLH.treeInput.get()).restore();
-        }
+        // Probability of the current borrowings (for the back move)
+        logHGF += getBorrowingsProbGibbs(conv);
+
+        // Select new attachment point:
+        if (moveDeparture)
+            conv.setNode1(newNode);
+        else
+            conv.setNode2(newNode);
+
+        assert !acg.isInvalid() : "ConvertedEdgeHopGibbs produced invalid state.";
+
+        // Only the trees following the conversion change with the hop. The Gibbs sampling below
+        // updates the trees whose borrowing changes.
+        updateMarginalTrees(treesBorrowing(conv));
+
+        // Resample affected blocks
+        logHGF -= drawBorrowingsGibbs(conv);
 
         return logHGF;
     }
-
 
 }

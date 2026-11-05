@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import beast.base.evolution.alignment.Alignment;
@@ -25,6 +26,7 @@ import contactrees.Conversion;
 import contactrees.ConversionGraph;
 import contactrees.MarginalNode;
 import contactrees.MarginalTree;
+import contactrees.model.MarginalClockModel;
 
 /**
  * Unit test for marginal tree traversal.
@@ -195,6 +197,43 @@ public class MarginalTreeTest extends ContactreesTest {
         }
     }
 
+    /**
+     * Marginal trees no longer roll out branch rates: a clock on the MarginalTree itself is rejected.
+     */
+    @Test
+    public void testBranchRateModelInputRejected() throws Exception {
+        UCRelaxedClockModel clock = new UCRelaxedClockModel();
+        clock.initByName(
+                "rates", new RealVectorParam<>(new double[] {2., 2., 1., 1.}, PositiveReal.INSTANCE),
+                "distr", new Uniform(),
+                "tree", acg);
+
+        MarginalTree marginalTree = new MarginalTree();
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> marginalTree.initByName(
+                "network", acg,
+                "block", blockSet.getBlocks().get(0),
+                "nodetype", MarginalNode.class.getName(),
+                "branchRateModel", clock));
+        assertTrue(exception.getMessage().contains("branchRateModel input is no longer supported"));
+    }
+
+    /**
+     * Branch-dependent clocks are not supported by MarginalClockModel yet.
+     */
+    @Test
+    public void testMarginalClockRejectsRelaxedClock() throws Exception {
+        UCRelaxedClockModel clock = new UCRelaxedClockModel();
+        clock.initByName(
+                "rates", new RealVectorParam<>(new double[] {2., 2., 1., 1.}, PositiveReal.INSTANCE),
+                "distr", new Uniform(),
+                "tree", acg);
+
+        MarginalClockModel marginalClock = new MarginalClockModel();
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> marginalClock.initByName("clock", clock));
+        assertTrue(exception.getMessage().contains("branch-dependent rates"));
+    }
+
+    @Ignore("Branch-dependent clocks on marginal trees are not supported yet (path-integrated rates in MarginalClockModel).")
     @Test
     public void testBranchRates() throws Exception {
         double[] rates = {2., 2., 1., 1.};

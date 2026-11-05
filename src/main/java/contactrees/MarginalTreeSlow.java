@@ -110,11 +110,13 @@ public class MarginalTreeSlow extends Tree {
         return this.changed;
     }
 
+    protected long lastBlockVersion = -1;
+
     public boolean checkOutdated() {
         if (acg.somethingIsDirty())
             return true;
 
-        if (block.isAheadOfMarginalTree())
+        if (block.getVersion() != lastBlockVersion)
             return true;
 
         if (branchRateModel.somethingIsDirty())
@@ -126,6 +128,7 @@ public class MarginalTreeSlow extends Tree {
 
     public void recalculate() {
         startEditing(null);
+        lastBlockVersion = block.getVersion();
         if (customdebug) System.out.print("*");
 
         List<Event> cfEvents = acg.getCFEvents();

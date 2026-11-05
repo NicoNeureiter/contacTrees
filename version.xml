@@ -21,6 +21,7 @@
         <provider classname="contactrees.model.ConversionPrior"/>
         <provider classname="contactrees.model.ConversionPriorLogger"/>
         <provider classname="contactrees.model.FreezableClock"/>
+        <provider classname="contactrees.model.MarginalClockModel"/>
         <provider classname="contactrees.model.likelihood.CTreeLikelihood"/>
         <provider classname="contactrees.model.SimulatedACGWithBlocks"/>
         <provider classname="contactrees.operators.ACGScaler"/>

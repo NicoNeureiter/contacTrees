@@ -1,8 +1,11 @@
 package contactrees.operators;
 
+import java.util.Set;
+
 import beast.base.core.Description;
 import beast.base.util.Randomizer;
 import contactrees.Conversion;
+import contactrees.MarginalTree;
 
 /**
  * @author Nico Neureiter
@@ -15,7 +18,7 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
     boolean activateSanityChecks = false;
 
     @Override
-    public double proposal() {
+    public double doProposal() {
         double logHGF = 0;
 
         if (Randomizer.nextBoolean()) {
@@ -35,8 +38,10 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
             logHGF += getConversionLogProb(conv);
             logHGF -= Math.log(1.0/acg.getConvCount());
 
-            // Remove conversion
+            // Remove conversion (only the trees following it change)
+            Set<MarginalTree> affected = treesBorrowing(conv);
             removeConversion(conv);
+            updateMarginalTrees(affected);
         }
 
         assert !acg.isInvalid() : "AddRemoveConv produced invalid state.";
@@ -55,9 +60,13 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
 
         double logP = attachEdge(newConversion);
 
-        double logPBlocks = drawBorrowingsGibbs(newConversion, false);
+        // No block follows the new conversion yet, so no marginal tree changed. The Gibbs
+        // sampling below updates the trees of the blocks that start to follow it.
+        markAllMarginalTreesUpToDate();
+
+        double logPBlocks = drawBorrowingsGibbs(newConversion);
         if (activateSanityChecks) {
-            double err = Math.abs(logPBlocks - getBorrowingsProbGibbs(newConversion, true));
+            double err = Math.abs(logPBlocks - getBorrowingsProbGibbs(newConversion));
             assert err < 1E-7;
         }
         logP += logPBlocks;
@@ -76,9 +85,9 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
         double logP = 0;
         logP = getEdgeAttachmentProb(conv);
 
-        double logPBlocks = getBorrowingsProbGibbs(conv, false);
+        double logPBlocks = getBorrowingsProbGibbs(conv);
         if (activateSanityChecks) {
-            double err = Math.abs(logPBlocks - getBorrowingsProbGibbs(conv, true));
+            double err = Math.abs(logPBlocks - getBorrowingsProbGibbs(conv));
             assert err < 1E-7;
         }
         logP += logPBlocks;
@@ -122,7 +131,7 @@ public class AddRemoveConversionGibbs extends ConversionCreationOperator {
 
     public double _drawNewConversion(Conversion newConversion) {
         acg.addConversion(newConversion);
-        return drawBorrowingsGibbs(newConversion, true);
+        return drawBorrowingsGibbs(newConversion);
     }
 
 }

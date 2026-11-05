@@ -28,7 +28,7 @@ public class CFConversionSwap extends CFOperator {
     }
 
     @Override
-    public double proposal() {
+    public double doProposal() {
         double logHGF = 0.0;
 
         // Determine whether we can apply this operator:
@@ -97,7 +97,7 @@ public class CFConversionSwap extends CFOperator {
         }
 
         if (resampleBorrowingsInput.get()) {
-            logHGF += drawBorrowingsGibbs(conv, true);
+            logHGF += drawBorrowingsGibbs(conv);
         } else {
             invertAffectedBlocks(conv);
         }

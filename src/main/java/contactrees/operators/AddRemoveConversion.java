@@ -1,8 +1,11 @@
 package contactrees.operators;
 
+import java.util.Set;
+
 import beast.base.core.Description;
 import beast.base.util.Randomizer;
 import contactrees.Conversion;
+import contactrees.MarginalTree;
 
 /**
  * @author Nico Neureiter
@@ -13,7 +16,7 @@ public class AddRemoveConversion extends ConversionCreationOperator {
     public AddRemoveConversion() { }
 
     @Override
-    public double proposal() {
+    public double doProposal() {
         double logHGF = 0;
 
         if (Randomizer.nextBoolean()) {
@@ -33,8 +36,10 @@ public class AddRemoveConversion extends ConversionCreationOperator {
             logHGF += getConversionProb(conv);
             logHGF -= Math.log(1.0/acg.getConvCount());
 
-            // Remove conversion
+            // Remove conversion (only the trees following it change)
+            Set<MarginalTree> affected = treesBorrowing(conv);
             removeConversion(conv);
+            updateMarginalTrees(affected);
         }
 
         assert !acg.isInvalid() : "AddRemoveConv produced invalid state.";
@@ -50,7 +55,11 @@ public class AddRemoveConversion extends ConversionCreationOperator {
      */
     public double drawNewConversion() {
         Conversion newConversion = addNewConversion();
-        return attachEdge(newConversion) + drawBorrowings(newConversion);
+        double logP = attachEdge(newConversion) + drawBorrowings(newConversion);
+
+        // Only the trees following the new conversion change
+        updateMarginalTrees(treesBorrowing(newConversion));
+        return logP;
     }
 
     /**

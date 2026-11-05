@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -52,9 +53,31 @@ public class ConversionGraph extends Tree {
      */
     protected CFEventList cfEventList;
 
+    /**
+     * Version numbers identify states of a conversion graph (or block): every edit assigns a
+     * fresh, globally unique version, and restore() returns to the version of the restored
+     * state. Marginal trees compare the version they reflect with the current one to decide
+     * whether they need to be updated.
+     */
+    private static final AtomicLong VERSION_COUNTER = new AtomicLong();
+
+    public static long nextVersion() {
+        return VERSION_COUNTER.incrementAndGet();
+    }
+
+    protected long version = nextVersion(), storedVersion = version;
+
+    /**
+     * Marginal trees derived from this conversion graph, and the subset of them that was
+     * modified in the current proposal (to be rolled back if the proposal fails directly).
+     */
+    protected final List<MarginalTree> marginalTrees = new ArrayList<>();
+    protected final List<MarginalTree> modifiedTrees = new ArrayList<>();
+
     @Override
     public void initAndValidate() {
         super.initAndValidate();
+        version = nextVersion();
 
         // Initialise conversions lists
         convs = new ConversionList(this);
@@ -351,6 +374,8 @@ public class ConversionGraph extends Tree {
         else
             cfEventList.makeDirty();
 
+        version = nextVersion();
+
 //        nodeCount = m_nodes.length;
 //        initArrays();
         assert !isInvalid();
@@ -388,6 +413,7 @@ public class ConversionGraph extends Tree {
 
     @Override
     public void store() {
+        storedVersion = version;
         super.store();
 
         // Copy the conversion list
@@ -417,6 +443,7 @@ public class ConversionGraph extends Tree {
         convs = tmp;
 
         cfEventList.makeDirty();
+        version = storedVersion;
 
         assert !isInvalid();
     }
@@ -426,8 +453,80 @@ public class ConversionGraph extends Tree {
         if (state != null)
             super.startEditing(operator);
 
+        version = nextVersion();
+
         if (cfEventList != null)
             cfEventList.makeDirty();
+    }
+
+    @Override
+    public void setEverythingDirty(final boolean isDirty) {
+        super.setEverythingDirty(isDirty);
+        if (isDirty) {
+            for (MarginalTree tree : marginalTrees)
+                tree.makeAllDirty();
+        }
+    }
+
+    /**
+     * @return the version of the current state of this conversion graph.
+     */
+    public long getVersion() {
+        return version;
+    }
+
+    /*
+     * Marginal tree registry
+     */
+
+    public void registerMarginalTree(MarginalTree tree) {
+        if (!marginalTrees.contains(tree))
+            marginalTrees.add(tree);
+    }
+
+    /**
+     * @return all marginal trees derived from this conversion graph.
+     */
+    public List<MarginalTree> getMarginalTrees() {
+        return marginalTrees;
+    }
+
+    /**
+     * Called by a marginal tree at its first modification in a proposal.
+     */
+    void markTreeModified(MarginalTree tree) {
+        if (!tree.inModifiedList) {
+            tree.inModifiedList = true;
+            modifiedTrees.add(tree);
+        }
+    }
+
+    /**
+     * Start a new proposal. Trees modified in the previous proposal have normally been accepted
+     * or restored by BEAST in the meantime. Trees that are not on the path to the posterior
+     * (e.g. only used by Gibbs operators) are not; they keep their changes here, and resweep
+     * when next used if the previous proposal was rejected.
+     */
+    public void beginProposal() {
+        for (MarginalTree tree : modifiedTrees) {
+            if (tree.isModifiedInProposal())
+                tree.commitProposal();
+            tree.inModifiedList = false;
+        }
+        modifiedTrees.clear();
+    }
+
+    /**
+     * Restore every marginal tree modified in the current proposal. Used when a proposal fails
+     * directly (returns -infinity), in which case BEAST does not restore calculation nodes.
+     */
+    public void rollbackMarginalTrees() {
+        for (MarginalTree tree : modifiedTrees) {
+            if (tree.isModifiedInProposal())
+                tree.restore();
+            tree.inModifiedList = false;
+        }
+        modifiedTrees.clear();
     }
 
     @Override
@@ -729,6 +828,7 @@ public class ConversionGraph extends Tree {
         initAfterParsingFromNewick(root, m_nodes);
 
         cfEventList = new CFEventList(this);
+        version = nextVersion();
 
         if (!dropNewickConvsInput.get()) {
             for (Conversion conv : convIDMap.values())
