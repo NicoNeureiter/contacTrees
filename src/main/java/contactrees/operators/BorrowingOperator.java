@@ -177,6 +177,7 @@ public abstract class BorrowingOperator extends ACGOperator {
 
         // Get posterior for current block move
         double logPosteriorOld = calcLogBorrowingPosterior(conv, treeLH);
+        boolean checkpoint = getMarginalTree(treeLH).isCheckpoint();
 
         // Compute posterior for flipped block move
         flipBorrowing(block, conv);
@@ -190,7 +191,7 @@ public abstract class BorrowingOperator extends ACGOperator {
         // (We can't just return positive infinity, because of combined moves)
         if (Randomizer.nextDouble() < pRevert) {
             flipBorrowing(block, conv);
-            getMarginalTree(treeLH).ensureUpToDate();
+            restoreAfterRevertedFlip(getMarginalTree(treeLH), checkpoint);
             logP = logPRevert;
         } else {
             logP = Math.log(1 - pRevert);
@@ -216,6 +217,7 @@ public abstract class BorrowingOperator extends ACGOperator {
 
             // Get prior and likelihood for current block move
             double logPosteriorOld = calcLogBorrowingPosterior(conv, treeLH);
+            boolean checkpoint = getMarginalTree(treeLH).isCheckpoint();
 
             // Compute prior and likelihood for flipped block move
             flipBorrowing(block, conv);
@@ -227,7 +229,7 @@ public abstract class BorrowingOperator extends ACGOperator {
 
             // Flip the block-move back to its original state
             flipBorrowing(block, conv);
-            getMarginalTree(treeLH).ensureUpToDate();
+            restoreAfterRevertedFlip(getMarginalTree(treeLH), checkpoint);
         }
 
         return logP;
@@ -257,6 +259,18 @@ public abstract class BorrowingOperator extends ACGOperator {
      * @param block
      * @param conv
      */
+    /**
+     * Bring the marginal tree back in line with its block after a flip was flipped back. If the
+     * tree was unchanged before the flip (a checkpoint), it returns to that state without dirty
+     * flags, so its likelihood is not recomputed; otherwise it is reswept.
+     */
+    protected static void restoreAfterRevertedFlip(MarginalTree tree, boolean checkpoint) {
+        if (checkpoint)
+            tree.revertToCheckpoint();
+        else
+            tree.ensureUpToDate();
+    }
+
     public void flipBorrowing(Block block, Conversion conv) {
         if (block.isAffected(conv)) {
             block.removeMove(conv);

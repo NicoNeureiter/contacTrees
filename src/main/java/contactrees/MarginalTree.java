@@ -1306,6 +1306,33 @@ public class MarginalTree extends Tree {
         return managed && isUpToDate() && !touched && !allDirty && !flagsPending;
     }
 
+    /**
+     * @return true iff the tree is up to date and neither changed in the current proposal nor
+     * flagged dirty, so that {@link #revertToCheckpoint()} can return to the current state.
+     */
+    public boolean isCheckpoint() {
+        return isUpToDate() && !clockStale && !touched && !allDirty && !flagsPending;
+    }
+
+    /**
+     * Return to the state of a checkpoint (see {@link #isCheckpoint()}) after edits that were
+     * undone, e.g. a Gibbs flip that was flipped back. The caller guarantees that the conversion
+     * graph and the block have the same content as at the checkpoint (only their versions
+     * differ). The tree was unchanged in the proposal up to the checkpoint, so the snapshot holds
+     * the checkpoint state; restoring it and clearing the flags lets the likelihood keep its
+     * cached value.
+     */
+    public void revertToCheckpoint() {
+        if (touched) {
+            restoreSnapshot();
+            touched = false;
+            super.setEverythingDirty(false);
+        }
+        setReflectedVersions();
+        if (validate)
+            checkConsistency("revertToCheckpoint");
+    }
+
     @Override
     public void startEditing(Operator operator) {
         // Marginal trees are not part of the state: no StateNode bookkeeping.
