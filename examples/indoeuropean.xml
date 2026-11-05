@@ -689,626 +689,626 @@
 
     <!-- #######################################   LIKELIHOOD   ####################################### -->
     <distribution id="likelihood" spec="CompoundDistribution"> <!--  useThreads="true" threads="2"-->
-      <distribution id="treeLikelihood.I" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:I">
-        <tree id="marginalTree.I" spec="MarginalTree" network="@acg" block="@I" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.I" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:I">
+        <tree id="marginalTree.I" spec="MarginalTree" network="@acg" block="@I"/>
       </distribution>
-      <distribution id="treeLikelihood.all" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:all">
-        <tree id="marginalTree.all" spec="MarginalTree" network="@acg" block="@all" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.all" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:all">
+        <tree id="marginalTree.all" spec="MarginalTree" network="@acg" block="@all"/>
       </distribution>
-      <distribution id="treeLikelihood.and" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:and">
-        <tree id="marginalTree.and" spec="MarginalTree" network="@acg" block="@and" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.and" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:and">
+        <tree id="marginalTree.and" spec="MarginalTree" network="@acg" block="@and"/>
       </distribution>
-      <distribution id="treeLikelihood.animal" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:animal">
-        <tree id="marginalTree.animal" spec="MarginalTree" network="@acg" block="@animal" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.animal" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:animal">
+        <tree id="marginalTree.animal" spec="MarginalTree" network="@acg" block="@animal"/>
       </distribution>
-      <distribution id="treeLikelihood.ashes" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:ashes">
-        <tree id="marginalTree.ashes" spec="MarginalTree" network="@acg" block="@ashes" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.ashes" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:ashes">
+        <tree id="marginalTree.ashes" spec="MarginalTree" network="@acg" block="@ashes"/>
       </distribution>
-      <distribution id="treeLikelihood.at" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:at">
-        <tree id="marginalTree.at" spec="MarginalTree" network="@acg" block="@at" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.at" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:at">
+        <tree id="marginalTree.at" spec="MarginalTree" network="@acg" block="@at"/>
       </distribution>
-      <distribution id="treeLikelihood.back" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:back">
-        <tree id="marginalTree.back" spec="MarginalTree" network="@acg" block="@back" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.back" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:back">
+        <tree id="marginalTree.back" spec="MarginalTree" network="@acg" block="@back"/>
       </distribution>
-      <distribution id="treeLikelihood.bad" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:bad">
-        <tree id="marginalTree.bad" spec="MarginalTree" network="@acg" block="@bad" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.bad" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:bad">
+        <tree id="marginalTree.bad" spec="MarginalTree" network="@acg" block="@bad"/>
       </distribution>
-      <distribution id="treeLikelihood.bark" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:bark">
-        <tree id="marginalTree.bark" spec="MarginalTree" network="@acg" block="@bark" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.bark" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:bark">
+        <tree id="marginalTree.bark" spec="MarginalTree" network="@acg" block="@bark"/>
       </distribution>
-      <distribution id="treeLikelihood.because" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:because">
-        <tree id="marginalTree.because" spec="MarginalTree" network="@acg" block="@because" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.because" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:because">
+        <tree id="marginalTree.because" spec="MarginalTree" network="@acg" block="@because"/>
       </distribution>
-      <distribution id="treeLikelihood.belly" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:belly">
-        <tree id="marginalTree.belly" spec="MarginalTree" network="@acg" block="@belly" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.belly" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:belly">
+        <tree id="marginalTree.belly" spec="MarginalTree" network="@acg" block="@belly"/>
       </distribution>
-      <distribution id="treeLikelihood.big" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:big">
-        <tree id="marginalTree.big" spec="MarginalTree" network="@acg" block="@big" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.big" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:big">
+        <tree id="marginalTree.big" spec="MarginalTree" network="@acg" block="@big"/>
       </distribution>
-      <distribution id="treeLikelihood.bird" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:bird">
-        <tree id="marginalTree.bird" spec="MarginalTree" network="@acg" block="@bird" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.bird" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:bird">
+        <tree id="marginalTree.bird" spec="MarginalTree" network="@acg" block="@bird"/>
       </distribution>
-      <distribution id="treeLikelihood.bite" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:bite">
-        <tree id="marginalTree.bite" spec="MarginalTree" network="@acg" block="@bite" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.bite" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:bite">
+        <tree id="marginalTree.bite" spec="MarginalTree" network="@acg" block="@bite"/>
       </distribution>
-      <distribution id="treeLikelihood.black" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:black">
-        <tree id="marginalTree.black" spec="MarginalTree" network="@acg" block="@black" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.black" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:black">
+        <tree id="marginalTree.black" spec="MarginalTree" network="@acg" block="@black"/>
       </distribution>
-      <distribution id="treeLikelihood.blood" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:blood">
-        <tree id="marginalTree.blood" spec="MarginalTree" network="@acg" block="@blood" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.blood" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:blood">
+        <tree id="marginalTree.blood" spec="MarginalTree" network="@acg" block="@blood"/>
       </distribution>
-      <distribution id="treeLikelihood.blow" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:blow">
-        <tree id="marginalTree.blow" spec="MarginalTree" network="@acg" block="@blow" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.blow" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:blow">
+        <tree id="marginalTree.blow" spec="MarginalTree" network="@acg" block="@blow"/>
       </distribution>
-      <distribution id="treeLikelihood.bone" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:bone">
-        <tree id="marginalTree.bone" spec="MarginalTree" network="@acg" block="@bone" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.bone" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:bone">
+        <tree id="marginalTree.bone" spec="MarginalTree" network="@acg" block="@bone"/>
       </distribution>
-      <distribution id="treeLikelihood.breast" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:breast">
-        <tree id="marginalTree.breast" spec="MarginalTree" network="@acg" block="@breast" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.breast" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:breast">
+        <tree id="marginalTree.breast" spec="MarginalTree" network="@acg" block="@breast"/>
       </distribution>
-      <distribution id="treeLikelihood.breathe" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:breathe">
-        <tree id="marginalTree.breathe" spec="MarginalTree" network="@acg" block="@breathe" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.breathe" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:breathe">
+        <tree id="marginalTree.breathe" spec="MarginalTree" network="@acg" block="@breathe"/>
       </distribution>
-      <distribution id="treeLikelihood.burn" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:burn">
-        <tree id="marginalTree.burn" spec="MarginalTree" network="@acg" block="@burn" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.burn" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:burn">
+        <tree id="marginalTree.burn" spec="MarginalTree" network="@acg" block="@burn"/>
       </distribution>
-      <distribution id="treeLikelihood.child" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:child">
-        <tree id="marginalTree.child" spec="MarginalTree" network="@acg" block="@child" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.child" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:child">
+        <tree id="marginalTree.child" spec="MarginalTree" network="@acg" block="@child"/>
       </distribution>
-      <distribution id="treeLikelihood.cloud" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:cloud">
-        <tree id="marginalTree.cloud" spec="MarginalTree" network="@acg" block="@cloud" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.cloud" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:cloud">
+        <tree id="marginalTree.cloud" spec="MarginalTree" network="@acg" block="@cloud"/>
       </distribution>
-      <distribution id="treeLikelihood.cold" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:cold">
-        <tree id="marginalTree.cold" spec="MarginalTree" network="@acg" block="@cold" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.cold" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:cold">
+        <tree id="marginalTree.cold" spec="MarginalTree" network="@acg" block="@cold"/>
       </distribution>
-      <distribution id="treeLikelihood.come" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:come">
-        <tree id="marginalTree.come" spec="MarginalTree" network="@acg" block="@come" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.come" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:come">
+        <tree id="marginalTree.come" spec="MarginalTree" network="@acg" block="@come"/>
       </distribution>
-      <distribution id="treeLikelihood.count" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:count">
-        <tree id="marginalTree.count" spec="MarginalTree" network="@acg" block="@count" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.count" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:count">
+        <tree id="marginalTree.count" spec="MarginalTree" network="@acg" block="@count"/>
       </distribution>
-      <distribution id="treeLikelihood.cut" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:cut">
-        <tree id="marginalTree.cut" spec="MarginalTree" network="@acg" block="@cut" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.cut" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:cut">
+        <tree id="marginalTree.cut" spec="MarginalTree" network="@acg" block="@cut"/>
       </distribution>
-      <distribution id="treeLikelihood.day" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:day">
-        <tree id="marginalTree.day" spec="MarginalTree" network="@acg" block="@day" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.day" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:day">
+        <tree id="marginalTree.day" spec="MarginalTree" network="@acg" block="@day"/>
       </distribution>
-      <distribution id="treeLikelihood.die" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:die">
-        <tree id="marginalTree.die" spec="MarginalTree" network="@acg" block="@die" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.die" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:die">
+        <tree id="marginalTree.die" spec="MarginalTree" network="@acg" block="@die"/>
       </distribution>
-      <distribution id="treeLikelihood.dig" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:dig">
-        <tree id="marginalTree.dig" spec="MarginalTree" network="@acg" block="@dig" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.dig" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:dig">
+        <tree id="marginalTree.dig" spec="MarginalTree" network="@acg" block="@dig"/>
       </distribution>
-      <distribution id="treeLikelihood.dirty" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:dirty">
-        <tree id="marginalTree.dirty" spec="MarginalTree" network="@acg" block="@dirty" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.dirty" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:dirty">
+        <tree id="marginalTree.dirty" spec="MarginalTree" network="@acg" block="@dirty"/>
       </distribution>
-      <distribution id="treeLikelihood.dog" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:dog">
-        <tree id="marginalTree.dog" spec="MarginalTree" network="@acg" block="@dog" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.dog" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:dog">
+        <tree id="marginalTree.dog" spec="MarginalTree" network="@acg" block="@dog"/>
       </distribution>
-      <distribution id="treeLikelihood.drink" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:drink">
-        <tree id="marginalTree.drink" spec="MarginalTree" network="@acg" block="@drink" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.drink" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:drink">
+        <tree id="marginalTree.drink" spec="MarginalTree" network="@acg" block="@drink"/>
       </distribution>
-      <distribution id="treeLikelihood.dry" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:dry">
-        <tree id="marginalTree.dry" spec="MarginalTree" network="@acg" block="@dry" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.dry" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:dry">
+        <tree id="marginalTree.dry" spec="MarginalTree" network="@acg" block="@dry"/>
       </distribution>
-      <distribution id="treeLikelihood.dull" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:dull">
-        <tree id="marginalTree.dull" spec="MarginalTree" network="@acg" block="@dull" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.dull" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:dull">
+        <tree id="marginalTree.dull" spec="MarginalTree" network="@acg" block="@dull"/>
       </distribution>
-      <distribution id="treeLikelihood.dust" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:dust">
-        <tree id="marginalTree.dust" spec="MarginalTree" network="@acg" block="@dust" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.dust" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:dust">
+        <tree id="marginalTree.dust" spec="MarginalTree" network="@acg" block="@dust"/>
       </distribution>
-      <distribution id="treeLikelihood.ear" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:ear">
-        <tree id="marginalTree.ear" spec="MarginalTree" network="@acg" block="@ear" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.ear" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:ear">
+        <tree id="marginalTree.ear" spec="MarginalTree" network="@acg" block="@ear"/>
       </distribution>
-      <distribution id="treeLikelihood.earth" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:earth">
-        <tree id="marginalTree.earth" spec="MarginalTree" network="@acg" block="@earth" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.earth" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:earth">
+        <tree id="marginalTree.earth" spec="MarginalTree" network="@acg" block="@earth"/>
       </distribution>
-      <distribution id="treeLikelihood.eat" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:eat">
-        <tree id="marginalTree.eat" spec="MarginalTree" network="@acg" block="@eat" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.eat" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:eat">
+        <tree id="marginalTree.eat" spec="MarginalTree" network="@acg" block="@eat"/>
       </distribution>
-      <distribution id="treeLikelihood.egg" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:egg">
-        <tree id="marginalTree.egg" spec="MarginalTree" network="@acg" block="@egg" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.egg" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:egg">
+        <tree id="marginalTree.egg" spec="MarginalTree" network="@acg" block="@egg"/>
       </distribution>
-      <distribution id="treeLikelihood.eye" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:eye">
-        <tree id="marginalTree.eye" spec="MarginalTree" network="@acg" block="@eye" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.eye" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:eye">
+        <tree id="marginalTree.eye" spec="MarginalTree" network="@acg" block="@eye"/>
       </distribution>
-      <distribution id="treeLikelihood.fall" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fall">
-        <tree id="marginalTree.fall" spec="MarginalTree" network="@acg" block="@fall" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.fall" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fall">
+        <tree id="marginalTree.fall" spec="MarginalTree" network="@acg" block="@fall"/>
       </distribution>
-      <distribution id="treeLikelihood.far" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:far">
-        <tree id="marginalTree.far" spec="MarginalTree" network="@acg" block="@far" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.far" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:far">
+        <tree id="marginalTree.far" spec="MarginalTree" network="@acg" block="@far"/>
       </distribution>
-      <distribution id="treeLikelihood.fat" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fat">
-        <tree id="marginalTree.fat" spec="MarginalTree" network="@acg" block="@fat" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.fat" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fat">
+        <tree id="marginalTree.fat" spec="MarginalTree" network="@acg" block="@fat"/>
       </distribution>
-      <distribution id="treeLikelihood.father" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:father">
-        <tree id="marginalTree.father" spec="MarginalTree" network="@acg" block="@father" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.father" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:father">
+        <tree id="marginalTree.father" spec="MarginalTree" network="@acg" block="@father"/>
       </distribution>
-      <distribution id="treeLikelihood.fear" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fear">
-        <tree id="marginalTree.fear" spec="MarginalTree" network="@acg" block="@fear" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.fear" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fear">
+        <tree id="marginalTree.fear" spec="MarginalTree" network="@acg" block="@fear"/>
       </distribution>
-      <distribution id="treeLikelihood.feather" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:feather">
-        <tree id="marginalTree.feather" spec="MarginalTree" network="@acg" block="@feather" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.feather" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:feather">
+        <tree id="marginalTree.feather" spec="MarginalTree" network="@acg" block="@feather"/>
       </distribution>
-      <distribution id="treeLikelihood.few" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:few">
-        <tree id="marginalTree.few" spec="MarginalTree" network="@acg" block="@few" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.few" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:few">
+        <tree id="marginalTree.few" spec="MarginalTree" network="@acg" block="@few"/>
       </distribution>
-      <distribution id="treeLikelihood.fight" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fight">
-        <tree id="marginalTree.fight" spec="MarginalTree" network="@acg" block="@fight" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.fight" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fight">
+        <tree id="marginalTree.fight" spec="MarginalTree" network="@acg" block="@fight"/>
       </distribution>
-      <distribution id="treeLikelihood.fingernail" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fingernail">
-        <tree id="marginalTree.fingernail" spec="MarginalTree" network="@acg" block="@fingernail" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.fingernail" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fingernail">
+        <tree id="marginalTree.fingernail" spec="MarginalTree" network="@acg" block="@fingernail"/>
       </distribution>
-      <distribution id="treeLikelihood.fire" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fire">
-        <tree id="marginalTree.fire" spec="MarginalTree" network="@acg" block="@fire" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.fire" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fire">
+        <tree id="marginalTree.fire" spec="MarginalTree" network="@acg" block="@fire"/>
       </distribution>
-      <distribution id="treeLikelihood.fish" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fish">
-        <tree id="marginalTree.fish" spec="MarginalTree" network="@acg" block="@fish" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.fish" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fish">
+        <tree id="marginalTree.fish" spec="MarginalTree" network="@acg" block="@fish"/>
       </distribution>
-      <distribution id="treeLikelihood.five" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:five">
-        <tree id="marginalTree.five" spec="MarginalTree" network="@acg" block="@five" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.five" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:five">
+        <tree id="marginalTree.five" spec="MarginalTree" network="@acg" block="@five"/>
       </distribution>
-      <distribution id="treeLikelihood.float" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:float">
-        <tree id="marginalTree.float" spec="MarginalTree" network="@acg" block="@float" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.float" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:float">
+        <tree id="marginalTree.float" spec="MarginalTree" network="@acg" block="@float"/>
       </distribution>
-      <distribution id="treeLikelihood.flow" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:flow">
-        <tree id="marginalTree.flow" spec="MarginalTree" network="@acg" block="@flow" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.flow" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:flow">
+        <tree id="marginalTree.flow" spec="MarginalTree" network="@acg" block="@flow"/>
       </distribution>
-      <distribution id="treeLikelihood.flower" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:flower">
-        <tree id="marginalTree.flower" spec="MarginalTree" network="@acg" block="@flower" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.flower" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:flower">
+        <tree id="marginalTree.flower" spec="MarginalTree" network="@acg" block="@flower"/>
       </distribution>
-      <distribution id="treeLikelihood.fly" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fly">
-        <tree id="marginalTree.fly" spec="MarginalTree" network="@acg" block="@fly" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.fly" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fly">
+        <tree id="marginalTree.fly" spec="MarginalTree" network="@acg" block="@fly"/>
       </distribution>
-      <distribution id="treeLikelihood.fog" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fog">
-        <tree id="marginalTree.fog" spec="MarginalTree" network="@acg" block="@fog" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.fog" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fog">
+        <tree id="marginalTree.fog" spec="MarginalTree" network="@acg" block="@fog"/>
       </distribution>
-      <distribution id="treeLikelihood.foot" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:foot">
-        <tree id="marginalTree.foot" spec="MarginalTree" network="@acg" block="@foot" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.foot" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:foot">
+        <tree id="marginalTree.foot" spec="MarginalTree" network="@acg" block="@foot"/>
       </distribution>
-      <distribution id="treeLikelihood.four" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:four">
-        <tree id="marginalTree.four" spec="MarginalTree" network="@acg" block="@four" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.four" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:four">
+        <tree id="marginalTree.four" spec="MarginalTree" network="@acg" block="@four"/>
       </distribution>
-      <distribution id="treeLikelihood.freeze" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:freeze">
-        <tree id="marginalTree.freeze" spec="MarginalTree" network="@acg" block="@freeze" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.freeze" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:freeze">
+        <tree id="marginalTree.freeze" spec="MarginalTree" network="@acg" block="@freeze"/>
       </distribution>
-      <distribution id="treeLikelihood.fruit" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fruit">
-        <tree id="marginalTree.fruit" spec="MarginalTree" network="@acg" block="@fruit" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.fruit" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:fruit">
+        <tree id="marginalTree.fruit" spec="MarginalTree" network="@acg" block="@fruit"/>
       </distribution>
-      <distribution id="treeLikelihood.full" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:full">
-        <tree id="marginalTree.full" spec="MarginalTree" network="@acg" block="@full" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.full" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:full">
+        <tree id="marginalTree.full" spec="MarginalTree" network="@acg" block="@full"/>
       </distribution>
-      <distribution id="treeLikelihood.give" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:give">
-        <tree id="marginalTree.give" spec="MarginalTree" network="@acg" block="@give" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.give" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:give">
+        <tree id="marginalTree.give" spec="MarginalTree" network="@acg" block="@give"/>
       </distribution>
-      <distribution id="treeLikelihood.good" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:good">
-        <tree id="marginalTree.good" spec="MarginalTree" network="@acg" block="@good" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.good" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:good">
+        <tree id="marginalTree.good" spec="MarginalTree" network="@acg" block="@good"/>
       </distribution>
-      <distribution id="treeLikelihood.grass" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:grass">
-        <tree id="marginalTree.grass" spec="MarginalTree" network="@acg" block="@grass" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.grass" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:grass">
+        <tree id="marginalTree.grass" spec="MarginalTree" network="@acg" block="@grass"/>
       </distribution>
-      <distribution id="treeLikelihood.green" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:green">
-        <tree id="marginalTree.green" spec="MarginalTree" network="@acg" block="@green" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.green" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:green">
+        <tree id="marginalTree.green" spec="MarginalTree" network="@acg" block="@green"/>
       </distribution>
-      <distribution id="treeLikelihood.guts" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:guts">
-        <tree id="marginalTree.guts" spec="MarginalTree" network="@acg" block="@guts" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.guts" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:guts">
+        <tree id="marginalTree.guts" spec="MarginalTree" network="@acg" block="@guts"/>
       </distribution>
-      <distribution id="treeLikelihood.hair" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:hair">
-        <tree id="marginalTree.hair" spec="MarginalTree" network="@acg" block="@hair" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.hair" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:hair">
+        <tree id="marginalTree.hair" spec="MarginalTree" network="@acg" block="@hair"/>
       </distribution>
-      <distribution id="treeLikelihood.hand" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:hand">
-        <tree id="marginalTree.hand" spec="MarginalTree" network="@acg" block="@hand" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.hand" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:hand">
+        <tree id="marginalTree.hand" spec="MarginalTree" network="@acg" block="@hand"/>
       </distribution>
-      <distribution id="treeLikelihood.he" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:he">
-        <tree id="marginalTree.he" spec="MarginalTree" network="@acg" block="@he" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.he" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:he">
+        <tree id="marginalTree.he" spec="MarginalTree" network="@acg" block="@he"/>
       </distribution>
-      <distribution id="treeLikelihood.head" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:head">
-        <tree id="marginalTree.head" spec="MarginalTree" network="@acg" block="@head" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.head" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:head">
+        <tree id="marginalTree.head" spec="MarginalTree" network="@acg" block="@head"/>
       </distribution>
-      <distribution id="treeLikelihood.hear" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:hear">
-        <tree id="marginalTree.hear" spec="MarginalTree" network="@acg" block="@hear" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.hear" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:hear">
+        <tree id="marginalTree.hear" spec="MarginalTree" network="@acg" block="@hear"/>
       </distribution>
-      <distribution id="treeLikelihood.heart" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:heart">
-        <tree id="marginalTree.heart" spec="MarginalTree" network="@acg" block="@heart" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.heart" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:heart">
+        <tree id="marginalTree.heart" spec="MarginalTree" network="@acg" block="@heart"/>
       </distribution>
-      <distribution id="treeLikelihood.heavy" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:heavy">
-        <tree id="marginalTree.heavy" spec="MarginalTree" network="@acg" block="@heavy" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.heavy" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:heavy">
+        <tree id="marginalTree.heavy" spec="MarginalTree" network="@acg" block="@heavy"/>
       </distribution>
-      <distribution id="treeLikelihood.here" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:here">
-        <tree id="marginalTree.here" spec="MarginalTree" network="@acg" block="@here" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.here" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:here">
+        <tree id="marginalTree.here" spec="MarginalTree" network="@acg" block="@here"/>
       </distribution>
-      <distribution id="treeLikelihood.hit" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:hit">
-        <tree id="marginalTree.hit" spec="MarginalTree" network="@acg" block="@hit" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.hit" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:hit">
+        <tree id="marginalTree.hit" spec="MarginalTree" network="@acg" block="@hit"/>
       </distribution>
-      <distribution id="treeLikelihood.hold" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:hold">
-        <tree id="marginalTree.hold" spec="MarginalTree" network="@acg" block="@hold" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.hold" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:hold">
+        <tree id="marginalTree.hold" spec="MarginalTree" network="@acg" block="@hold"/>
       </distribution>
-      <distribution id="treeLikelihood.horn" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:horn">
-        <tree id="marginalTree.horn" spec="MarginalTree" network="@acg" block="@horn" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.horn" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:horn">
+        <tree id="marginalTree.horn" spec="MarginalTree" network="@acg" block="@horn"/>
       </distribution>
-      <distribution id="treeLikelihood.how" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:how">
-        <tree id="marginalTree.how" spec="MarginalTree" network="@acg" block="@how" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.how" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:how">
+        <tree id="marginalTree.how" spec="MarginalTree" network="@acg" block="@how"/>
       </distribution>
-      <distribution id="treeLikelihood.hunt" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:hunt">
-        <tree id="marginalTree.hunt" spec="MarginalTree" network="@acg" block="@hunt" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.hunt" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:hunt">
+        <tree id="marginalTree.hunt" spec="MarginalTree" network="@acg" block="@hunt"/>
       </distribution>
-      <distribution id="treeLikelihood.husband" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:husband">
-        <tree id="marginalTree.husband" spec="MarginalTree" network="@acg" block="@husband" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.husband" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:husband">
+        <tree id="marginalTree.husband" spec="MarginalTree" network="@acg" block="@husband"/>
       </distribution>
-      <distribution id="treeLikelihood.ice" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:ice">
-        <tree id="marginalTree.ice" spec="MarginalTree" network="@acg" block="@ice" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.ice" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:ice">
+        <tree id="marginalTree.ice" spec="MarginalTree" network="@acg" block="@ice"/>
       </distribution>
-      <distribution id="treeLikelihood.if" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:if">
-        <tree id="marginalTree.if" spec="MarginalTree" network="@acg" block="@if" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.if" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:if">
+        <tree id="marginalTree.if" spec="MarginalTree" network="@acg" block="@if"/>
       </distribution>
-      <distribution id="treeLikelihood.in" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:in">
-        <tree id="marginalTree.in" spec="MarginalTree" network="@acg" block="@in" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.in" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:in">
+        <tree id="marginalTree.in" spec="MarginalTree" network="@acg" block="@in"/>
       </distribution>
-      <distribution id="treeLikelihood.kill" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:kill">
-        <tree id="marginalTree.kill" spec="MarginalTree" network="@acg" block="@kill" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.kill" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:kill">
+        <tree id="marginalTree.kill" spec="MarginalTree" network="@acg" block="@kill"/>
       </distribution>
-      <distribution id="treeLikelihood.knee" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:knee">
-        <tree id="marginalTree.knee" spec="MarginalTree" network="@acg" block="@knee" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.knee" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:knee">
+        <tree id="marginalTree.knee" spec="MarginalTree" network="@acg" block="@knee"/>
       </distribution>
-      <distribution id="treeLikelihood.know" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:know">
-        <tree id="marginalTree.know" spec="MarginalTree" network="@acg" block="@know" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.know" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:know">
+        <tree id="marginalTree.know" spec="MarginalTree" network="@acg" block="@know"/>
       </distribution>
-      <distribution id="treeLikelihood.lake" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:lake">
-        <tree id="marginalTree.lake" spec="MarginalTree" network="@acg" block="@lake" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.lake" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:lake">
+        <tree id="marginalTree.lake" spec="MarginalTree" network="@acg" block="@lake"/>
       </distribution>
-      <distribution id="treeLikelihood.laugh" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:laugh">
-        <tree id="marginalTree.laugh" spec="MarginalTree" network="@acg" block="@laugh" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.laugh" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:laugh">
+        <tree id="marginalTree.laugh" spec="MarginalTree" network="@acg" block="@laugh"/>
       </distribution>
-      <distribution id="treeLikelihood.leaf" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:leaf">
-        <tree id="marginalTree.leaf" spec="MarginalTree" network="@acg" block="@leaf" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.leaf" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:leaf">
+        <tree id="marginalTree.leaf" spec="MarginalTree" network="@acg" block="@leaf"/>
       </distribution>
-      <distribution id="treeLikelihood.left" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:left">
-        <tree id="marginalTree.left" spec="MarginalTree" network="@acg" block="@left" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.left" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:left">
+        <tree id="marginalTree.left" spec="MarginalTree" network="@acg" block="@left"/>
       </distribution>
-      <distribution id="treeLikelihood.leg" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:leg">
-        <tree id="marginalTree.leg" spec="MarginalTree" network="@acg" block="@leg" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.leg" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:leg">
+        <tree id="marginalTree.leg" spec="MarginalTree" network="@acg" block="@leg"/>
       </distribution>
-      <distribution id="treeLikelihood.lie" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:lie">
-        <tree id="marginalTree.lie" spec="MarginalTree" network="@acg" block="@lie" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.lie" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:lie">
+        <tree id="marginalTree.lie" spec="MarginalTree" network="@acg" block="@lie"/>
       </distribution>
-      <distribution id="treeLikelihood.live" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:live">
-        <tree id="marginalTree.live" spec="MarginalTree" network="@acg" block="@live" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.live" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:live">
+        <tree id="marginalTree.live" spec="MarginalTree" network="@acg" block="@live"/>
       </distribution>
-      <distribution id="treeLikelihood.liver" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:liver">
-        <tree id="marginalTree.liver" spec="MarginalTree" network="@acg" block="@liver" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.liver" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:liver">
+        <tree id="marginalTree.liver" spec="MarginalTree" network="@acg" block="@liver"/>
       </distribution>
-      <distribution id="treeLikelihood.long" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:long">
-        <tree id="marginalTree.long" spec="MarginalTree" network="@acg" block="@long" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.long" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:long">
+        <tree id="marginalTree.long" spec="MarginalTree" network="@acg" block="@long"/>
       </distribution>
-      <distribution id="treeLikelihood.louse" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:louse">
-        <tree id="marginalTree.louse" spec="MarginalTree" network="@acg" block="@louse" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.louse" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:louse">
+        <tree id="marginalTree.louse" spec="MarginalTree" network="@acg" block="@louse"/>
       </distribution>
-      <distribution id="treeLikelihood.man" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:man">
-        <tree id="marginalTree.man" spec="MarginalTree" network="@acg" block="@man" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.man" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:man">
+        <tree id="marginalTree.man" spec="MarginalTree" network="@acg" block="@man"/>
       </distribution>
-      <distribution id="treeLikelihood.many" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:many">
-        <tree id="marginalTree.many" spec="MarginalTree" network="@acg" block="@many" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.many" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:many">
+        <tree id="marginalTree.many" spec="MarginalTree" network="@acg" block="@many"/>
       </distribution>
-      <distribution id="treeLikelihood.meat" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:meat">
-        <tree id="marginalTree.meat" spec="MarginalTree" network="@acg" block="@meat" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.meat" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:meat">
+        <tree id="marginalTree.meat" spec="MarginalTree" network="@acg" block="@meat"/>
       </distribution>
-      <distribution id="treeLikelihood.moon" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:moon">
-        <tree id="marginalTree.moon" spec="MarginalTree" network="@acg" block="@moon" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.moon" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:moon">
+        <tree id="marginalTree.moon" spec="MarginalTree" network="@acg" block="@moon"/>
       </distribution>
-      <distribution id="treeLikelihood.mother" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:mother">
-        <tree id="marginalTree.mother" spec="MarginalTree" network="@acg" block="@mother" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.mother" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:mother">
+        <tree id="marginalTree.mother" spec="MarginalTree" network="@acg" block="@mother"/>
       </distribution>
-      <distribution id="treeLikelihood.mountain" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:mountain">
-        <tree id="marginalTree.mountain" spec="MarginalTree" network="@acg" block="@mountain" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.mountain" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:mountain">
+        <tree id="marginalTree.mountain" spec="MarginalTree" network="@acg" block="@mountain"/>
       </distribution>
-      <distribution id="treeLikelihood.mouth" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:mouth">
-        <tree id="marginalTree.mouth" spec="MarginalTree" network="@acg" block="@mouth" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.mouth" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:mouth">
+        <tree id="marginalTree.mouth" spec="MarginalTree" network="@acg" block="@mouth"/>
       </distribution>
-      <distribution id="treeLikelihood.name" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:name">
-        <tree id="marginalTree.name" spec="MarginalTree" network="@acg" block="@name" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.name" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:name">
+        <tree id="marginalTree.name" spec="MarginalTree" network="@acg" block="@name"/>
       </distribution>
-      <distribution id="treeLikelihood.narrow" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:narrow">
-        <tree id="marginalTree.narrow" spec="MarginalTree" network="@acg" block="@narrow" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.narrow" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:narrow">
+        <tree id="marginalTree.narrow" spec="MarginalTree" network="@acg" block="@narrow"/>
       </distribution>
-      <distribution id="treeLikelihood.near" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:near">
-        <tree id="marginalTree.near" spec="MarginalTree" network="@acg" block="@near" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.near" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:near">
+        <tree id="marginalTree.near" spec="MarginalTree" network="@acg" block="@near"/>
       </distribution>
-      <distribution id="treeLikelihood.neck" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:neck">
-        <tree id="marginalTree.neck" spec="MarginalTree" network="@acg" block="@neck" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.neck" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:neck">
+        <tree id="marginalTree.neck" spec="MarginalTree" network="@acg" block="@neck"/>
       </distribution>
-      <distribution id="treeLikelihood.new" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:new">
-        <tree id="marginalTree.new" spec="MarginalTree" network="@acg" block="@new" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.new" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:new">
+        <tree id="marginalTree.new" spec="MarginalTree" network="@acg" block="@new"/>
       </distribution>
-      <distribution id="treeLikelihood.night" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:night">
-        <tree id="marginalTree.night" spec="MarginalTree" network="@acg" block="@night" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.night" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:night">
+        <tree id="marginalTree.night" spec="MarginalTree" network="@acg" block="@night"/>
       </distribution>
-      <distribution id="treeLikelihood.nose" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:nose">
-        <tree id="marginalTree.nose" spec="MarginalTree" network="@acg" block="@nose" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.nose" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:nose">
+        <tree id="marginalTree.nose" spec="MarginalTree" network="@acg" block="@nose"/>
       </distribution>
-      <distribution id="treeLikelihood.not" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:not">
-        <tree id="marginalTree.not" spec="MarginalTree" network="@acg" block="@not" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.not" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:not">
+        <tree id="marginalTree.not" spec="MarginalTree" network="@acg" block="@not"/>
       </distribution>
-      <distribution id="treeLikelihood.old" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:old">
-        <tree id="marginalTree.old" spec="MarginalTree" network="@acg" block="@old" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.old" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:old">
+        <tree id="marginalTree.old" spec="MarginalTree" network="@acg" block="@old"/>
       </distribution>
-      <distribution id="treeLikelihood.one" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:one">
-        <tree id="marginalTree.one" spec="MarginalTree" network="@acg" block="@one" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.one" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:one">
+        <tree id="marginalTree.one" spec="MarginalTree" network="@acg" block="@one"/>
       </distribution>
-      <distribution id="treeLikelihood.other" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:other">
-        <tree id="marginalTree.other" spec="MarginalTree" network="@acg" block="@other" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.other" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:other">
+        <tree id="marginalTree.other" spec="MarginalTree" network="@acg" block="@other"/>
       </distribution>
-      <distribution id="treeLikelihood.person" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:person">
-        <tree id="marginalTree.person" spec="MarginalTree" network="@acg" block="@person" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.person" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:person">
+        <tree id="marginalTree.person" spec="MarginalTree" network="@acg" block="@person"/>
       </distribution>
-      <distribution id="treeLikelihood.play" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:play">
-        <tree id="marginalTree.play" spec="MarginalTree" network="@acg" block="@play" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.play" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:play">
+        <tree id="marginalTree.play" spec="MarginalTree" network="@acg" block="@play"/>
       </distribution>
-      <distribution id="treeLikelihood.pull" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:pull">
-        <tree id="marginalTree.pull" spec="MarginalTree" network="@acg" block="@pull" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.pull" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:pull">
+        <tree id="marginalTree.pull" spec="MarginalTree" network="@acg" block="@pull"/>
       </distribution>
-      <distribution id="treeLikelihood.push" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:push">
-        <tree id="marginalTree.push" spec="MarginalTree" network="@acg" block="@push" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.push" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:push">
+        <tree id="marginalTree.push" spec="MarginalTree" network="@acg" block="@push"/>
       </distribution>
-      <distribution id="treeLikelihood.rain" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:rain">
-        <tree id="marginalTree.rain" spec="MarginalTree" network="@acg" block="@rain" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.rain" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:rain">
+        <tree id="marginalTree.rain" spec="MarginalTree" network="@acg" block="@rain"/>
       </distribution>
-      <distribution id="treeLikelihood.red" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:red">
-        <tree id="marginalTree.red" spec="MarginalTree" network="@acg" block="@red" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.red" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:red">
+        <tree id="marginalTree.red" spec="MarginalTree" network="@acg" block="@red"/>
       </distribution>
-      <distribution id="treeLikelihood.right" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:right">
-        <tree id="marginalTree.right" spec="MarginalTree" network="@acg" block="@right" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.right" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:right">
+        <tree id="marginalTree.right" spec="MarginalTree" network="@acg" block="@right"/>
       </distribution>
-      <distribution id="treeLikelihood.rightside" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:rightside">
-        <tree id="marginalTree.rightside" spec="MarginalTree" network="@acg" block="@rightside" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.rightside" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:rightside">
+        <tree id="marginalTree.rightside" spec="MarginalTree" network="@acg" block="@rightside"/>
       </distribution>
-      <distribution id="treeLikelihood.river" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:river">
-        <tree id="marginalTree.river" spec="MarginalTree" network="@acg" block="@river" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.river" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:river">
+        <tree id="marginalTree.river" spec="MarginalTree" network="@acg" block="@river"/>
       </distribution>
-      <distribution id="treeLikelihood.road" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:road">
-        <tree id="marginalTree.road" spec="MarginalTree" network="@acg" block="@road" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.road" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:road">
+        <tree id="marginalTree.road" spec="MarginalTree" network="@acg" block="@road"/>
       </distribution>
-      <distribution id="treeLikelihood.root" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:root">
-        <tree id="marginalTree.root" spec="MarginalTree" network="@acg" block="@root" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.root" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:root">
+        <tree id="marginalTree.root" spec="MarginalTree" network="@acg" block="@root"/>
       </distribution>
-      <distribution id="treeLikelihood.rope" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:rope">
-        <tree id="marginalTree.rope" spec="MarginalTree" network="@acg" block="@rope" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.rope" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:rope">
+        <tree id="marginalTree.rope" spec="MarginalTree" network="@acg" block="@rope"/>
       </distribution>
-      <distribution id="treeLikelihood.rotten" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:rotten">
-        <tree id="marginalTree.rotten" spec="MarginalTree" network="@acg" block="@rotten" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.rotten" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:rotten">
+        <tree id="marginalTree.rotten" spec="MarginalTree" network="@acg" block="@rotten"/>
       </distribution>
-      <distribution id="treeLikelihood.round" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:round">
-        <tree id="marginalTree.round" spec="MarginalTree" network="@acg" block="@round" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.round" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:round">
+        <tree id="marginalTree.round" spec="MarginalTree" network="@acg" block="@round"/>
       </distribution>
-      <distribution id="treeLikelihood.rub" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:rub">
-        <tree id="marginalTree.rub" spec="MarginalTree" network="@acg" block="@rub" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.rub" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:rub">
+        <tree id="marginalTree.rub" spec="MarginalTree" network="@acg" block="@rub"/>
       </distribution>
-      <distribution id="treeLikelihood.salt" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:salt">
-        <tree id="marginalTree.salt" spec="MarginalTree" network="@acg" block="@salt" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.salt" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:salt">
+        <tree id="marginalTree.salt" spec="MarginalTree" network="@acg" block="@salt"/>
       </distribution>
-      <distribution id="treeLikelihood.sand" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sand">
-        <tree id="marginalTree.sand" spec="MarginalTree" network="@acg" block="@sand" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.sand" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sand">
+        <tree id="marginalTree.sand" spec="MarginalTree" network="@acg" block="@sand"/>
       </distribution>
-      <distribution id="treeLikelihood.say" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:say">
-        <tree id="marginalTree.say" spec="MarginalTree" network="@acg" block="@say" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.say" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:say">
+        <tree id="marginalTree.say" spec="MarginalTree" network="@acg" block="@say"/>
       </distribution>
-      <distribution id="treeLikelihood.scratch" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:scratch">
-        <tree id="marginalTree.scratch" spec="MarginalTree" network="@acg" block="@scratch" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.scratch" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:scratch">
+        <tree id="marginalTree.scratch" spec="MarginalTree" network="@acg" block="@scratch"/>
       </distribution>
-      <distribution id="treeLikelihood.sea" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sea">
-        <tree id="marginalTree.sea" spec="MarginalTree" network="@acg" block="@sea" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.sea" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sea">
+        <tree id="marginalTree.sea" spec="MarginalTree" network="@acg" block="@sea"/>
       </distribution>
-      <distribution id="treeLikelihood.see" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:see">
-        <tree id="marginalTree.see" spec="MarginalTree" network="@acg" block="@see" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.see" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:see">
+        <tree id="marginalTree.see" spec="MarginalTree" network="@acg" block="@see"/>
       </distribution>
-      <distribution id="treeLikelihood.seed" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:seed">
-        <tree id="marginalTree.seed" spec="MarginalTree" network="@acg" block="@seed" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.seed" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:seed">
+        <tree id="marginalTree.seed" spec="MarginalTree" network="@acg" block="@seed"/>
       </distribution>
-      <distribution id="treeLikelihood.sew" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sew">
-        <tree id="marginalTree.sew" spec="MarginalTree" network="@acg" block="@sew" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.sew" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sew">
+        <tree id="marginalTree.sew" spec="MarginalTree" network="@acg" block="@sew"/>
       </distribution>
-      <distribution id="treeLikelihood.sharp" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sharp">
-        <tree id="marginalTree.sharp" spec="MarginalTree" network="@acg" block="@sharp" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.sharp" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sharp">
+        <tree id="marginalTree.sharp" spec="MarginalTree" network="@acg" block="@sharp"/>
       </distribution>
-      <distribution id="treeLikelihood.short" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:short">
-        <tree id="marginalTree.short" spec="MarginalTree" network="@acg" block="@short" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.short" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:short">
+        <tree id="marginalTree.short" spec="MarginalTree" network="@acg" block="@short"/>
       </distribution>
-      <distribution id="treeLikelihood.sing" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sing">
-        <tree id="marginalTree.sing" spec="MarginalTree" network="@acg" block="@sing" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.sing" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sing">
+        <tree id="marginalTree.sing" spec="MarginalTree" network="@acg" block="@sing"/>
       </distribution>
-      <distribution id="treeLikelihood.sit" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sit">
-        <tree id="marginalTree.sit" spec="MarginalTree" network="@acg" block="@sit" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.sit" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sit">
+        <tree id="marginalTree.sit" spec="MarginalTree" network="@acg" block="@sit"/>
       </distribution>
-      <distribution id="treeLikelihood.skin" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:skin">
-        <tree id="marginalTree.skin" spec="MarginalTree" network="@acg" block="@skin" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.skin" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:skin">
+        <tree id="marginalTree.skin" spec="MarginalTree" network="@acg" block="@skin"/>
       </distribution>
-      <distribution id="treeLikelihood.sky" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sky">
-        <tree id="marginalTree.sky" spec="MarginalTree" network="@acg" block="@sky" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.sky" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sky">
+        <tree id="marginalTree.sky" spec="MarginalTree" network="@acg" block="@sky"/>
       </distribution>
-      <distribution id="treeLikelihood.sleep" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sleep">
-        <tree id="marginalTree.sleep" spec="MarginalTree" network="@acg" block="@sleep" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.sleep" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sleep">
+        <tree id="marginalTree.sleep" spec="MarginalTree" network="@acg" block="@sleep"/>
       </distribution>
-      <distribution id="treeLikelihood.small" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:small">
-        <tree id="marginalTree.small" spec="MarginalTree" network="@acg" block="@small" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.small" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:small">
+        <tree id="marginalTree.small" spec="MarginalTree" network="@acg" block="@small"/>
       </distribution>
-      <distribution id="treeLikelihood.smell" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:smell">
-        <tree id="marginalTree.smell" spec="MarginalTree" network="@acg" block="@smell" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.smell" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:smell">
+        <tree id="marginalTree.smell" spec="MarginalTree" network="@acg" block="@smell"/>
       </distribution>
-      <distribution id="treeLikelihood.smoke" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:smoke">
-        <tree id="marginalTree.smoke" spec="MarginalTree" network="@acg" block="@smoke" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.smoke" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:smoke">
+        <tree id="marginalTree.smoke" spec="MarginalTree" network="@acg" block="@smoke"/>
       </distribution>
-      <distribution id="treeLikelihood.smooth" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:smooth">
-        <tree id="marginalTree.smooth" spec="MarginalTree" network="@acg" block="@smooth" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.smooth" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:smooth">
+        <tree id="marginalTree.smooth" spec="MarginalTree" network="@acg" block="@smooth"/>
       </distribution>
-      <distribution id="treeLikelihood.snake" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:snake">
-        <tree id="marginalTree.snake" spec="MarginalTree" network="@acg" block="@snake" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.snake" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:snake">
+        <tree id="marginalTree.snake" spec="MarginalTree" network="@acg" block="@snake"/>
       </distribution>
-      <distribution id="treeLikelihood.snow" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:snow">
-        <tree id="marginalTree.snow" spec="MarginalTree" network="@acg" block="@snow" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.snow" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:snow">
+        <tree id="marginalTree.snow" spec="MarginalTree" network="@acg" block="@snow"/>
       </distribution>
-      <distribution id="treeLikelihood.some" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:some">
-        <tree id="marginalTree.some" spec="MarginalTree" network="@acg" block="@some" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.some" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:some">
+        <tree id="marginalTree.some" spec="MarginalTree" network="@acg" block="@some"/>
       </distribution>
-      <distribution id="treeLikelihood.spit" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:spit">
-        <tree id="marginalTree.spit" spec="MarginalTree" network="@acg" block="@spit" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.spit" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:spit">
+        <tree id="marginalTree.spit" spec="MarginalTree" network="@acg" block="@spit"/>
       </distribution>
-      <distribution id="treeLikelihood.split" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:split">
-        <tree id="marginalTree.split" spec="MarginalTree" network="@acg" block="@split" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.split" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:split">
+        <tree id="marginalTree.split" spec="MarginalTree" network="@acg" block="@split"/>
       </distribution>
-      <distribution id="treeLikelihood.squeeze" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:squeeze">
-        <tree id="marginalTree.squeeze" spec="MarginalTree" network="@acg" block="@squeeze" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.squeeze" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:squeeze">
+        <tree id="marginalTree.squeeze" spec="MarginalTree" network="@acg" block="@squeeze"/>
       </distribution>
-      <distribution id="treeLikelihood.stab" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:stab">
-        <tree id="marginalTree.stab" spec="MarginalTree" network="@acg" block="@stab" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.stab" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:stab">
+        <tree id="marginalTree.stab" spec="MarginalTree" network="@acg" block="@stab"/>
       </distribution>
-      <distribution id="treeLikelihood.stand" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:stand">
-        <tree id="marginalTree.stand" spec="MarginalTree" network="@acg" block="@stand" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.stand" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:stand">
+        <tree id="marginalTree.stand" spec="MarginalTree" network="@acg" block="@stand"/>
       </distribution>
-      <distribution id="treeLikelihood.star" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:star">
-        <tree id="marginalTree.star" spec="MarginalTree" network="@acg" block="@star" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.star" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:star">
+        <tree id="marginalTree.star" spec="MarginalTree" network="@acg" block="@star"/>
       </distribution>
-      <distribution id="treeLikelihood.stick" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:stick">
-        <tree id="marginalTree.stick" spec="MarginalTree" network="@acg" block="@stick" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.stick" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:stick">
+        <tree id="marginalTree.stick" spec="MarginalTree" network="@acg" block="@stick"/>
       </distribution>
-      <distribution id="treeLikelihood.stone" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:stone">
-        <tree id="marginalTree.stone" spec="MarginalTree" network="@acg" block="@stone" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.stone" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:stone">
+        <tree id="marginalTree.stone" spec="MarginalTree" network="@acg" block="@stone"/>
       </distribution>
-      <distribution id="treeLikelihood.straight" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:straight">
-        <tree id="marginalTree.straight" spec="MarginalTree" network="@acg" block="@straight" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.straight" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:straight">
+        <tree id="marginalTree.straight" spec="MarginalTree" network="@acg" block="@straight"/>
       </distribution>
-      <distribution id="treeLikelihood.suck" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:suck">
-        <tree id="marginalTree.suck" spec="MarginalTree" network="@acg" block="@suck" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.suck" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:suck">
+        <tree id="marginalTree.suck" spec="MarginalTree" network="@acg" block="@suck"/>
       </distribution>
-      <distribution id="treeLikelihood.sun" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sun">
-        <tree id="marginalTree.sun" spec="MarginalTree" network="@acg" block="@sun" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.sun" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:sun">
+        <tree id="marginalTree.sun" spec="MarginalTree" network="@acg" block="@sun"/>
       </distribution>
-      <distribution id="treeLikelihood.swell" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:swell">
-        <tree id="marginalTree.swell" spec="MarginalTree" network="@acg" block="@swell" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.swell" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:swell">
+        <tree id="marginalTree.swell" spec="MarginalTree" network="@acg" block="@swell"/>
       </distribution>
-      <distribution id="treeLikelihood.swim" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:swim">
-        <tree id="marginalTree.swim" spec="MarginalTree" network="@acg" block="@swim" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.swim" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:swim">
+        <tree id="marginalTree.swim" spec="MarginalTree" network="@acg" block="@swim"/>
       </distribution>
-      <distribution id="treeLikelihood.tail" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:tail">
-        <tree id="marginalTree.tail" spec="MarginalTree" network="@acg" block="@tail" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.tail" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:tail">
+        <tree id="marginalTree.tail" spec="MarginalTree" network="@acg" block="@tail"/>
       </distribution>
-      <distribution id="treeLikelihood.that" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:that">
-        <tree id="marginalTree.that" spec="MarginalTree" network="@acg" block="@that" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.that" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:that">
+        <tree id="marginalTree.that" spec="MarginalTree" network="@acg" block="@that"/>
       </distribution>
-      <distribution id="treeLikelihood.there" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:there">
-        <tree id="marginalTree.there" spec="MarginalTree" network="@acg" block="@there" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.there" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:there">
+        <tree id="marginalTree.there" spec="MarginalTree" network="@acg" block="@there"/>
       </distribution>
-      <distribution id="treeLikelihood.they" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:they">
-        <tree id="marginalTree.they" spec="MarginalTree" network="@acg" block="@they" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.they" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:they">
+        <tree id="marginalTree.they" spec="MarginalTree" network="@acg" block="@they"/>
       </distribution>
-      <distribution id="treeLikelihood.thick" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:thick">
-        <tree id="marginalTree.thick" spec="MarginalTree" network="@acg" block="@thick" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.thick" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:thick">
+        <tree id="marginalTree.thick" spec="MarginalTree" network="@acg" block="@thick"/>
       </distribution>
-      <distribution id="treeLikelihood.thin" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:thin">
-        <tree id="marginalTree.thin" spec="MarginalTree" network="@acg" block="@thin" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.thin" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:thin">
+        <tree id="marginalTree.thin" spec="MarginalTree" network="@acg" block="@thin"/>
       </distribution>
-      <distribution id="treeLikelihood.think" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:think">
-        <tree id="marginalTree.think" spec="MarginalTree" network="@acg" block="@think" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.think" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:think">
+        <tree id="marginalTree.think" spec="MarginalTree" network="@acg" block="@think"/>
       </distribution>
-      <distribution id="treeLikelihood.this" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:this">
-        <tree id="marginalTree.this" spec="MarginalTree" network="@acg" block="@this" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.this" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:this">
+        <tree id="marginalTree.this" spec="MarginalTree" network="@acg" block="@this"/>
       </distribution>
-      <distribution id="treeLikelihood.thou" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:thou">
-        <tree id="marginalTree.thou" spec="MarginalTree" network="@acg" block="@thou" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.thou" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:thou">
+        <tree id="marginalTree.thou" spec="MarginalTree" network="@acg" block="@thou"/>
       </distribution>
-      <distribution id="treeLikelihood.three" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:three">
-        <tree id="marginalTree.three" spec="MarginalTree" network="@acg" block="@three" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.three" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:three">
+        <tree id="marginalTree.three" spec="MarginalTree" network="@acg" block="@three"/>
       </distribution>
-      <distribution id="treeLikelihood.throw" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:throw">
-        <tree id="marginalTree.throw" spec="MarginalTree" network="@acg" block="@throw" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.throw" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:throw">
+        <tree id="marginalTree.throw" spec="MarginalTree" network="@acg" block="@throw"/>
       </distribution>
-      <distribution id="treeLikelihood.tie" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:tie">
-        <tree id="marginalTree.tie" spec="MarginalTree" network="@acg" block="@tie" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.tie" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:tie">
+        <tree id="marginalTree.tie" spec="MarginalTree" network="@acg" block="@tie"/>
       </distribution>
-      <distribution id="treeLikelihood.tongue" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:tongue">
-        <tree id="marginalTree.tongue" spec="MarginalTree" network="@acg" block="@tongue" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.tongue" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:tongue">
+        <tree id="marginalTree.tongue" spec="MarginalTree" network="@acg" block="@tongue"/>
       </distribution>
-      <distribution id="treeLikelihood.tooth" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:tooth">
-        <tree id="marginalTree.tooth" spec="MarginalTree" network="@acg" block="@tooth" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.tooth" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:tooth">
+        <tree id="marginalTree.tooth" spec="MarginalTree" network="@acg" block="@tooth"/>
       </distribution>
-      <distribution id="treeLikelihood.tree" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:tree">
-        <tree id="marginalTree.tree" spec="MarginalTree" network="@acg" block="@tree" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.tree" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:tree">
+        <tree id="marginalTree.tree" spec="MarginalTree" network="@acg" block="@tree"/>
       </distribution>
-      <distribution id="treeLikelihood.turn" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:turn">
-        <tree id="marginalTree.turn" spec="MarginalTree" network="@acg" block="@turn" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.turn" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:turn">
+        <tree id="marginalTree.turn" spec="MarginalTree" network="@acg" block="@turn"/>
       </distribution>
-      <distribution id="treeLikelihood.two" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:two">
-        <tree id="marginalTree.two" spec="MarginalTree" network="@acg" block="@two" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.two" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:two">
+        <tree id="marginalTree.two" spec="MarginalTree" network="@acg" block="@two"/>
       </distribution>
-      <distribution id="treeLikelihood.vomit" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:vomit">
-        <tree id="marginalTree.vomit" spec="MarginalTree" network="@acg" block="@vomit" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.vomit" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:vomit">
+        <tree id="marginalTree.vomit" spec="MarginalTree" network="@acg" block="@vomit"/>
       </distribution>
-      <distribution id="treeLikelihood.walk" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:walk">
-        <tree id="marginalTree.walk" spec="MarginalTree" network="@acg" block="@walk" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.walk" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:walk">
+        <tree id="marginalTree.walk" spec="MarginalTree" network="@acg" block="@walk"/>
       </distribution>
-      <distribution id="treeLikelihood.warm" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:warm">
-        <tree id="marginalTree.warm" spec="MarginalTree" network="@acg" block="@warm" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.warm" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:warm">
+        <tree id="marginalTree.warm" spec="MarginalTree" network="@acg" block="@warm"/>
       </distribution>
-      <distribution id="treeLikelihood.wash" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wash">
-        <tree id="marginalTree.wash" spec="MarginalTree" network="@acg" block="@wash" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.wash" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wash">
+        <tree id="marginalTree.wash" spec="MarginalTree" network="@acg" block="@wash"/>
       </distribution>
-      <distribution id="treeLikelihood.water" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:water">
-        <tree id="marginalTree.water" spec="MarginalTree" network="@acg" block="@water" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.water" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:water">
+        <tree id="marginalTree.water" spec="MarginalTree" network="@acg" block="@water"/>
       </distribution>
-      <distribution id="treeLikelihood.we" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:we">
-        <tree id="marginalTree.we" spec="MarginalTree" network="@acg" block="@we" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.we" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:we">
+        <tree id="marginalTree.we" spec="MarginalTree" network="@acg" block="@we"/>
       </distribution>
-      <distribution id="treeLikelihood.wet" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wet">
-        <tree id="marginalTree.wet" spec="MarginalTree" network="@acg" block="@wet" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.wet" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wet">
+        <tree id="marginalTree.wet" spec="MarginalTree" network="@acg" block="@wet"/>
       </distribution>
-      <distribution id="treeLikelihood.what" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:what">
-        <tree id="marginalTree.what" spec="MarginalTree" network="@acg" block="@what" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.what" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:what">
+        <tree id="marginalTree.what" spec="MarginalTree" network="@acg" block="@what"/>
       </distribution>
-      <distribution id="treeLikelihood.when" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:when">
-        <tree id="marginalTree.when" spec="MarginalTree" network="@acg" block="@when" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.when" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:when">
+        <tree id="marginalTree.when" spec="MarginalTree" network="@acg" block="@when"/>
       </distribution>
-      <distribution id="treeLikelihood.where" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:where">
-        <tree id="marginalTree.where" spec="MarginalTree" network="@acg" block="@where" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.where" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:where">
+        <tree id="marginalTree.where" spec="MarginalTree" network="@acg" block="@where"/>
       </distribution>
-      <distribution id="treeLikelihood.white" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:white">
-        <tree id="marginalTree.white" spec="MarginalTree" network="@acg" block="@white" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.white" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:white">
+        <tree id="marginalTree.white" spec="MarginalTree" network="@acg" block="@white"/>
       </distribution>
-      <distribution id="treeLikelihood.who" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:who">
-        <tree id="marginalTree.who" spec="MarginalTree" network="@acg" block="@who" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.who" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:who">
+        <tree id="marginalTree.who" spec="MarginalTree" network="@acg" block="@who"/>
       </distribution>
-      <distribution id="treeLikelihood.wide" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wide">
-        <tree id="marginalTree.wide" spec="MarginalTree" network="@acg" block="@wide" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.wide" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wide">
+        <tree id="marginalTree.wide" spec="MarginalTree" network="@acg" block="@wide"/>
       </distribution>
-      <distribution id="treeLikelihood.wife" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wife">
-        <tree id="marginalTree.wife" spec="MarginalTree" network="@acg" block="@wife" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.wife" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wife">
+        <tree id="marginalTree.wife" spec="MarginalTree" network="@acg" block="@wife"/>
       </distribution>
-      <distribution id="treeLikelihood.wind" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wind">
-        <tree id="marginalTree.wind" spec="MarginalTree" network="@acg" block="@wind" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.wind" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wind">
+        <tree id="marginalTree.wind" spec="MarginalTree" network="@acg" block="@wind"/>
       </distribution>
-      <distribution id="treeLikelihood.wing" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wing">
-        <tree id="marginalTree.wing" spec="MarginalTree" network="@acg" block="@wing" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.wing" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wing">
+        <tree id="marginalTree.wing" spec="MarginalTree" network="@acg" block="@wing"/>
       </distribution>
-      <distribution id="treeLikelihood.wipe" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wipe">
-        <tree id="marginalTree.wipe" spec="MarginalTree" network="@acg" block="@wipe" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.wipe" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:wipe">
+        <tree id="marginalTree.wipe" spec="MarginalTree" network="@acg" block="@wipe"/>
       </distribution>
-      <distribution id="treeLikelihood.with" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:with">
-        <tree id="marginalTree.with" spec="MarginalTree" network="@acg" block="@with" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.with" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:with">
+        <tree id="marginalTree.with" spec="MarginalTree" network="@acg" block="@with"/>
       </distribution>
-      <distribution id="treeLikelihood.woman" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:woman">
-        <tree id="marginalTree.woman" spec="MarginalTree" network="@acg" block="@woman" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.woman" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:woman">
+        <tree id="marginalTree.woman" spec="MarginalTree" network="@acg" block="@woman"/>
       </distribution>
-      <distribution id="treeLikelihood.woods" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:woods">
-        <tree id="marginalTree.woods" spec="MarginalTree" network="@acg" block="@woods" branchRateModel="@clock.fast"/>
+      <distribution id="treeLikelihood.woods" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.fast" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:woods">
+        <tree id="marginalTree.woods" spec="MarginalTree" network="@acg" block="@woods"/>
       </distribution>
-      <distribution id="treeLikelihood.worm" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:worm">
-        <tree id="marginalTree.worm" spec="MarginalTree" network="@acg" block="@worm" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.worm" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:worm">
+        <tree id="marginalTree.worm" spec="MarginalTree" network="@acg" block="@worm"/>
       </distribution>
-      <distribution id="treeLikelihood.year" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:year">
-        <tree id="marginalTree.year" spec="MarginalTree" network="@acg" block="@year" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.year" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:year">
+        <tree id="marginalTree.year" spec="MarginalTree" network="@acg" block="@year"/>
       </distribution>
-      <distribution id="treeLikelihood.yellow" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:yellow">
-        <tree id="marginalTree.yellow" spec="MarginalTree" network="@acg" block="@yellow" branchRateModel="@clock.medium"/>
+      <distribution id="treeLikelihood.yellow" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.medium" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:yellow">
+        <tree id="marginalTree.yellow" spec="MarginalTree" network="@acg" block="@yellow"/>
       </distribution>
-      <distribution id="treeLikelihood.you" spec="TreeLikelihood" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:you">
-        <tree id="marginalTree.you" spec="MarginalTree" network="@acg" block="@you" branchRateModel="@clock.slow"/>
+      <distribution id="treeLikelihood.you" spec="contactrees.model.likelihood.CTreeLikelihood" branchRateModel="@clock.slow" useAmbiguities="true" siteModel="@SiteModel.vocabulary" data="@feature_data:you">
+        <tree id="marginalTree.you" spec="MarginalTree" network="@acg" block="@you"/>
       </distribution>
 
     </distribution>
