@@ -13,9 +13,11 @@ import contactrees.MarginalTree;
  * on the clonal frame. Marginal trees keep their true heights, so the rate of a marginal branch
  * is the time-weighted mean of the clonal frame rates along the path the branch follows.
  *
- * Currently only clocks whose rate does not depend on the branch are supported (strict clocks,
- * or a FreezableClock without frozen taxa around one); then every marginal branch has the clock
- * rate.
+ * For clocks whose rate does not depend on the branch (strict clocks, or a FreezableClock
+ * without frozen taxa around one) every marginal branch has the clock rate. For any other clock
+ * defined on the clonal frame (relaxed clocks, frozen taxa, ...) the marginal tree records the
+ * CF path of each marginal branch and computes the path-averaged rates
+ * ({@link MarginalTree#setBranchRateClock}).
  *
  * @author Nico Neureiter
  */
@@ -31,14 +33,19 @@ public class MarginalClockModel extends Base {
             "The marginal tree whose branch rates are provided.");
 
     protected BranchRateModel clock;
+    protected MarginalTree tree;
+    protected boolean branchIndependent;
 
     @Override
     public void initAndValidate() {
         clock = clockInput.get();
-        if (!isBranchIndependent(clock)) {
-            throw new UnsupportedOperationException("MarginalClockModel " + getID() + ": clock model "
-                    + clock.getClass().getSimpleName() + " has branch-dependent rates, which are not yet "
-                    + "supported on marginal trees. Use a strict clock.");
+        tree = treeInput.get();
+        branchIndependent = isBranchIndependent(clock);
+        if (!branchIndependent) {
+            if (tree == null)
+                throw new IllegalArgumentException("MarginalClockModel " + getID() + ": the clock "
+                        + clock.getClass().getSimpleName() + " has branch-dependent rates, which requires the tree input.");
+            tree.setBranchRateClock(clock);
         }
     }
 
@@ -57,13 +64,54 @@ public class MarginalClockModel extends Base {
 
     @Override
     public double getRateForBranch(Node node) {
-        // Branch independent: the rate of any branch is the clock rate.
-        return clock.getRateForBranch(node);
+        if (branchIndependent)
+            return clock.getRateForBranch(node);
+        tree.ensureUpToDate();
+        return tree.getBranchRate(node.getNr());
+    }
+
+    public boolean isBranchIndependent() {
+        return branchIndependent;
     }
 
     @Override
     protected boolean requiresRecalculation() {
-        return (clock instanceof CalculationNode cn) && cn.somethingIsDirty();
+        boolean clockDirty = (clock instanceof CalculationNode cn) && cn.somethingIsDirty();
+        if (branchIndependent)
+            return clockDirty;
+
+        // Recompute the rates now; nodes whose rate changed are flagged dirty in the tree
+        if (clockDirty)
+            tree.invalidateRates();
+        tree.ensureUpToDate();
+        return clockDirty || tree.somethingIsDirty();
+    }
+
+    /*
+     * After a proposal that only changed the clock, BEAST accepts or restores this wrapper but not
+     * the marginal tree (which is not downstream of the clock), although the tree's rates changed.
+     * Forward both; they are no-ops for a tree that BEAST handles itself.
+     */
+
+    @Override
+    protected void store() {
+        super.store();
+        if (!branchIndependent)
+            tree.store();
+    }
+
+    @Override
+    protected void restore() {
+        super.restore();
+        if (!branchIndependent)
+            tree.restore();
+    }
+
+    @Override
+    protected void accept() {
+        super.accept();
+        if (!branchIndependent)
+            tree.acceptProposal();
     }
 
 }

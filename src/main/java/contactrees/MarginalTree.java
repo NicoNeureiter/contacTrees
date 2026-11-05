@@ -29,9 +29,16 @@ import contactrees.CFEventList.EventType;
  * across updates. The forward mapping (creator to node number) and the inverse mapping are kept
  * here, per marginal tree.
  *
- * <h2>Heights</h2>
+ * <h2>Heights and branch rates</h2>
  * Marginal node heights are the creator heights (no rolling out of branch rates). Branch
  * rates are supplied to the likelihood by {@link contactrees.model.MarginalClockModel}.
+ * For a clock with branch-dependent rates, the tree also records the <i>path</i> of every
+ * marginal branch: the CF branches it runs along (bottom to top) and the events where it
+ * changes CF branch (a CF node it passes through, or a conversion over which it jumps to an
+ * empty branch). Events are stored by identity (CF node nr or conversion ID), not by time, so
+ * height-only updates leave the paths valid. The rate of a marginal branch is the time-weighted
+ * mean of the CF rates along its path; rates are recomputed from the paths whenever the
+ * conversion graph, the block or the clock changed, and a node whose rate changed is flagged dirty.
  *
  * <h2>Updates and caching</h2>
  * The structure is (re)derived by {@link #resweep()}: a sweep over the CF events and the block's
@@ -130,8 +137,28 @@ public class MarginalTree extends Tree {
     protected boolean[] keepNr;
     protected final ArrayList<Conversion> sortedConvs = new ArrayList<>();
 
+    /* Branch paths and rates, only used with a branch-dependent clock (see setBranchRateClock). */
+    /** The clock on the clonal frame, or null if the clock is branch independent. */
+    protected BranchRateModel rateClock;
+    /** The clock changed since the rates were last computed. */
+    protected boolean clockStale = false;
+    /** Per node nr: the CF branches (CF node nrs) occupied by the marginal branch above it, bottom to top. */
+    protected int[][] pathBranches;
+    /** Per node nr: the events where that marginal branch changes CF branch (creatorId-encoded). */
+    protected long[][] pathEvents;
+    /** Per node nr: the rate of the marginal branch above it. */
+    protected double[] rates;
+    protected int[][] sPathBranches;
+    protected long[][] sPathEvents;
+    protected double[] sRates;
+    /* Sweep scratch for the paths: per lineage a linked list of events in an event pool. */
+    protected int[] linStart, linHead, linTail;
+    protected long[] evId = new long[0];
+    protected int[] evBranch = new int[0], evNext = new int[0];
+    protected int nEvents;
+
     /** Counters for diagnostics and tests. */
-    public long nResweeps = 0, nNodesWritten = 0;
+    public long nResweeps = 0, nNodesWritten = 0, nRateUpdates = 0;
 
     @Override
     public void initAndValidate() {
@@ -228,6 +255,8 @@ public class MarginalTree extends Tree {
     public void ensureUpToDate() {
         if (!isUpToDate())
             resweep();
+        else if (clockStale)
+            updateRates();
     }
 
     /**
@@ -235,13 +264,25 @@ public class MarginalTree extends Tree {
      * Operators call this for trees they know to be unaffected by their changes.
      */
     public void markUpToDate() {
+        boolean changed = setReflectedVersions();
+        // With a branch-dependent clock, rates depend on heights along the paths (e.g. of CF
+        // nodes the block only passes through), so they are recomputed after any change.
+        if (rateClock != null && (changed || clockStale))
+            updateRates();
+    }
+
+    /**
+     * @return true iff the reflected versions changed.
+     */
+    private boolean setReflectedVersions() {
         long acgVersion = acg.getVersion();
         long blockVersion = block.getVersion();
         if (reflectedAcgVersion == acgVersion && reflectedBlockVersion == blockVersion)
-            return;
+            return false;
         beginVersionChange();
         reflectedAcgVersion = acgVersion;
         reflectedBlockVersion = blockVersion;
+        return true;
     }
 
     /*
@@ -256,7 +297,9 @@ public class MarginalTree extends Tree {
         nResweeps++;
         computeStructure();
         reconcile();
-        markUpToDate();
+        setReflectedVersions();
+        if (rateClock != null)
+            updateRates();
     }
 
     /**
@@ -270,6 +313,8 @@ public class MarginalTree extends Tree {
 
         Arrays.fill(activeLineage, -1);
         nRecords = 0;
+        nEvents = 0;
+        boolean paths = (rateClock != null);
         int iConv = 0;
 
         for (int iEvent = 0; iEvent < cfEvents.size(); iEvent++) {
@@ -279,6 +324,8 @@ public class MarginalTree extends Tree {
 
             if (event.getType() == EventType.SAMPLE) {
                 activeLineage[nodeNr] = nodeNr;
+                if (paths)
+                    startPath(nodeNr, nodeNr);
             } else {
                 int left = node.getChild(0).getNr();
                 int right = node.getChild(1).getNr();
@@ -291,12 +338,18 @@ public class MarginalTree extends Tree {
                     activeLineage[left] = -1;
                     activeLineage[right] = -1;
                     activeLineage[nodeNr] = lineage;
+                    if (paths)
+                        startPath(lineage, nodeNr);
                 } else if (lineageLeft >= 0) {
                     activeLineage[left] = -1;
                     activeLineage[nodeNr] = lineageLeft;
+                    if (paths)
+                        addPathEvent(lineageLeft, creatorId(CREATOR_CF, nodeNr), nodeNr);
                 } else if (lineageRight >= 0) {
                     activeLineage[right] = -1;
                     activeLineage[nodeNr] = lineageRight;
+                    if (paths)
+                        addPathEvent(lineageRight, creatorId(CREATOR_CF, nodeNr), nodeNr);
                 }
             }
 
@@ -314,10 +367,14 @@ public class MarginalTree extends Tree {
                     int lineage = addRecord(CREATOR_CONVERSION, conv.getID(), conv.getHeight(), lineage1, lineage2);
                     activeLineage[nr1] = -1;
                     activeLineage[nr2] = lineage;
+                    if (paths)
+                        startPath(lineage, nr2);
                 } else if (lineage1 >= 0) {
                     // The lineage of node1 jumps to the (empty) branch of node2
                     activeLineage[nr1] = -1;
                     activeLineage[nr2] = lineage1;
+                    if (paths)
+                        addPathEvent(lineage1, creatorId(CREATOR_CONVERSION, conv.getID()), nr2);
                 }
                 // else: node1 already left this branch, the conversion has no effect
             }
@@ -327,6 +384,51 @@ public class MarginalTree extends Tree {
             throw new IllegalStateException("MarginalTree " + getID() + ": sweep produced " + nRecords
                     + " internal nodes, expected " + (nLeaves - 1) + ".");
         }
+    }
+
+    private void startPath(int lineage, int branch) {
+        linStart[lineage] = branch;
+        linHead[lineage] = -1;
+        linTail[lineage] = -1;
+    }
+
+    private void addPathEvent(int lineage, long eventId, int newBranch) {
+        if (nEvents >= evId.length) {
+            int capacity = Math.max(2 * evId.length, nCFNodes + 16);
+            evId = Arrays.copyOf(evId, capacity);
+            evBranch = Arrays.copyOf(evBranch, capacity);
+            evNext = Arrays.copyOf(evNext, capacity);
+        }
+        int e = nEvents++;
+        evId[e] = eventId;
+        evBranch[e] = newBranch;
+        evNext[e] = -1;
+        if (linTail[lineage] < 0)
+            linHead[lineage] = e;
+        else
+            evNext[linTail[lineage]] = e;
+        linTail[lineage] = e;
+    }
+
+    private int pathEventCount(int lineage) {
+        int n = 0;
+        for (int e = linHead[lineage]; e >= 0; e = evNext[e])
+            n++;
+        return n;
+    }
+
+    /**
+     * @return true iff the stored path matches the swept path of the given lineage.
+     */
+    private boolean pathMatches(int[] branches, long[] events, int lineage) {
+        if (branches == null || branches[0] != linStart[lineage] || events.length != pathEventCount(lineage))
+            return false;
+        int i = 0;
+        for (int e = linHead[lineage]; e >= 0; e = evNext[e], i++) {
+            if (events[i] != evId[e] || branches[i + 1] != evBranch[e])
+                return false;
+        }
+        return true;
     }
 
     private int addRecord(byte kind, int key, double height, int childA, int childB) {
@@ -518,7 +620,37 @@ public class MarginalTree extends Tree {
             }
         }
 
-        // 6. Root: the last firing creator (or the single leaf)
+        // 6. Paths of the marginal branches (only with a branch-dependent clock). A changed
+        //    path does not flag the node itself: updateRates() does if the rate changed.
+        if (rateClock != null) {
+            int rootLineage = (nRecords > 0) ? nLeaves + nRecords - 1 : 0;
+            for (int lineage = 0; lineage < nLeaves + nRecords; lineage++) {
+                int nr = lineageToNr(lineage);
+                if (lineage == rootLineage) {
+                    if (pathBranches[nr] != null) {
+                        beginModification();
+                        pathBranches[nr] = null;
+                        pathEvents[nr] = null;
+                    }
+                } else if (!pathMatches(pathBranches[nr], pathEvents[nr], lineage)) {
+                    beginModification();
+                    int n = pathEventCount(lineage);
+                    int[] branches = new int[n + 1];
+                    long[] events = new long[n];
+                    branches[0] = linStart[lineage];
+                    int i = 0;
+                    for (int e = linHead[lineage]; e >= 0; e = evNext[e], i++) {
+                        events[i] = evId[e];
+                        branches[i + 1] = evBranch[e];
+                    }
+                    // Paths are replaced, never changed in place (the snapshot shares them)
+                    pathBranches[nr] = branches;
+                    pathEvents[nr] = events;
+                }
+            }
+        }
+
+        // 7. Root: the last firing creator (or the single leaf)
         Node newRoot = (nRecords > 0) ? m_nodes[recNr[nRecords - 1]] : m_nodes[0];
         if (newRoot != root || newRoot.getParent() != null) {
             beginModification();
@@ -607,6 +739,120 @@ public class MarginalTree extends Tree {
     }
 
     /*
+     * Branch-dependent clocks: paths and rates
+     */
+
+    /**
+     * Use a clock with branch-dependent rates on the clonal frame: from now on the tree records
+     * the paths of its marginal branches and provides their rates ({@link #getBranchRate(int)}).
+     */
+    public void setBranchRateClock(BranchRateModel clock) {
+        if (rateClock == clock)
+            return;
+        if (rateClock != null)
+            throw new IllegalStateException("MarginalTree " + getID() + " already uses clock " + rateClock
+                    + "; one marginal tree cannot be used with two different clocks.");
+        rateClock = clock;
+
+        int nNodes = getNodeCount();
+        pathBranches = new int[nNodes][];
+        pathEvents = new long[nNodes][];
+        rates = new double[nNodes];
+        sPathBranches = new int[nNodes][];
+        sPathEvents = new long[nNodes][];
+        sRates = new double[nNodes];
+        linStart = new int[nCFNodes];
+        linHead = new int[nCFNodes];
+        linTail = new int[nCFNodes];
+
+        initialising = true;
+        try {
+            computeStructure();
+            reconcile();
+            setReflectedVersions();
+            updateRates();
+        } finally {
+            initialising = false;
+        }
+        touched = false;
+        versionsTouched = false;
+        makeAllDirty();
+    }
+
+    /**
+     * Notify the tree that the clock changed (its rates are recomputed on the next use).
+     */
+    public void invalidateRates() {
+        if (rateClock != null)
+            clockStale = true;
+    }
+
+    /**
+     * @return the rate of the marginal branch above the node with the given number (only
+     * available with a branch-dependent clock; call {@link #ensureUpToDate()} first).
+     */
+    public double getBranchRate(int nr) {
+        return rates[nr];
+    }
+
+    /**
+     * Recompute all branch rates from the paths and the current heights and clock. Nodes whose
+     * rate changed are flagged dirty.
+     */
+    protected void updateRates() {
+        clockStale = false;
+        nRateUpdates++;
+        ConversionList convs = acg.getConversions();
+        int rootNr = root.getNr();
+        for (int nr = 0; nr < getNodeCount(); nr++) {
+            double rate = (nr == rootNr) ? 1.0 : computeRate(nr, convs);
+            if (Double.doubleToRawLongBits(rate) != Double.doubleToRawLongBits(rates[nr])) {
+                beginModification();
+                rates[nr] = rate;
+                m_nodes[nr].makeDirty(Tree.IS_DIRTY);
+            }
+        }
+    }
+
+    /**
+     * Time-weighted mean of the CF rates along the path of the marginal branch above node nr.
+     * The terms are summed in path order, so equal paths give bit-identical rates in all trees.
+     */
+    protected double computeRate(int nr, ConversionList convs) {
+        int[] branches = pathBranches[nr];
+        long[] events = pathEvents[nr];
+        double bottom = m_nodes[nr].getHeight();
+        double top = m_nodes[nr].getParent().getHeight();
+
+        double t = bottom;
+        double sum = 0.0;
+        for (int i = 0; i < events.length; i++) {
+            double tEvent = eventHeight(events[i], convs);
+            sum += cfRate(branches[i]) * (tEvent - t);
+            t = tEvent;
+        }
+        sum += cfRate(branches[events.length]) * (top - t);
+
+        double length = top - bottom;
+        return (length > 0.0) ? sum / length : cfRate(branches[0]);
+    }
+
+    private double cfRate(int cfNr) {
+        return rateClock.getRateForBranch(acg.getNode(cfNr));
+    }
+
+    private double eventHeight(long eventId, ConversionList convs) {
+        byte kind = (byte) (eventId >>> 32);
+        int key = (int) eventId;
+        return (kind == CREATOR_CF) ? acg.getNode(key).getHeight() : convs.get(key).getHeight();
+    }
+
+    /** @return the CF branches of the path above node nr (bottom to top), or null for the root. */
+    public int[] getPathBranches(int nr) {
+        return pathBranches == null ? null : pathBranches[nr];
+    }
+
+    /*
      * Mapping queries
      */
 
@@ -676,6 +922,11 @@ public class MarginalTree extends Tree {
         sConvToMarg.clear();
         sConvToMarg.putAll(convToMarg);
         sRoot = root.getNr();
+        if (rateClock != null) {
+            System.arraycopy(pathBranches, 0, sPathBranches, 0, nNodes);
+            System.arraycopy(pathEvents, 0, sPathEvents, 0, nNodes);
+            System.arraycopy(rates, 0, sRates, 0, nNodes);
+        }
     }
 
     protected void restoreSnapshot() {
@@ -699,6 +950,11 @@ public class MarginalTree extends Tree {
         sConvToMarg = tmp;
         setRootOnly(m_nodes[sRoot]);
         freeTop = 0;
+        if (rateClock != null) {
+            System.arraycopy(sPathBranches, 0, pathBranches, 0, nNodes);
+            System.arraycopy(sPathEvents, 0, pathEvents, 0, nNodes);
+            System.arraycopy(sRates, 0, rates, 0, nNodes);
+        }
         postCache = null;
     }
 
@@ -786,6 +1042,14 @@ public class MarginalTree extends Tree {
         } else if (hadFlags) {
             flagsPending = true;
         }
+    }
+
+    /**
+     * Accept the current proposal. Used by the clock wrapper: after a clock-only proposal, BEAST
+     * accepts or restores the clock wrapper but not the tree, whose rates changed.
+     */
+    public void acceptProposal() {
+        accept();
     }
 
     /**
@@ -878,6 +1142,29 @@ public class MarginalTree extends Tree {
         }
         if (root.getParent() != null)
             throw inconsistency(context, "root has a parent");
+
+        if (rateClock != null) {
+            int rootLineage = (nRecords > 0) ? nLeaves + nRecords - 1 : 0;
+            for (int lineage = 0; lineage < nLeaves + nRecords; lineage++) {
+                int nr = (lineage < nLeaves) ? lineage
+                        : lookupNr(recKind[lineage - nLeaves], recKey[lineage - nLeaves]);
+                if (lineage == rootLineage)
+                    continue;
+                if (!pathMatches(pathBranches[nr], pathEvents[nr], lineage))
+                    throw inconsistency(context, "path above node " + nr + " (" + creatorString(nr) + ") is "
+                            + Arrays.toString(pathBranches[nr]) + " " + Arrays.toString(pathEvents[nr])
+                            + ", sweep gives start " + linStart[lineage] + " with " + pathEventCount(lineage) + " events");
+            }
+            if (!clockStale) {
+                ConversionList convs = acg.getConversions();
+                for (int nr = 0; nr < getNodeCount(); nr++) {
+                    double expected = (nr == root.getNr()) ? 1.0 : computeRate(nr, convs);
+                    if (rates[nr] != expected)
+                        throw inconsistency(context, "rate above node " + nr + " (" + creatorString(nr) + ") is "
+                                + rates[nr] + ", expected " + expected);
+                }
+            }
+        }
     }
 
     private long lineageCreatorId(int lineage) {
@@ -918,6 +1205,8 @@ public class MarginalTree extends Tree {
             h = 31 * h + Double.hashCode(node.getHeight());
             h = 31 * h + creatorKind[nr];
             h = 31 * h + creatorKey[nr];
+            if (rateClock != null)
+                h = 31 * h + Double.hashCode(rates[nr]);
         }
         return h;
     }

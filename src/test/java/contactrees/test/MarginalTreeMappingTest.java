@@ -14,7 +14,11 @@ import org.junit.Test;
 import beast.base.evolution.alignment.Alignment;
 import beast.base.evolution.tree.Node;
 import beast.base.spec.domain.PositiveReal;
+import beast.base.evolution.alignment.Taxon;
 import beast.base.spec.evolution.branchratemodel.StrictClockModel;
+import beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel;
+import beast.base.spec.inference.distribution.Uniform;
+import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.spec.evolution.likelihood.TreeLikelihood;
 import beast.base.spec.evolution.sitemodel.SiteModel;
 import beast.base.spec.evolution.substitutionmodel.JukesCantor;
@@ -28,6 +32,7 @@ import contactrees.ConversionGraph;
 import contactrees.MarginalNode;
 import contactrees.MarginalTree;
 import contactrees.MarginalTreeSlow;
+import contactrees.model.FreezableClock;
 import contactrees.model.SimulatedACGWithBlocks;
 import contactrees.model.likelihood.CTreeLikelihood;
 
@@ -150,6 +155,64 @@ public class MarginalTreeMappingTest extends ContactreesTest {
                 assertEquals("seed " + seed + ", " + block.getID(), refLogP, logP, 1e-9 * Math.abs(refLogP));
             }
         }
+    }
+
+    /**
+     * Random relaxed clock on the clonal frame: one rate per CF branch, drawn in [0.3, 3).
+     */
+    static UCRelaxedClockModel randomRelaxedClock(ConversionGraph acg, long seed) {
+        java.util.Random random = new java.util.Random(seed);
+        double[] rates = new double[acg.getNodeCount() - 1];
+        for (int i = 0; i < rates.length; i++)
+            rates[i] = 0.3 + 2.7 * random.nextDouble();
+        UCRelaxedClockModel clock = new UCRelaxedClockModel();
+        clock.initByName("rates", new RealVectorParam<>(rates, PositiveReal.INSTANCE),
+                "distr", new Uniform(), "tree", acg);
+        return clock;
+    }
+
+    /**
+     * With a relaxed clock (optionally with a frozen taxon), the likelihood of the true-height
+     * marginal tree with path-averaged rates must equal the likelihood of the rolled-out reference.
+     */
+    @Test
+    public void testRelaxedClockLikelihoodMatchesRolledOutReference() {
+        Alignment alignment = getAlignment(10);
+        JukesCantor jc = new JukesCantor();
+        jc.initByName();
+        SiteModel siteModel = new SiteModel();
+        siteModel.initByName("substModel", jc);
+
+        int nWithConversions = 0;
+        for (long seed = 1; seed <= 10; seed++) {
+            simulateRandomACG(seed, 0.4, 0.5);
+            nWithConversions += randomAcg.getConvCount() > 0 ? 1 : 0;
+            for (boolean frozen : new boolean[] {false, true}) {
+                UCRelaxedClockModel relaxed = randomRelaxedClock(randomAcg, seed);
+                FreezableClock clock = new FreezableClock();
+                clock.initByName("clock", relaxed, "frozenTaxa", frozen ? List.of(new Taxon("4")) : List.of());
+
+                for (Block block : randomBlockSet.getBlocks()) {
+                    MarginalTree tree = newMarginalTree(randomAcg, block);
+                    CTreeLikelihood likelihood = new CTreeLikelihood();
+                    likelihood.initByName("data", alignment, "tree", tree, "siteModel", siteModel,
+                            "branchRateModel", clock);
+                    tree.checkConsistency("init");
+
+                    MarginalTreeSlow reference = new MarginalTreeSlow();
+                    reference.initByName("network", randomAcg, "block", block,
+                            "nodetype", contactrees.MarginalNodeSlow.class.getName(), "branchRateModel", clock);
+                    TreeLikelihood refLikelihood = new TreeLikelihood();
+                    refLikelihood.initByName("data", alignment, "tree", reference, "siteModel", siteModel);
+
+                    double logP = likelihood.calculateLogP();
+                    double refLogP = refLikelihood.calculateLogP();
+                    assertEquals("seed " + seed + ", frozen " + frozen + ", " + block.getID(),
+                            refLogP, logP, 1e-9 * Math.abs(refLogP));
+                }
+            }
+        }
+        assertTrue(nWithConversions > 0);
     }
 
     /**

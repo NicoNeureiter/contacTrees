@@ -18,7 +18,11 @@ import beast.base.inference.StateNode;
 import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.PositiveReal;
 import beast.base.spec.domain.UnitInterval;
+import beast.base.evolution.alignment.Taxon;
+import beast.base.evolution.branchratemodel.BranchRateModel;
 import beast.base.spec.evolution.branchratemodel.StrictClockModel;
+import beast.base.spec.evolution.branchratemodel.UCRelaxedClockModel;
+import beast.base.spec.inference.distribution.Uniform;
 import beast.base.spec.evolution.likelihood.TreeLikelihood;
 import beast.base.spec.evolution.sitemodel.SiteModel;
 import beast.base.spec.evolution.speciation.YuleModel;
@@ -32,6 +36,7 @@ import beast.base.util.Randomizer;
 import contactrees.Block;
 import contactrees.MarginalTree;
 import contactrees.model.ConversionMovePrior;
+import contactrees.model.FreezableClock;
 import contactrees.model.ConversionPrior;
 import contactrees.model.likelihood.CTreeLikelihood;
 import contactrees.model.likelihood.SharedTransitionMatrixCache;
@@ -109,7 +114,7 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
 
     @Test
     public void testCachesStayConsistentUnderAllOperators() throws Exception {
-        runChain(20000, false, 7, false);
+        runChain(20000, false, 7, false, false);
     }
 
     /**
@@ -120,10 +125,40 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
     @Test
     public void testSharedTransitionMatricesStayConsistent() throws Exception {
         SharedTransitionMatrixCache.resetStatistics();
-        runChain(10000, false, 13, true);
+        runChain(10000, false, 13, true, false);
         for (TreeLikelihood likelihood : likelihoods)
             assertTrue(((CTreeLikelihood) likelihood).usesSharedTransitionMatrices());
         assertTrue("no matrix was ever shared", SharedTransitionMatrixCache.getHitCount() > 0);
+    }
+
+    /**
+     * Chain with a relaxed clock (one estimated rate per CF branch) and a frozen taxon, so that the
+     * marginal trees track the CF paths of their branches and recompute path-averaged rates. The
+     * branch rates are scaled individually, so clock-only proposals are accepted and rejected.
+     * checkConsistency compares paths and rates against a fresh sweep after every step.
+     */
+    @Test
+    public void testRelaxedClockCachesStayConsistent() throws Exception {
+        runChain(15000, false, 17, false, true);
+        for (MarginalTree tree : trees)
+            assertTrue(tree.getPathBranches(0) != null);
+    }
+
+    /**
+     * The relaxed-clock chain in debug mode (checksums include the branch rates).
+     */
+    @Test
+    public void testRelaxedClockRestoreChecksumsInDebugMode() throws Exception {
+        String old = System.getProperty("beast.debug");
+        System.setProperty("beast.debug", "true");
+        try {
+            runChain(3000, true, 19, false, true);
+        } finally {
+            if (old == null)
+                System.clearProperty("beast.debug");
+            else
+                System.setProperty("beast.debug", old);
+        }
     }
 
     /**
@@ -173,7 +208,7 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         String old = System.getProperty("beast.debug");
         System.setProperty("beast.debug", "true");
         try {
-            runChain(3000, true, 11, false);
+            runChain(3000, true, 11, false, false);
         } finally {
             if (old == null)
                 System.clearProperty("beast.debug");
@@ -182,7 +217,7 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         }
     }
 
-    void runChain(int chainLength, boolean debug, long seed, boolean gtr) throws Exception {
+    void runChain(int chainLength, boolean debug, long seed, boolean gtr, boolean relaxed) throws Exception {
         trees.clear();
         likelihoods.clear();
         nChecks = 0;
@@ -205,8 +240,25 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
 
         RealScalarParam<PositiveReal> clockRate = new RealScalarParam<>(0.2, PositiveReal.INSTANCE);
         clockRate.setID("clockRate");
-        StrictClockModel clock = new StrictClockModel();
-        clock.initByName("clock.rate", clockRate);
+        RealVectorParam<PositiveReal> branchRates = null;
+        BranchRateModel clock;
+        if (relaxed) {
+            double[] rates = new double[randomAcg.getNodeCount() - 1];
+            java.util.Random random = new java.util.Random(seed);
+            for (int i = 0; i < rates.length; i++)
+                rates[i] = 0.5 + random.nextDouble();
+            branchRates = new RealVectorParam<>(rates, PositiveReal.INSTANCE);
+            branchRates.setID("branchRates");
+            UCRelaxedClockModel ucld = new UCRelaxedClockModel();
+            ucld.initByName("rates", branchRates, "distr", new Uniform(), "tree", randomAcg, "clock.rate", clockRate);
+            FreezableClock freezable = new FreezableClock();
+            freezable.initByName("clock", ucld, "frozenTaxa", List.of(new Taxon("4")));
+            clock = freezable;
+        } else {
+            StrictClockModel strict = new StrictClockModel();
+            strict.initByName("clock.rate", clockRate);
+            clock = strict;
+        }
 
         // Likelihoods
         List<Distribution> likelihoodList = new ArrayList<>();
@@ -250,6 +302,8 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         stateNodes.add(clockRate);
         if (gtr)
             stateNodes.add(rateAG);
+        if (relaxed)
+            stateNodes.add(branchRates);
         for (StateNode fixed : List.of(conversionRates, pMove, birthRate)) {
             fixed.isEstimatedInput.setValue(false, fixed);
             stateNodes.add(fixed);
@@ -262,7 +316,7 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         Object[] creationArgs = {"acg", randomAcg, "pMove", pMove, "blockSet", randomBlockSet,
                 "conversionPrior", convPrior};
         operators.add(op(new ACGScaler(), "acg", randomAcg, "scaleFactor", 0.9));
-        operators.add(op(new ACGScaler(), "acg", randomAcg, "scaleFactor", 0.8, "rootOnly", true));
+        operators.add(op(new ACGScaler(), "acg", randomAcg, "scaleFactor", 0.95, "rootOnly", true));
         operators.add(op(new CFUniform(), creationArgs));
         operators.add(op(new CFSubtreeSlide(), creationArgs));
         operators.add(op(new CFSubtreeSlide(), with(creationArgs, "gibbsSampleBlockMoves", true, "treeLikelihood", likelihoods)));
@@ -288,6 +342,12 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         clockScaler.initByName("parameter", clockRate, "scaleFactor", 0.97, "weight", 1.0, "optimise", false);
         clockScaler.setID("ClockRateScaler");
         operators.add(clockScaler);
+        if (relaxed) {
+            ScaleOperator branchRateScaler = new ScaleOperator();
+            branchRateScaler.initByName("parameter", branchRates, "scaleFactor", 0.7, "weight", 3.0, "optimise", false);
+            branchRateScaler.setID("BranchRateScaler");
+            operators.add(branchRateScaler);
+        }
         if (gtr) {
             ScaleOperator rateScaler = new ScaleOperator();
             rateScaler.initByName("parameter", rateAG, "scaleFactor", 0.8, "weight", 3.0, "optimise", false);
@@ -314,8 +374,8 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
                     operator.get_m_nNrAccepted() > 0 || operator instanceof CFWilsonBalding
                     || operator instanceof ScaleOperator);
         for (Operator operator : operators)
-            if (operator.getID().equals("RateAGScaler"))
-                assertTrue("substitution model moves must be both accepted and rejected",
+            if (operator.getID().equals("RateAGScaler") || operator.getID().equals("BranchRateScaler"))
+                assertTrue(operator.getID() + " must be both accepted and rejected",
                         operator.get_m_nNrAccepted() > 0 && operator.get_m_nNrRejected() > 0);
     }
 
