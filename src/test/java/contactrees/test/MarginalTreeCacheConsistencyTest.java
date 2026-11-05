@@ -22,6 +22,8 @@ import beast.base.spec.evolution.branchratemodel.StrictClockModel;
 import beast.base.spec.evolution.likelihood.TreeLikelihood;
 import beast.base.spec.evolution.sitemodel.SiteModel;
 import beast.base.spec.evolution.speciation.YuleModel;
+import beast.base.spec.evolution.substitutionmodel.Frequencies;
+import beast.base.spec.evolution.substitutionmodel.GTR;
 import beast.base.spec.evolution.substitutionmodel.JukesCantor;
 import beast.base.spec.inference.operator.ScaleOperator;
 import beast.base.spec.inference.parameter.RealScalarParam;
@@ -32,6 +34,7 @@ import contactrees.MarginalTree;
 import contactrees.model.ConversionMovePrior;
 import contactrees.model.ConversionPrior;
 import contactrees.model.likelihood.CTreeLikelihood;
+import contactrees.model.likelihood.SharedTransitionMatrixCache;
 import contactrees.operators.ACGScaler;
 import contactrees.operators.AddRemoveConversion;
 import contactrees.operators.AddRemoveConversionGibbs;
@@ -87,7 +90,13 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
             double cached = likelihood.getCurrentLogP();
             tree.makeAllDirty();
             likelihood.store();
-            double fresh = likelihood.calculateLogP();
+            SharedTransitionMatrixCache.bypass = true;
+            double fresh;
+            try {
+                fresh = likelihood.calculateLogP();
+            } finally {
+                SharedTransitionMatrixCache.bypass = false;
+            }
             likelihood.restore();
             tree.setEverythingDirty(false);
 
@@ -100,7 +109,58 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
 
     @Test
     public void testCachesStayConsistentUnderAllOperators() throws Exception {
-        runChain(20000, false, 7);
+        runChain(20000, false, 7, false);
+    }
+
+    /**
+     * Chain with an estimated GTR+G model, so that the likelihoods share transition matrices and
+     * the substitution model changes (and is restored) during the run. Every cached likelihood is
+     * compared against a recomputation that bypasses the shared matrices.
+     */
+    @Test
+    public void testSharedTransitionMatricesStayConsistent() throws Exception {
+        SharedTransitionMatrixCache.resetStatistics();
+        runChain(10000, false, 13, true);
+        for (TreeLikelihood likelihood : likelihoods)
+            assertTrue(((CTreeLikelihood) likelihood).usesSharedTransitionMatrices());
+        assertTrue("no matrix was ever shared", SharedTransitionMatrixCache.getHitCount() > 0);
+    }
+
+    /**
+     * Shared and unshared transition matrices give identical likelihoods.
+     */
+    @Test
+    public void testSharedMatricesMatchUnshared() {
+        for (long seed = 1; seed <= 5; seed++) {
+            simulateRandomACG(seed, 0.4, 0.5);
+            Alignment alignment = getAlignment(10);
+            SiteModel siteModel = gtrSiteModel(alignment, new RealScalarParam<>(3.0, PositiveReal.INSTANCE));
+            for (Block block : randomBlockSet.getBlocks()) {
+                MarginalTree tree = newMarginalTree(randomAcg, block);
+                double[] logP = new double[2];
+                for (int shared = 0; shared < 2; shared++) {
+                    StrictClockModel clock = new StrictClockModel();
+                    clock.initByName("clock.rate", new RealScalarParam<>(0.3, PositiveReal.INSTANCE));
+                    CTreeLikelihood likelihood = new CTreeLikelihood();
+                    likelihood.initByName("data", alignment, "tree", tree, "siteModel", siteModel,
+                            "branchRateModel", clock, "shareTransitionMatrices", shared == 1);
+                    assertTrue(likelihood.usesSharedTransitionMatrices() == (shared == 1));
+                    logP[shared] = likelihood.calculateLogP();
+                }
+                assertTrue(logP[0] + " vs " + logP[1], logP[0] == logP[1]);
+            }
+        }
+    }
+
+    static SiteModel gtrSiteModel(Alignment alignment, RealScalarParam<PositiveReal> rateAG) {
+        Frequencies freqs = new Frequencies();
+        freqs.initByName("data", alignment);
+        GTR gtr = new GTR();
+        gtr.initByName("frequencies", freqs, "rateAG", rateAG);
+        SiteModel siteModel = new SiteModel();
+        siteModel.initByName("gammaCategoryCount", 4,
+                "shape", new RealScalarParam<>(0.5, PositiveReal.INSTANCE), "substModel", gtr);
+        return siteModel;
     }
 
     /**
@@ -113,7 +173,7 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         String old = System.getProperty("beast.debug");
         System.setProperty("beast.debug", "true");
         try {
-            runChain(3000, true, 11);
+            runChain(3000, true, 11, false);
         } finally {
             if (old == null)
                 System.clearProperty("beast.debug");
@@ -122,7 +182,7 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         }
     }
 
-    void runChain(int chainLength, boolean debug, long seed) throws Exception {
+    void runChain(int chainLength, boolean debug, long seed, boolean gtr) throws Exception {
         trees.clear();
         likelihoods.clear();
         nChecks = 0;
@@ -131,10 +191,17 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
 
         randomAcg.setID("acg");
         Alignment alignment = getAlignment(10);
-        JukesCantor jc = new JukesCantor();
-        jc.initByName();
-        SiteModel siteModel = new SiteModel();
-        siteModel.initByName("substModel", jc);
+        RealScalarParam<PositiveReal> rateAG = new RealScalarParam<>(3.0, PositiveReal.INSTANCE);
+        rateAG.setID("rateAG");
+        SiteModel siteModel;
+        if (gtr) {
+            siteModel = gtrSiteModel(alignment, rateAG);
+        } else {
+            JukesCantor jc = new JukesCantor();
+            jc.initByName();
+            siteModel = new SiteModel();
+            siteModel.initByName("substModel", jc);
+        }
 
         RealScalarParam<PositiveReal> clockRate = new RealScalarParam<>(0.2, PositiveReal.INSTANCE);
         clockRate.setID("clockRate");
@@ -181,6 +248,8 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         stateNodes.add(randomAcg);
         stateNodes.addAll(randomBlockSet.getBlocks());
         stateNodes.add(clockRate);
+        if (gtr)
+            stateNodes.add(rateAG);
         for (StateNode fixed : List.of(conversionRates, pMove, birthRate)) {
             fixed.isEstimatedInput.setValue(false, fixed);
             stateNodes.add(fixed);
@@ -219,6 +288,12 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         clockScaler.initByName("parameter", clockRate, "scaleFactor", 0.97, "weight", 1.0, "optimise", false);
         clockScaler.setID("ClockRateScaler");
         operators.add(clockScaler);
+        if (gtr) {
+            ScaleOperator rateScaler = new ScaleOperator();
+            rateScaler.initByName("parameter", rateAG, "scaleFactor", 0.8, "weight", 3.0, "optimise", false);
+            rateScaler.setID("RateAGScaler");
+            operators.add(rateScaler);
+        }
 
         Logger screenLog = new Logger();
         screenLog.initByName("logEvery", chainLength, "log", posterior);
@@ -238,6 +313,10 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
             assertTrue(operator.getID() + " was never accepted", debug ||
                     operator.get_m_nNrAccepted() > 0 || operator instanceof CFWilsonBalding
                     || operator instanceof ScaleOperator);
+        for (Operator operator : operators)
+            if (operator.getID().equals("RateAGScaler"))
+                assertTrue("substitution model moves must be both accepted and rejected",
+                        operator.get_m_nNrAccepted() > 0 && operator.get_m_nNrRejected() > 0);
     }
 
     static Object[] with(Object[] base, Object... extra) {
