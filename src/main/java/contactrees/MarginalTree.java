@@ -124,7 +124,6 @@ public class MarginalTree extends Tree {
     protected int[] sParent, sLeft, sRight, sCreatorKey, sCfToMarg;
     protected byte[] sCreatorKind;
     protected double[] sHeight;
-    protected HashMap<Integer, Integer> sConvToMarg = new HashMap<>();
     protected int sRoot;
     protected long sAcgVersion, sBlockVersion;
 
@@ -1147,8 +1146,7 @@ public class MarginalTree extends Tree {
         System.arraycopy(creatorKind, 0, sCreatorKind, 0, nNodes);
         System.arraycopy(creatorKey, 0, sCreatorKey, 0, nNodes);
         System.arraycopy(cfToMarg, 0, sCfToMarg, 0, nCFNodes);
-        sConvToMarg.clear();
-        sConvToMarg.putAll(convToMarg);
+        // convToMarg is not copied: it is the inverse of the creator arrays and rebuilt on restore
         sRoot = root.getNr();
         if (rateClock != null) {
             System.arraycopy(pathBranches, 0, sPathBranches, 0, nNodes);
@@ -1173,9 +1171,10 @@ public class MarginalTree extends Tree {
         System.arraycopy(sCreatorKind, 0, creatorKind, 0, nNodes);
         System.arraycopy(sCreatorKey, 0, creatorKey, 0, nNodes);
         System.arraycopy(sCfToMarg, 0, cfToMarg, 0, nCFNodes);
-        HashMap<Integer, Integer> tmp = convToMarg;
-        convToMarg = sConvToMarg;
-        sConvToMarg = tmp;
+        convToMarg.clear();
+        for (int nr = nLeaves; nr < nNodes; nr++)
+            if (creatorKind[nr] == CREATOR_CONVERSION)
+                convToMarg.put(creatorKey[nr], nr);
         setRootOnly(m_nodes[sRoot]);
         freeTop = 0;
         if (rateClock != null) {
