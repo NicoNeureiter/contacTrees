@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -220,9 +221,11 @@ public class ConversionGraph extends Tree {
         return length;
     }
 
-    HashSet<Node> _lineagesAtHeight = new HashSet<>();
+    // Linked: callers sample from the set by iterating it, so its order must not depend on
+    // identity hash codes (the same seed would otherwise give different runs)
+    HashSet<Node> _lineagesAtHeight = new LinkedHashSet<>();
     /**
-     * Obtain the set of lineages active at the specified height.
+     * Obtain the set of lineages active at the specified height, in a deterministic order.
      * @param height
      * @return Set of active lineages
      */

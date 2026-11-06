@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import beast.base.evolution.tree.Node;
@@ -212,7 +213,7 @@ public class Util {
      * @return
      */
     static public HashSet<Node> getClosestRelatives(Node node, double height, int nClosest) {
-        HashSet<Node> relatives = new HashSet<>();
+        HashSet<Node> relatives = new LinkedHashSet<>();
 
         if (node.isRoot())
             throw new IllegalArgumentException();
@@ -231,7 +232,7 @@ public class Util {
     }
 
     static public HashSet<Node> getDescendantsAtHeight(Node node, double height) {
-        HashSet<Node> descendants = new HashSet<>();
+        HashSet<Node> descendants = new LinkedHashSet<>();
 
         // Make sure we are not too far down already
         if (!node.isRoot()) {
@@ -253,7 +254,7 @@ public class Util {
     }
 
     static public HashSet<Node> getLeaves(Node node) {
-        HashSet<Node> leaves = new HashSet<>();
+        HashSet<Node> leaves = new LinkedHashSet<>();
 
         if (node.isLeaf()) {
             leaves.add(node);
