@@ -16,6 +16,7 @@ import org.junit.Test;
 import beast.base.evolution.tree.Node;
 import contactrees.Block;
 import contactrees.Conversion;
+import contactrees.ConversionGraph;
 
 
 
@@ -39,6 +40,77 @@ public class  ConversionGraphTest extends ContactreesTest {
 		assertTrue(conv.getNode2().isLeaf());
 		assertTrue(conv.getNode1().getParent().isRoot());
 		assertEquals(conv.getNode2().getParent().getHeight(), 1.0, 1E-6);
+	}
+
+	/**
+	 * Restoring an ACG from a state file must keep every node number, since node-indexed state
+	 * (e.g. relaxed clock rate categories) relies on them. Internal numbers here are deliberately
+	 * not in post-order, as after a few MCMC moves.
+	 */
+	@Test
+	public void testStateFileRoundTripKeepsNodeNumbers() throws Exception {
+		// Post-order numbering would be 6 for (1,2), 7 for its parent and 8 for (4,5)
+		ConversionGraph original = new ConversionGraph();
+		original.initAndValidate();
+		original.fromExtendedNewick("(((1:0.4,2:0.4)8:0.6,3:1.0)6:0.7,(4:0.8,5:0.8)7:0.9)9:0.0;", true, 1);
+		assertEquals(original.getNode(7).getHeight(), 0.4, 1e-9);
+		assertEquals(original.getNode(5).getHeight(), 1.0, 1e-9);
+		original.addConversion(new Conversion(original.getNode(2), original.getNode(3), 0.5, original, 1));
+		original.addConversion(new Conversion(original.getNode(7), original.getNode(3), 0.6, original, 2));
+
+		ConversionGraph restored = restoreFromXML(original);
+		assertEquals(original.getNodeCount(), restored.getNodeCount());
+		for (int nr = 0; nr < original.getNodeCount(); nr++) {
+			Node n0 = original.getNode(nr), n1 = restored.getNode(nr);
+			assertEquals(nr, n1.getNr());
+			assertEquals(n0.getHeight(), n1.getHeight(), 1e-9);
+			assertEquals(n0.isRoot() ? -1 : n0.getParent().getNr(), n1.isRoot() ? -1 : n1.getParent().getNr());
+		}
+		assertEquals(original.getConvCount(), restored.getConvCount());
+		for (Conversion c0 : original.getConversions()) {
+			Conversion c1 = restored.getConversions().get(c0.getID());
+			assertEquals(c0.getNode1().getNr(), c1.getNode1().getNr());
+			assertEquals(c0.getNode2().getNr(), c1.getNode2().getNr());
+			assertEquals(c0.getHeight(), c1.getHeight(), 1e-9);
+		}
+	}
+
+	/** A root that is not the last node is still moved to the last slot, keeping numbers distinct. */
+	@Test
+	public void testNumberedParsingMovesRootLast() {
+		ConversionGraph acg = new ConversionGraph();
+		acg.initAndValidate();
+		acg.fromExtendedNewick("((1:1.0,2:1.0)7:1.0,(3:0.5,4:0.5)6:1.5)5:0.0;", true, 1);
+		assertEquals(6, acg.getRoot().getNr());
+		HashSet<Integer> nrs = new HashSet<>();
+		for (int nr = 0; nr < acg.getNodeCount(); nr++) {
+			assertEquals(nr, acg.getNode(nr).getNr());
+			nrs.add(acg.getNode(nr).getNr());
+		}
+		assertEquals(7, nrs.size());
+	}
+
+	/** Without valid internal labels the parser still numbers internal nodes itself. */
+	@Test
+	public void testNumberedParsingFallsBackWithoutLabels() {
+		ConversionGraph acg = new ConversionGraph();
+		acg.initAndValidate();
+		acg.fromExtendedNewick("((1:1.0,2:1.0):1.0,(3:0.5,4:0.5):1.5):0.0;", true, 1);
+		assertEquals(6, acg.getRoot().getNr());
+		HashSet<Integer> nrs = new HashSet<>();
+		for (int nr = 0; nr < acg.getNodeCount(); nr++)
+			nrs.add(acg.getNode(nr).getNr());
+		assertEquals(7, nrs.size());
+	}
+
+	static ConversionGraph restoreFromXML(ConversionGraph acg) throws Exception {
+		String xml = acg.toXML();
+		org.w3c.dom.Document doc = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+				.parse(new java.io.ByteArrayInputStream(xml.getBytes()));
+		ConversionGraph restored = new ConversionGraph();
+		restored.initAndValidate();
+		restored.fromXML(doc.getDocumentElement());
+		return restored;
 	}
 
 	@Test

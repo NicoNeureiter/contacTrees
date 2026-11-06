@@ -611,7 +611,9 @@ public class ConversionGraph extends Tree {
 
     @Override
     public void fromXML(final org.w3c.dom.Node node) {
-        fromExtendedNewick(node.getTextContent().replaceAll("&amp", "&"));
+        // State files label every node with its number, and node-indexed state (e.g. relaxed
+        // clock rate categories) relies on getting the same numbers back.
+        fromExtendedNewick(node.getTextContent().replaceAll("&amp", "&"), true, taxaTranslationOffset);
     }
 
     /**
@@ -775,10 +777,25 @@ public class ConversionGraph extends Tree {
                 root = stripHybridNodes(root);
                 root.setParent(null);
 
-                if (!numbered)
+                if (!numbered || !hasValidNumbering(root))
                     numberInternalNodes(root, root.getAllLeafNodes().size());
 
                 return root;
+            }
+
+            /** Leaves numbered 0..n-1 and internal nodes n..2n-2, each number used once. */
+            private boolean hasValidNumbering(Node root) {
+                List<Node> nodes = root.getAllChildNodesAndSelf();
+                int nLeaves = root.getAllLeafNodes().size();
+                boolean[] used = new boolean[nodes.size()];
+                for (Node node : nodes) {
+                    int nr = node.getNr();
+                    boolean inRange = node.isLeaf() ? (nr >= 0 && nr < nLeaves) : (nr >= nLeaves && nr < used.length);
+                    if (!inRange || used[nr])
+                        return false;
+                    used[nr] = true;
+                }
+                return true;
             }
 
             @Override
@@ -844,7 +861,11 @@ public class ConversionGraph extends Tree {
     }
 
     public void initAfterParsingFromNewick(Node root, Node[] mnodes) {
-        m_nodes = root.getAllChildNodesAndSelf().toArray(m_nodes);
+        List<Node> nodes = root.getAllChildNodesAndSelf();
+        // Index by number, so that setRoot() can swap the root into the last slot if needed
+        m_nodes = new Node[nodes.size()];
+        for (Node node : nodes)
+            m_nodes[node.getNr()] = node;
         nodeCount = m_nodes.length;
         leafNodeCount = root.getAllLeafNodes().size();
         internalNodeCount = nodeCount - leafNodeCount;
