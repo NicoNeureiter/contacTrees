@@ -62,7 +62,10 @@ import contactrees.operators.ResampleBorrowings;
  * Runs a short MCMC with every ACG operator (including the Gibbs operators, which evaluate
  * likelihoods inside their proposals) and checks after every step that
  *  - every marginal tree matches a from-scratch sweep and has no pending proposal state, and
- *  - every cached tree likelihood equals a from-scratch recomputation.
+ *  - every cached tree likelihood equals a from-scratch recomputation, and
+ *  - no node flags are left over from the proposal (see MarginalTree#hasStaleFlags).
+ * It also checks that the dirty flags left by the proposals don't make the likelihoods recompute
+ * much more than the actual changes require (over-marking costs speed, not correctness).
  */
 public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
 
@@ -70,6 +73,27 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
     List<MarginalTree> trees = new ArrayList<>();
     List<TreeLikelihood> likelihoods = new ArrayList<>();
     long nChecks = 0;
+    /** {matrices for the flags, matrices required, partials for the flags, partials required} */
+    final long[] recomputed = new long[4];
+    /**
+     * Allowed ratio of recomputed to required work. Matrices have more slack: when a node's
+     * children change, the unchanged child is flagged too.
+     */
+    static final double PARTIALS_TOLERANCE = 1.05, MATRICES_TOLERANCE = 1.5;
+
+    /** Counts, after every proposal, what the flags of its tree make it recompute. */
+    class CountingTreeLikelihood extends CTreeLikelihood {
+        MarginalTree tree;
+
+        @Override
+        public boolean requiresRecalculation() {
+            // The tree comes before its likelihood in the dirtiness check, so it is up to date
+            int[] counts = tree.countRecomputedNodes();
+            for (int i = 0; i < 4; i++)
+                recomputed[i] += counts[i];
+            return super.requiresRecalculation();
+        }
+    }
 
     class ValidatingMCMC extends MCMC {
         @Override
@@ -92,6 +116,10 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
             if (tree.isModifiedInProposal())
                 throw new AssertionError(context + ": " + tree.getID() + " was out of date");
             tree.checkConsistency(context);
+            // Flags left over from an earlier proposal would make the next evaluation recompute
+            // nodes that did not change (checked before the recomputation below clears them)
+            if (tree.hasStaleFlags())
+                throw new AssertionError(context + ": " + tree.getID() + " has node flags left over from the proposal");
 
             // Recompute the likelihood from scratch inside a store/restore window
             double cached = likelihood.getCurrentLogP();
@@ -151,16 +179,7 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
      */
     @Test
     public void testRelaxedClockRestoreChecksumsInDebugMode() throws Exception {
-        String old = System.getProperty("beast.debug");
-        System.setProperty("beast.debug", "true");
-        try {
-            runChain(3000, true, 19, false, true);
-        } finally {
-            if (old == null)
-                System.clearProperty("beast.debug");
-            else
-                System.setProperty("beast.debug", old);
-        }
+        runChain(3000, true, 19, false, true);
     }
 
     /**
@@ -207,22 +226,14 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
      */
     @Test
     public void testRestoreChecksumsInDebugMode() throws Exception {
-        String old = System.getProperty("beast.debug");
-        System.setProperty("beast.debug", "true");
-        try {
-            runChain(3000, true, 11, false, false);
-        } finally {
-            if (old == null)
-                System.clearProperty("beast.debug");
-            else
-                System.setProperty("beast.debug", old);
-        }
+        runChain(3000, true, 11, false, false);
     }
 
     void runChain(int chainLength, boolean debug, long seed, boolean gtr, boolean relaxed) throws Exception {
         trees.clear();
         likelihoods.clear();
         nChecks = 0;
+        java.util.Arrays.fill(recomputed, 0);
         simulateRandomACG(seed, 0.4, 0.4);
         Randomizer.setSeed(seed * 1000 + 1);
 
@@ -270,7 +281,8 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
             tree.initByName("network", randomAcg, "block", block, "nodetype", MarginalNode.class.getName(),
                     "validate", true);
             tree.setID("mtree." + block.getID());
-            CTreeLikelihood likelihood = new CTreeLikelihood();
+            CountingTreeLikelihood likelihood = new CountingTreeLikelihood();
+            likelihood.tree = tree;
             likelihood.initByName("data", alignment, "tree", tree, "siteModel", siteModel, "branchRateModel", clock);
             likelihood.setID("treeLikelihood." + block.getID());
             trees.add(tree);
@@ -365,20 +377,33 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         Logger screenLog = new Logger();
         screenLog.initByName("logEvery", chainLength, "log", posterior);
 
-        MCMC mcmc = new ValidatingMCMC();
-        mcmc.initByName(
-                "chainLength", (long) chainLength,
-                "state", state,
-                "distribution", posterior,
-                "operator", operators,
-                "logger", screenLog);
-        mcmc.run();
+        // Set debug mode explicitly: other tests (BeastMCMC.main) leave beast.debug=true behind
+        String oldDebug = System.getProperty("beast.debug");
+        System.setProperty("beast.debug", Boolean.toString(debug));
+        try {
+            MCMC mcmc = new ValidatingMCMC();
+            mcmc.initByName(
+                    "chainLength", (long) chainLength,
+                    "state", state,
+                    "distribution", posterior,
+                    "operator", operators,
+                    "logger", screenLog);
+            mcmc.run();
+        } finally {
+            if (oldDebug == null)
+                System.clearProperty("beast.debug");
+            else
+                System.setProperty("beast.debug", oldDebug);
+        }
 
         assertTrue(nChecks >= (long) chainLength * trees.size());
         long partial = 0;
         for (MarginalTree tree : trees)
             partial += tree.nPartialResweeps;
         assertTrue("no partial resweeps", partial > 0);
+        // In debug mode, MCMC sets everything dirty after rejections, which the counts would include
+        if (!debug)
+            checkRecomputation();
         // The short debug-mode run is too short for every operator to be accepted
         for (Operator operator : operators)
             assertTrue(operator.getID() + " was never accepted", debug ||
@@ -388,6 +413,17 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
             if (operator.getID().equals("RateAGScaler") || operator.getID().equals("BranchRateScaler"))
                 assertTrue(operator.getID() + " must be both accepted and rejected",
                         operator.get_m_nNrAccepted() > 0 && operator.get_m_nNrRejected() > 0);
+    }
+
+    /** Over-marking check: the flags must not make the likelihoods recompute much more than needed. */
+    void checkRecomputation() {
+        System.out.println("Recomputed after proposals: matrices " + recomputed[0] + " (required "
+                + recomputed[1] + "), partials " + recomputed[2] + " (required " + recomputed[3] + ")");
+        assertTrue("flags recompute fewer partials than required", recomputed[2] >= recomputed[3]);
+        assertTrue("over-marking: " + recomputed[2] + " partials recomputed, " + recomputed[3] + " required",
+                recomputed[2] <= PARTIALS_TOLERANCE * recomputed[3]);
+        assertTrue("over-marking: " + recomputed[0] + " matrices recomputed, " + recomputed[1] + " required",
+                recomputed[0] <= MATRICES_TOLERANCE * recomputed[1]);
     }
 
     static Object[] with(Object[] base, Object... extra) {

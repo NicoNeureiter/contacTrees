@@ -1218,6 +1218,64 @@ public class MarginalTree extends Tree {
         }
     }
 
+    /**
+     * Diagnostic for over-marking: the work a likelihood on this tree does for the current dirty
+     * flags, compared with the work the actual changes since the pre-proposal state require.
+     * Follows the rules of TreeLikelihood.traverse: a branch matrix is recomputed if the node is
+     * flagged or its branch time changed; partials are recomputed if a child was updated. A
+     * node's partials are required to change if its children changed, and its matrix if its
+     * branch time changed. Clock rates outside the tree (a strict clock) are not seen here.
+     * Call it after the tree was checked for recalculation and before accept/restore.
+     *
+     * @return {matrices for the flags, matrices required, partials for the flags, partials required}
+     */
+    public int[] countRecomputedNodes() {
+        int nNodes = getNodeCount();
+        boolean[] seedFlags = new boolean[nNodes], seedNeeded = new boolean[nNodes];
+        boolean[] childrenChanged = new boolean[nNodes];
+        int[] counts = new int[4];
+        for (int nr = 0; nr < nNodes; nr++) {
+            Node node = m_nodes[nr];
+            int parent = node.isRoot() ? -1 : node.getParent().getNr();
+            int preParent = touched ? sParent[nr] : parent;
+            double rate = rates == null ? 1.0 : rates[nr];
+            double preRate = rates == null ? 1.0 : (touched ? sRates[nr] : rate);
+            double time = parent < 0 ? Double.NaN : (m_nodes[parent].getHeight() - node.getHeight()) * rate;
+            double preTime = preParent < 0 ? Double.NaN
+                    : ((touched ? sHeight[preParent] : m_nodes[preParent].getHeight())
+                            - (touched ? sHeight[nr] : node.getHeight())) * preRate;
+            boolean timeChanged = parent >= 0
+                    && (preParent < 0 || Double.doubleToLongBits(time) != Double.doubleToLongBits(preTime));
+            if (nr >= nLeaves && touched) {
+                int l = node.getLeft().getNr(), r = node.getRight().getNr();
+                childrenChanged[nr] = !((l == sLeft[nr] && r == sRight[nr]) || (l == sRight[nr] && r == sLeft[nr]));
+            }
+            seedFlags[nr] = node.isDirty() != Tree.IS_CLEAN || timeChanged;
+            seedNeeded[nr] = timeChanged;
+            if (parent >= 0) {
+                if (seedFlags[nr]) counts[0]++;
+                if (seedNeeded[nr]) counts[1]++;
+            }
+        }
+        countUpdates(root, seedFlags, null, counts, 2);
+        countUpdates(root, seedNeeded, childrenChanged, counts, 3);
+        return counts;
+    }
+
+    /** @return whether the node was updated (post-order), counting recomputed partials in counts[slot]. */
+    private boolean countUpdates(Node node, boolean[] seed, boolean[] mustRecompute, int[] counts, int slot) {
+        boolean updated = seed[node.getNr()];
+        if (!node.isLeaf()) {
+            boolean left = countUpdates(node.getLeft(), seed, mustRecompute, counts, slot);
+            boolean right = countUpdates(node.getRight(), seed, mustRecompute, counts, slot);
+            if (left || right || (mustRecompute != null && mustRecompute[node.getNr()])) {
+                counts[slot]++;
+                updated = true;
+            }
+        }
+        return updated;
+    }
+
     @Override
     public boolean requiresRecalculation() {
         ensureUpToDate();
@@ -1289,6 +1347,20 @@ public class MarginalTree extends Tree {
             flagsPending = true;
         touched = false;
         versionsTouched = false;
+    }
+
+    /**
+     * @return true iff a node is flagged although the tree records no reason for it (no change in
+     *         the current proposal, no pending flags and not all dirty). Such flags make the next
+     *         evaluation recompute nodes that did not change.
+     */
+    public boolean hasStaleFlags() {
+        if (touched || allDirty || flagsPending)
+            return false;
+        for (Node node : m_nodes)
+            if (node.isDirty() != Tree.IS_CLEAN)
+                return true;
+        return false;
     }
 
     /**
