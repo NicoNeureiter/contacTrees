@@ -1251,7 +1251,7 @@ public class MarginalTree extends Tree {
         touched = false;
         versionsTouched = false;
         if (managed) {
-            clearFlags();
+            clearFlags(hadFlags);
         } else if (hadFlags) {
             flagsPending = true;
         }
@@ -1265,7 +1265,7 @@ public class MarginalTree extends Tree {
         touched = false;
         versionsTouched = false;
         if (managed) {
-            clearFlags();
+            clearFlags(hadFlags);
         } else if (hadFlags) {
             flagsPending = true;
         }
@@ -1291,8 +1291,13 @@ public class MarginalTree extends Tree {
         versionsTouched = false;
     }
 
-    private void clearFlags() {
-        if (touched || allDirty || flagsPending)
+    /**
+     * Clear the node flags if any can be set.
+     * @param hadChanges whether the tree changed in the proposal that just ended (the caller has
+     *        already reset {@link #touched})
+     */
+    private void clearFlags(boolean hadChanges) {
+        if (hadChanges || touched || allDirty || flagsPending)
             super.setEverythingDirty(false);
         allDirty = false;
         flagsPending = false;
