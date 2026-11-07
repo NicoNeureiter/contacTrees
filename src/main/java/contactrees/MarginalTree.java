@@ -6,7 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import beast.base.core.BEASTInterface;
 import beast.base.core.Input;
+import beast.base.core.ProgramStatus;
 import beast.base.evolution.branchratemodel.BranchRateModel;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
@@ -14,6 +16,8 @@ import beast.base.inference.Operator;
 import beast.base.inference.StateNode;
 import contactrees.CFEventList.Event;
 import contactrees.CFEventList.EventType;
+import contactrees.model.MarginalClockModel;
+import contactrees.model.likelihood.CTreeLikelihood;
 
 
 /**
@@ -102,6 +106,7 @@ public class MarginalTree extends Tree {
     /* Proposal bookkeeping. */
     /** Structure or mapping changed in the current proposal (a snapshot exists). */
     protected boolean touched = false;
+    protected boolean usersChecked = false;
     /** The reflected versions changed in the current proposal (their old values are saved). */
     protected boolean versionsTouched = false;
     /** All nodes are flagged dirty (initialisation or setEverythingDirty(true)). */
@@ -1276,8 +1281,33 @@ public class MarginalTree extends Tree {
         return updated;
     }
 
+    /**
+     * A clock with branch-dependent rates is defined on the clonal frame (e.g. rate categories
+     * indexed by CF node number), so a likelihood must not apply it to the marginal tree directly.
+     * CTreeLikelihood wraps it in a MarginalClockModel; any other likelihood may only use clocks
+     * that give every branch the same rate. Checked on first use, when all users are connected.
+     */
+    protected void checkUsers() {
+        usersChecked = true;
+        if (ProgramStatus.name.equals("BEAUti"))
+            return;
+        for (BEASTInterface user : getOutputs()) {
+            if (user instanceof CTreeLikelihood || !user.getInputs().containsKey("branchRateModel"))
+                continue;
+            Object clock = user.getInputs().get("branchRateModel").get();
+            if (clock instanceof BranchRateModel brm && !(clock instanceof MarginalClockModel)
+                    && !MarginalClockModel.isBranchIndependent(brm))
+                throw new IllegalArgumentException(user.getClass().getSimpleName() + " " + user.getID()
+                        + " applies the branch-dependent clock " + ((BEASTInterface) clock).getID()
+                        + " to MarginalTree " + getID() + ". Use a CTreeLikelihood, which maps the "
+                        + "clonal frame clock onto the marginal tree.");
+        }
+    }
+
     @Override
     public boolean requiresRecalculation() {
+        if (!usersChecked)
+            checkUsers();
         ensureUpToDate();
         if (validate)
             checkConsistency("requiresRecalculation");
@@ -1286,6 +1316,8 @@ public class MarginalTree extends Tree {
 
     @Override
     public boolean somethingIsDirty() {
+        if (!usersChecked)
+            checkUsers();
         ensureUpToDate();
         return touched || allDirty || flagsPending;
     }

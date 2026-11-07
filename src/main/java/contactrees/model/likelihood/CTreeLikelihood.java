@@ -12,7 +12,6 @@ import contactrees.model.MarginalClockModel;
 @Description("Tree likelihood of a block's marginal tree. A clock model given as branchRateModel is "
         + "defined on the clonal frame and is wrapped in a MarginalClockModel.")
 public class CTreeLikelihood extends TreeLikelihood {
-	final public Input<MarginalTree> marginalTreeInput = new Input<>("marginalTree", "marginal tree based on actual tree");
     final public Input<Boolean> shareMatricesInput = new Input<>("shareTransitionMatrices",
             "share transition probability matrices with all other likelihoods using the same substitution model "
             + "(only used by the Java likelihood core and for substitution models based on BasicGeneralSubstitutionModel)", true);
@@ -30,9 +29,6 @@ public class CTreeLikelihood extends TreeLikelihood {
             return;
         }
 
-        if (marginalTreeInput.get() != null)
-            treeInput.set(marginalTreeInput.get());
-
         if (!(treeInput.get() instanceof MarginalTree mTree))
             throw new IllegalArgumentException("CTreeLikelihood " + getID() + " requires a MarginalTree as tree.");
 
@@ -46,7 +42,6 @@ public class CTreeLikelihood extends TreeLikelihood {
         }
 
         super.initAndValidate();
-        marginalTreeInput.setValue(null, this);
 
         if (beagle == null && shareMatricesInput.get() && SharedTransitionMatrixCache.supports(substitutionModel)) {
             cachingModel = new SharedTransitionMatrixCache.CachingSubstitutionModel(

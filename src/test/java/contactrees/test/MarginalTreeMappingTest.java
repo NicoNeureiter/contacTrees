@@ -1,6 +1,7 @@
 package contactrees.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -155,6 +156,41 @@ public class MarginalTreeMappingTest extends ContactreesTest {
                 assertEquals("seed " + seed + ", " + block.getID(), refLogP, logP, 1e-9 * Math.abs(refLogP));
             }
         }
+    }
+
+    /**
+     * A plain TreeLikelihood must not apply a branch-dependent clonal frame clock to a marginal
+     * tree (it would look up rates by marginal node number). Strict clocks remain allowed.
+     */
+    @Test
+    public void testPlainLikelihoodRejectsRelaxedClock() {
+        Alignment alignment = getAlignment(10);
+        JukesCantor jc = new JukesCantor();
+        jc.initByName();
+        SiteModel siteModel = new SiteModel();
+        siteModel.initByName("substModel", jc);
+        simulateRandomACG(1, 0.4, 0.5);
+        Block block = randomBlockSet.getBlocks().get(0);
+
+        MarginalTree relaxedTree = newMarginalTree(randomAcg, block);
+        TreeLikelihood relaxed = new TreeLikelihood();
+        relaxed.initByName("data", alignment, "tree", relaxedTree, "siteModel", siteModel,
+                "branchRateModel", randomRelaxedClock(randomAcg, 1));
+        assertThrows(IllegalArgumentException.class, relaxedTree::requiresRecalculation);
+
+        MarginalTree strictTree = newMarginalTree(randomAcg, block);
+        StrictClockModel strict = new StrictClockModel();
+        strict.initByName("clock.rate", new RealScalarParam<>(0.5, PositiveReal.INSTANCE));
+        TreeLikelihood plainStrict = new TreeLikelihood();
+        plainStrict.initByName("data", alignment, "tree", strictTree, "siteModel", siteModel, "branchRateModel", strict);
+        strictTree.requiresRecalculation();
+
+        MarginalTree wrappedTree = newMarginalTree(randomAcg, block);
+        CTreeLikelihood wrapped = new CTreeLikelihood();
+        wrapped.initByName("data", alignment, "tree", wrappedTree, "siteModel", siteModel,
+                "branchRateModel", randomRelaxedClock(randomAcg, 1));
+        wrappedTree.requiresRecalculation();
+        assertTrue(Double.isFinite(wrapped.calculateLogP()));
     }
 
     /**
