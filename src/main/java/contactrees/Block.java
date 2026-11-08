@@ -4,17 +4,15 @@
 package contactrees;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.w3c.dom.Node;
 
 import beast.base.core.Description;
 import beast.base.inference.Operator;
 import beast.base.inference.StateNode;
-import contactrees.util.Util;
 
 
 /**
@@ -23,26 +21,17 @@ import contactrees.util.Util;
 @Description("A block which is affected by a marginal tree and defined through a set of conversions wihtin a network.")
 public class Block extends StateNode {
 
-    // The indices (in the ConversionList) of the conversions affecting this block.
-    List<Integer> convIDs, convIDsStored;
-
-    // The same IDs as a set, for O(1) membership queries.
-    protected HashSet<Integer> convIDSet = new HashSet<>();
+    // The indices (in the ConversionList) of the conversions affecting this block, in insertion order.
+    protected LinkedHashSet<Integer> convIDs = new LinkedHashSet<>(), convIDsStored = new LinkedHashSet<>();
 
     // Version of the current state (see ConversionGraph#getVersion()).
     protected long version = ConversionGraph.nextVersion(), storedVersion = version;
 
     @Override
     public void initAndValidate() {
-        convIDs = new ArrayList<Integer>();
-        convIDsStored = new ArrayList<>();
-        convIDSet.clear();
+        convIDs = new LinkedHashSet<>();
+        convIDsStored = new LinkedHashSet<>();
         version = ConversionGraph.nextVersion();
-    }
-
-    private void rebuildIDSet() {
-        convIDSet.clear();
-        convIDSet.addAll(convIDs);
     }
 
     /**
@@ -59,11 +48,8 @@ public class Block extends StateNode {
     public void addMove(Conversion conv) {
         startEditing(null);
         assert conv != null;
-        assert convIDs != null;
-        assert !convIDSet.contains(conv.getID());
-
-        convIDs.add(conv.getID());
-        convIDSet.add(conv.getID());
+        boolean added = convIDs.add(conv.getID());
+        assert added;
     }
 
 
@@ -73,10 +59,7 @@ public class Block extends StateNode {
      */
     public void removeMove(Conversion conv) {
         startEditing(null);
-        Integer cID = conv.getID();
-        convIDs.remove(cID);
-        convIDSet.remove(cID);
-        assert !convIDs.contains(cID);
+        convIDs.remove(conv.getID());
     }
 
     /**
@@ -85,7 +68,6 @@ public class Block extends StateNode {
     public void removeAllMoves() {
         startEditing(null);
         convIDs.clear();
-        convIDSet.clear();
     }
 
     /**
@@ -94,7 +76,7 @@ public class Block extends StateNode {
      * @return "true" iff the block moved over the conversion.
      */
     public boolean isAffected(Conversion conv) {
-        return convIDSet.contains(conv.getID());
+        return convIDs.contains(conv.getID());
     }
 
     public int countMoves() {
@@ -109,7 +91,7 @@ public class Block extends StateNode {
         return convIDs.size();
     }
 
-    public List<Integer> getConversionIDs(){
+    public Set<Integer> getConversionIDs(){
         return convIDs;
     }
 
@@ -134,9 +116,8 @@ public class Block extends StateNode {
         Block copy = new Block();
 
         copy.setID(getID());
-        copy.convIDs = Util.deepCopyIntegers(convIDs);
-        copy.convIDsStored = Util.deepCopyIntegers(convIDsStored);
-        copy.rebuildIDSet();
+        copy.convIDs = new LinkedHashSet<>(convIDs);
+        copy.convIDsStored = new LinkedHashSet<>(convIDsStored);
 
         return copy;
     }
@@ -145,9 +126,8 @@ public class Block extends StateNode {
     public void assignTo(StateNode other) {
         final Block block = (Block) other;
         block.setID(getID());
-        block.convIDs = Util.deepCopyIntegers(convIDs);
-        block.convIDsStored = Util.deepCopyIntegers(convIDsStored);
-        block.rebuildIDSet();
+        block.convIDs = new LinkedHashSet<>(convIDs);
+        block.convIDsStored = new LinkedHashSet<>(convIDsStored);
         block.version = ConversionGraph.nextVersion();
     }
 
@@ -155,9 +135,8 @@ public class Block extends StateNode {
     public void assignFrom(StateNode other) {
         final Block block = (Block) other;
         setID(block.getID());
-        convIDs = Util.deepCopyIntegers(block.convIDs);
-        convIDsStored = Util.deepCopyIntegers(block.convIDsStored);
-        rebuildIDSet();
+        convIDs = new LinkedHashSet<>(block.convIDs);
+        convIDsStored = new LinkedHashSet<>(block.convIDsStored);
         version = ConversionGraph.nextVersion();
     }
 
@@ -165,17 +144,14 @@ public class Block extends StateNode {
     protected void store() {
         storedVersion = version;
         convIDsStored.clear();
-        for (int i=0; i<convIDs.size(); i++) {
-            convIDsStored.add(convIDs.get(i));
-        }
+        convIDsStored.addAll(convIDs);
     }
 
     @Override
     public void restore() {
-        List<Integer> tmp = convIDs;
+        LinkedHashSet<Integer> tmp = convIDs;
         convIDs = convIDsStored;
         convIDsStored = tmp;
-        rebuildIDSet();
         version = storedVersion;
     }
 
@@ -201,9 +177,9 @@ public class Block extends StateNode {
 
     @Override
     public void fromXML(Node node) {
-        // Initialize arrays
-        convIDs = new ArrayList<Integer>();
-        convIDsStored = new ArrayList<>();
+        // Initialize the ID sets
+        convIDs = new LinkedHashSet<>();
+        convIDsStored = new LinkedHashSet<>();
 
         // Get the string representation of the `convIDs` list
         String str = node.getTextContent();
@@ -213,13 +189,13 @@ public class Block extends StateNode {
         assert str.endsWith("]");
         str = str.substring(1, str.length() - 1);
 
-        // Parse the string list and put convIDs into the `convIDs` array.
+        // Parse the string list and put the IDs into the `convIDs` set.
         if (str.length() > 0) {
             for (String convID : str.split("\\s*,\\s*")) {
-                convIDs.add(Integer.parseInt(convID));
+                boolean added = convIDs.add(Integer.parseInt(convID));
+                assert added;
             }
         }
-        rebuildIDSet();
         version = ConversionGraph.nextVersion();
     }
 

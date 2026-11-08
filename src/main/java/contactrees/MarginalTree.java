@@ -506,9 +506,8 @@ public class MarginalTree extends Tree {
     protected List<Conversion> getSortedBlockConversions() {
         sortedConvs.clear();
         ConversionList convList = acg.getConversions();
-        List<Integer> cIDs = block.getConversionIDs();
-        for (int i = 0; i < cIDs.size(); i++) {
-            Conversion c = convList.get(cIDs.get(i));
+        for (int cID : block.getConversionIDs()) {
+            Conversion c = convList.get(cID);
             validateConversionRef(c);
             sortedConvs.add(c);
         }
