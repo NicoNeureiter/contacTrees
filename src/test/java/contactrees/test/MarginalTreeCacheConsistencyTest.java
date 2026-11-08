@@ -276,7 +276,7 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         // Likelihoods
         List<Distribution> likelihoodList = new ArrayList<>();
         for (Block block : randomBlockSet.getBlocks()) {
-            // validate: every partial resweep is checked against a full sweep
+            // validate: the tree is checked against a fresh sweep whenever it is used
             MarginalTree tree = new MarginalTree();
             tree.initByName("network", randomAcg, "block", block, "nodetype", MarginalNode.class.getName(),
                     "validate", true);
@@ -397,10 +397,6 @@ public class MarginalTreeCacheConsistencyTest extends MarginalTreeMappingTest {
         }
 
         assertTrue(nChecks >= (long) chainLength * trees.size());
-        long partial = 0;
-        for (MarginalTree tree : trees)
-            partial += tree.nPartialResweeps;
-        assertTrue("no partial resweeps", partial > 0);
         // In debug mode, MCMC sets everything dirty after rejections, which the counts would include
         if (!debug)
             checkRecomputation();

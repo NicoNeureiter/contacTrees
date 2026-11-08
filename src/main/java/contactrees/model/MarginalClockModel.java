@@ -70,10 +70,6 @@ public class MarginalClockModel extends Base {
         return tree.getBranchRate(node.getNr());
     }
 
-    public boolean isBranchIndependent() {
-        return branchIndependent;
-    }
-
     @Override
     protected boolean requiresRecalculation() {
         boolean clockDirty = (clock instanceof CalculationNode cn) && cn.somethingIsDirty();

@@ -106,7 +106,7 @@ public class ACGTipDatesRandomWalker extends TipDatesRandomWalker {
         for (int j = 0; j < attachedConvs.size(); j++)
             attachedConvs.get(j).setHeight(newConvHeights.get(j));
 
-        updateMarginalTrees(node, oldHeight, attachedConvs, oldConvHeights);
+        updateMarginalTrees(node, attachedConvs, oldConvHeights);
 
         return logHR;
     }
@@ -117,8 +117,7 @@ public class ACGTipDatesRandomWalker extends TipDatesRandomWalker {
      * conversion of the tree's block on a shared branch; then only heights change (the tip and
      * the attached conversions the block follows). Otherwise the tree is reswept.
      */
-    protected void updateMarginalTrees(Node tip, double oldTipHeight, List<Conversion> attached, double[] oldHeights) {
-        double lowestChange = Math.min(oldTipHeight, tip.getHeight());
+    protected void updateMarginalTrees(Node tip, List<Conversion> attached, double[] oldHeights) {
         List<Conversion> followed = new ArrayList<>();
         for (MarginalTree tree : acg.getMarginalTrees()) {
             followed.clear();
@@ -130,16 +129,20 @@ public class ACGTipDatesRandomWalker extends TipDatesRandomWalker {
                 tree.updateCreatorHeight(tip);
                 for (Conversion conv : followed)
                     tree.updateCreatorHeight(conv);
-                tree.markUpToDate(lowestChange);
+                tree.markUpToDate();
             } else {
                 tree.ensureUpToDate();
             }
         }
     }
 
+    /**
+     * @return true iff every attached conversion the tree's block follows lies strictly inside its
+     * branches and kept its order relative to the block's other conversions on those branches.
+     */
     private boolean keepsTopology(MarginalTree tree, List<Conversion> followed, List<Conversion> attached, double[] oldHeights) {
         for (Conversion conv : followed) {
-            if (!ACGOperator.isStrictlyInsideBranches(conv))
+            if (!isStrictlyInsideBranches(conv))
                 return false;
             double oldConv = oldHeights[attached.indexOf(conv)];
             Node n1 = conv.getNode1(), n2 = conv.getNode2();
@@ -159,6 +162,18 @@ public class ACGTipDatesRandomWalker extends TipDatesRandomWalker {
             }
         }
         return true;
+    }
+
+    /**
+     * @return true iff the conversion lies strictly between the bottom and the top of both its
+     * branches (no tie with a CF event on them).
+     */
+    private static boolean isStrictlyInsideBranches(Conversion conv) {
+        double h = conv.getHeight();
+        Node n1 = conv.getNode1(), n2 = conv.getNode2();
+        return h > n1.getHeight() && h > n2.getHeight()
+                && (n1.isRoot() || h < n1.getParent().getHeight())
+                && (n2.isRoot() || h < n2.getParent().getHeight());
     }
 
 }

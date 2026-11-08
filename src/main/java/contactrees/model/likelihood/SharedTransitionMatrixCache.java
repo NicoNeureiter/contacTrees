@@ -41,11 +41,6 @@ public class SharedTransitionMatrixCache {
     static final Map<SubstitutionModel, ThreadLocal<SharedTransitionMatrixCache>> REGISTRY = new IdentityHashMap<>();
     static final List<SharedTransitionMatrixCache> ALL_CACHES = new ArrayList<>();
 
-    static {
-        if (Boolean.getBoolean("contactrees.matrixCacheStats"))
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> System.err.println(statistics())));
-    }
-
     /**
      * @return the cache of the given model for the calling thread
      */
@@ -85,20 +80,7 @@ public class SharedTransitionMatrixCache {
         }
     }
 
-    public static String statistics() {
-        long hits = 0, misses = 0, resets = 0;
-        synchronized (REGISTRY) {
-            for (SharedTransitionMatrixCache cache : ALL_CACHES) {
-                hits += cache.hits;
-                misses += cache.misses;
-                resets += cache.resets;
-            }
-        }
-        long total = hits + misses;
-        return String.format("Transition matrix cache: %d requests, %d hits (%.1f%%), %d computed, %d resets",
-                total, hits, total == 0 ? 0.0 : 100.0 * hits / total, misses, resets);
-    }
-
+    /** @return the number of matrices served from a cache (for tests). */
     public static long getHitCount() {
         long hits = 0;
         synchronized (REGISTRY) {
@@ -111,7 +93,7 @@ public class SharedTransitionMatrixCache {
     public static void resetStatistics() {
         synchronized (REGISTRY) {
             for (SharedTransitionMatrixCache cache : ALL_CACHES)
-                cache.hits = cache.misses = cache.resets = 0;
+                cache.hits = 0;
         }
     }
 
@@ -123,7 +105,7 @@ public class SharedTransitionMatrixCache {
     int generation = 1;
     EigenDecomposition eigenDecomposition;
 
-    long hits, misses, resets;
+    long hits;
 
     SharedTransitionMatrixCache(BasicGeneralSubstitutionModel model) {
         this.model = model;
@@ -141,7 +123,6 @@ public class SharedTransitionMatrixCache {
         if (current != eigenDecomposition) {
             eigenDecomposition = current;
             generation++;
-            resets++;
         }
     }
 
@@ -162,7 +143,6 @@ public class SharedTransitionMatrixCache {
         System.arraycopy(matrix, 0, matrices, offset, matrixSize);
         keys[slot] = bits;
         generations[slot] = generation;
-        misses++;
     }
 
     /**

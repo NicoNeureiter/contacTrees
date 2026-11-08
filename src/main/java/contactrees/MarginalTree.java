@@ -161,13 +161,8 @@ public class MarginalTree extends Tree {
     protected int[] evBranch = new int[0], evNext = new int[0];
     protected int nEvents;
 
-    // Partial sweeps: lineages swept (paths to check), departures per CF branch below the frontier
-    protected int[] sweptLineages;
-    protected int nSwept, nSweptLineagesStarted, rootLineage;
-    protected int[] depHead, depTail, depNext = new int[0];
-
-    /** Counters for diagnostics and tests. */
-    public long nResweeps = 0, nPartialResweeps = 0, nNodesWritten = 0, nRateUpdates = 0;
+    /** Lineage of the root after the sweep (the last record, or the leaf of a single-leaf tree). */
+    protected int rootLineage;
 
     @Override
     public void initAndValidate() {
@@ -196,8 +191,13 @@ public class MarginalTree extends Tree {
         initMapping();
 
         acg.registerMarginalTree(this);
-        block.registerMarginalTree(this);
+        rebuild();
+    }
 
+    /**
+     * Build the tree from scratch (outside any proposal) and flag all nodes.
+     */
+    private void rebuild() {
         initialising = true;
         try {
             resweep();
@@ -245,9 +245,6 @@ public class MarginalTree extends Tree {
         recNr = new int[nInternal];
         recHeight = new double[nInternal];
         keepNr = new boolean[nNodes];
-        sweptLineages = new int[nCFNodes];
-        depHead = new int[nCFNodes];
-        depTail = new int[nCFNodes];
     }
 
     /*
@@ -266,19 +263,9 @@ public class MarginalTree extends Tree {
      */
     public void ensureUpToDate() {
         if (!isUpToDate())
-            resweep(lowestChange());
+            resweep();
         else if (clockStale)
-            updateRates(Double.NEGATIVE_INFINITY);
-    }
-
-    /**
-     * @return a height below which the conversion graph and the block are known to be unchanged
-     * since the state this tree reflects (-infinity if unknown).
-     */
-    protected double lowestChange() {
-        if (acg.getVersion() != reflectedAcgVersion)
-            return Double.NEGATIVE_INFINITY;
-        return block.getLowestChangeSince(reflectedBlockVersion);
+            updateRates();
     }
 
     /**
@@ -286,19 +273,11 @@ public class MarginalTree extends Tree {
      * Operators call this for trees whose structure they know to be unaffected by their changes.
      */
     public void markUpToDate() {
-        markUpToDate(Double.NEGATIVE_INFINITY);
-    }
-
-    /**
-     * Like {@link #markUpToDate()}, for changes that left everything below the given height
-     * unchanged (only the rates of branches reaching that height are recomputed).
-     */
-    public void markUpToDate(double lowestChange) {
         boolean changed = setReflectedVersions();
         // With a branch-dependent clock, rates depend on heights along the paths (e.g. of CF
         // nodes the block only passes through), so they are recomputed after any change.
         if (rateClock != null && (changed || clockStale))
-            updateRates(clockStale ? Double.NEGATIVE_INFINITY : lowestChange);
+            updateRates();
     }
 
     /**
@@ -306,7 +285,9 @@ public class MarginalTree extends Tree {
      * depends on (e.g. only conversions its block does not follow): structure and rates stay.
      */
     public void markUnaffected() {
-        markUpToDate(Double.POSITIVE_INFINITY);
+        setReflectedVersions();
+        if (clockStale)
+            updateRates();
     }
 
     /**
@@ -332,84 +313,35 @@ public class MarginalTree extends Tree {
      * current tree: creators keep their node numbers, only changed nodes are written and flagged.
      */
     public void resweep() {
-        resweep(Double.NEGATIVE_INFINITY);
-    }
-
-    /**
-     * Resweep, given that the conversion graph and the block are unchanged below the height
-     * lowestChange (compared to the state this tree reflects). Only the part of the tree above
-     * that height is swept again.
-     */
-    protected void resweep(double lowestChange) {
-        nResweeps++;
-        double from = lowestChange;
-        if (from == Double.NEGATIVE_INFINITY || !computeStructure(from)) {
-            from = Double.NEGATIVE_INFINITY;
-            computeStructure(from);
-        } else {
-            nPartialResweeps++;
-        }
-        reconcile(from);
+        computeStructure();
+        reconcile();
         setReflectedVersions();
         if (rateClock != null)
-            updateRates(clockStale ? Double.NEGATIVE_INFINITY : from);
-        if (validate && from > Double.NEGATIVE_INFINITY)
-            checkConsistency("partial resweep from " + from);
-    }
-
-    /**
-     * Full sweep (see {@link #computeStructure(double)}).
-     */
-    protected void computeStructure() {
-        computeStructure(Double.NEGATIVE_INFINITY);
+            updateRates();
     }
 
     /**
      * Sweep through the CF events and the block's conversions (from the leaves to the root) and
      * record every firing creator in the scratch arrays. Lineages are identified by the node at
-     * their bottom: leaf nr for leaves, nLeaves + record index for new internal nodes, and
-     * nCFNodes + node nr for existing nodes on the frontier of a partial sweep.
-     *
-     * A partial sweep (from > -infinity) keeps the current tree below the height {@code from}:
-     * it starts from the marginal branches crossing that height and records only the creators
-     * at or above it. This requires the conversion graph and the block to be unchanged below
-     * that height.
-     *
-     * @return false if a partial sweep is not possible (exact ties around the frontier)
+     * their bottom: leaf nr for leaves, nLeaves + record index for internal nodes.
      */
-    protected boolean computeStructure(double from) {
+    protected void computeStructure() {
         List<Event> cfEvents = acg.getCFEvents();
         List<Conversion> convs = getSortedBlockConversions();
 
         Arrays.fill(activeLineage, -1);
         nRecords = 0;
         nEvents = 0;
-        nSwept = 0;
-        nSweptLineagesStarted = 0;
-        rootLineage = -1;
         boolean paths = (rateClock != null);
         int iConv = 0;
-        int iEvent = 0;
 
-        if (from > Double.NEGATIVE_INFINITY) {
-            while (iConv < convs.size() && convs.get(iConv).getHeight() < from)
-                iConv++;
-            iEvent = firstEventAtOrAbove(cfEvents, from);
-            if (!startFromFrontier(convs, iConv, from, paths))
-                return false;
-            // Conversions at or above the frontier that come before the first CF event swept
-            if (iEvent < cfEvents.size())
-                iConv = sweepConversions(convs, iConv, cfEvents.get(iEvent), paths);
-        }
-
-        for (; iEvent < cfEvents.size(); iEvent++) {
+        for (int iEvent = 0; iEvent < cfEvents.size(); iEvent++) {
             Event event = cfEvents.get(iEvent);
             Node node = event.getNode();
             int nodeNr = node.getNr();
 
             if (event.getType() == EventType.SAMPLE) {
                 activeLineage[nodeNr] = nodeNr;
-                lineageStarted(nodeNr);
                 if (paths)
                     startPath(nodeNr, nodeNr);
             } else {
@@ -424,7 +356,6 @@ public class MarginalTree extends Tree {
                     activeLineage[left] = -1;
                     activeLineage[right] = -1;
                     activeLineage[nodeNr] = lineage;
-                    lineageStarted(lineage);
                     if (paths)
                         startPath(lineage, nodeNr);
                 } else if (lineageLeft >= 0) {
@@ -444,17 +375,12 @@ public class MarginalTree extends Tree {
             iConv = sweepConversions(convs, iConv, node.isRoot() ? null : cfEvents.get(iEvent + 1), paths);
         }
 
-        if (from == Double.NEGATIVE_INFINITY) {
-            if (nRecords != Math.max(nLeaves - 1, 0)) {
-                throw new IllegalStateException("MarginalTree " + getID() + ": sweep produced " + nRecords
-                        + " internal nodes, expected " + (nLeaves - 1) + ".");
-            }
-        } else if (nRecords != nSweptLineagesStarted - nRecords - 1) {
-            // Lineages started: frontier + leaves above it + one per record; all merge into one
-            return false;
+        if (nRecords != Math.max(nLeaves - 1, 0)) {
+            throw new IllegalStateException("MarginalTree " + getID() + ": sweep produced " + nRecords
+                    + " internal nodes, expected " + (nLeaves - 1) + ".");
         }
-        rootLineage = (nRecords > 0) ? nLeaves + nRecords - 1 : rootLineage;
-        return true;
+        // The last record is the root (a single-leaf tree has no records)
+        rootLineage = (nRecords > 0) ? nLeaves + nRecords - 1 : 0;
     }
 
     /**
@@ -476,7 +402,6 @@ public class MarginalTree extends Tree {
                 int lineage = addRecord(CREATOR_CONVERSION, conv.getID(), conv.getHeight(), lineage1, lineage2);
                 activeLineage[nr1] = -1;
                 activeLineage[nr2] = lineage;
-                lineageStarted(lineage);
                 if (paths)
                     startPath(lineage, nr2);
             } else if (lineage1 >= 0) {
@@ -489,113 +414,6 @@ public class MarginalTree extends Tree {
             // else: node1 already left this branch, the conversion has no effect
         }
         return iConv;
-    }
-
-    private void lineageStarted(int lineage) {
-        sweptLineages[nSwept++] = lineage;
-        nSweptLineagesStarted++;
-        rootLineage = lineage;
-    }
-
-    /**
-     * @return the index of the first CF event at or above the given height
-     */
-    private static int firstEventAtOrAbove(List<Event> cfEvents, double height) {
-        int lo = 0, hi = cfEvents.size();
-        while (lo < hi) {
-            int mid = (lo + hi) >>> 1;
-            if (cfEvents.get(mid).getHeight() < height)
-                lo = mid + 1;
-            else
-                hi = mid;
-        }
-        return lo;
-    }
-
-    /**
-     * Start a partial sweep: activate the lineages of the marginal branches that cross the height
-     * {@code from} on the CF branches they occupy there. These are found by following each branch
-     * up from its bottom node: below its parent, the lineage passes through every CF node it meets
-     * and jumps at every conversion of the block that departs from its current CF branch (if
-     * either was a coalescence, it would be the parent). Exact ties make the order of events
-     * ambiguous; then the partial sweep is abandoned.
-     *
-     * @param iFrom index of the first conversion at or above {@code from} in the sorted list
-     * @return false if a partial sweep is not possible
-     */
-    private boolean startFromFrontier(List<Conversion> convs, int iFrom, double from, boolean paths) {
-        // The block's conversions below the frontier, grouped by the CF branch they depart from
-        if (depNext.length < convs.size())
-            depNext = new int[Math.max(convs.size(), 2 * depNext.length)];
-        Arrays.fill(depHead, -1);
-        for (int k = 0; k < iFrom; k++) {
-            int b = convs.get(k).getNode1().getNr();
-            depNext[k] = -1;
-            if (depHead[b] < 0)
-                depHead[b] = k;
-            else
-                depNext[depTail[b]] = k;
-            depTail[b] = k;
-        }
-
-        ConversionList allConvs = acg.getConversions();
-        int nNodes = getNodeCount();
-        for (int nr = 0; nr < nNodes; nr++) {
-            Node node = m_nodes[nr];
-            double t = node.getHeight();
-            Node parent = node.getParent();
-            if (!(t < from) || (parent != null && parent.getHeight() < from))
-                continue;
-            if (creatorKind[nr] == CREATOR_NONE)
-                return false;
-
-            int lineage = (nr < nLeaves) ? nr : nCFNodes + nr;
-            int b;
-            if (creatorKind[nr] == CREATOR_CONVERSION) {
-                Conversion creator = allConvs.get(creatorKey[nr]);
-                if (creator == null)
-                    return false;
-                b = creator.getNode2().getNr();
-            } else {
-                b = creatorKey[nr];
-            }
-            if (paths)
-                startPath(lineage, b);
-
-            int dep = depHead[b];
-            while (true) {
-                while (dep >= 0 && convs.get(dep).getHeight() < t)
-                    dep = depNext[dep];
-                double tDep = (dep >= 0) ? convs.get(dep).getHeight() : Double.POSITIVE_INFINITY;
-                Node cfNode = acg.getNode(b);
-                double tTop = cfNode.isRoot() ? Double.POSITIVE_INFINITY : cfNode.getParent().getHeight();
-                double next = Math.min(tDep, tTop);
-                if (next >= from)
-                    break;
-                if (tDep == t || tDep == tTop)
-                    return false;
-
-                long eventId;
-                if (tDep < tTop) {
-                    Conversion conv = convs.get(dep);
-                    eventId = creatorId(CREATOR_CONVERSION, conv.getID());
-                    b = conv.getNode2().getNr();
-                } else {
-                    b = cfNode.getParent().getNr();
-                    eventId = creatorId(CREATOR_CF, b);
-                }
-                t = next;
-                if (paths)
-                    addPathEvent(lineage, eventId, b);
-                dep = depHead[b];
-            }
-
-            if (activeLineage[b] >= 0)
-                return false;
-            activeLineage[b] = lineage;
-            lineageStarted(lineage);
-        }
-        return true;
     }
 
     private void startPath(int lineage, int branch) {
@@ -737,26 +555,14 @@ public class MarginalTree extends Tree {
     }
 
     private int lineageToNr(int lineage) {
-        if (lineage < nLeaves)
-            return lineage;
-        if (lineage >= nCFNodes)
-            return lineage - nCFNodes;
-        return recNr[lineage - nLeaves];
-    }
-
-    /**
-     * Apply the structure in the scratch records to the tree (see {@link #reconcile(double)}).
-     */
-    protected void reconcile() {
-        reconcile(Double.NEGATIVE_INFINITY);
+        return (lineage < nLeaves) ? lineage : recNr[lineage - nLeaves];
     }
 
     /**
      * Apply the structure in the scratch records to the tree: release creators that no longer fire,
-     * claim node numbers for new creators, then write (and flag) only what changed. After a
-     * partial sweep from the given height, the nodes below it are kept as they are.
+     * claim node numbers for new creators, then write (and flag) only what changed.
      */
-    protected void reconcile(double from) {
+    protected void reconcile() {
         int nNodes = getNodeCount();
 
         // 1. Look up existing node numbers of the firing creators
@@ -770,7 +576,7 @@ public class MarginalTree extends Tree {
 
         // 2. Release all internal nodes whose creator stopped firing
         for (int nr = nLeaves; nr < nNodes; nr++) {
-            if (creatorKind[nr] != CREATOR_NONE && !keepNr[nr] && !(m_nodes[nr].getHeight() < from)) {
+            if (creatorKind[nr] != CREATOR_NONE && !keepNr[nr]) {
                 beginModification();
                 if (creatorKind[nr] == CREATOR_CF)
                     cfToMarg[creatorKey[nr]] = -1;
@@ -806,7 +612,6 @@ public class MarginalTree extends Tree {
                 beginModification();
                 ((MarginalNode) leaf).setHeight(h);
                 leaf.makeDirty(Tree.IS_DIRTY);
-                nNodesWritten++;
             }
         }
 
@@ -833,22 +638,19 @@ public class MarginalTree extends Tree {
                 node.makeDirty(Tree.IS_FILTHY);
                 childA.makeDirty(Tree.IS_DIRTY);
                 childB.makeDirty(Tree.IS_DIRTY);
-                nNodesWritten++;
             } else if (!sameHeight) {
                 beginModification();
                 node.setHeight(recHeight[i]);
                 node.makeDirty(Tree.IS_DIRTY);
                 childA.makeDirty(Tree.IS_DIRTY);
                 childB.makeDirty(Tree.IS_DIRTY);
-                nNodesWritten++;
             }
         }
 
         // 6. Paths of the marginal branches (only with a branch-dependent clock). A changed
         //    path does not flag the node itself: updateRates() does if the rate changed.
         if (rateClock != null) {
-            for (int s = 0; s < nSwept; s++) {
-                int lineage = sweptLineages[s];
+            for (int lineage = 0; lineage < nLeaves + nRecords; lineage++) {
                 int nr = lineageToNr(lineage);
                 if (lineage == rootLineage) {
                     if (pathBranches[nr] != null) {
@@ -959,7 +761,6 @@ public class MarginalTree extends Tree {
         for (Node child : node.getChildren())
             child.makeDirty(Tree.IS_DIRTY);
         postCache = null;
-        nNodesWritten++;
     }
 
     /*
@@ -985,23 +786,12 @@ public class MarginalTree extends Tree {
         sPathBranches = new int[nNodes][];
         sPathEvents = new long[nNodes][];
         sRates = new double[nNodes];
-        // Lineage ids: leaves and new records below nCFNodes, frontier nodes above (see computeStructure)
-        linStart = new int[2 * nCFNodes];
-        linHead = new int[2 * nCFNodes];
-        linTail = new int[2 * nCFNodes];
+        // One path per lineage (leaves and records, see computeStructure)
+        linStart = new int[nCFNodes];
+        linHead = new int[nCFNodes];
+        linTail = new int[nCFNodes];
 
-        initialising = true;
-        try {
-            computeStructure();
-            reconcile();
-            setReflectedVersions();
-            updateRates(Double.NEGATIVE_INFINITY);
-        } finally {
-            initialising = false;
-        }
-        touched = false;
-        versionsTouched = false;
-        makeAllDirty();
+        rebuild();
     }
 
     /**
@@ -1023,20 +813,12 @@ public class MarginalTree extends Tree {
     /**
      * Recompute the branch rates from the paths and the current heights and clock. Nodes whose
      * rate changed are flagged dirty.
-     *
-     * @param lowestChange nothing below this height changed since the rates were last computed
-     *        (and the clock did not change): branches ending below it keep their rates.
      */
-    protected void updateRates(double lowestChange) {
-        assert !clockStale || lowestChange == Double.NEGATIVE_INFINITY;
+    protected void updateRates() {
         clockStale = false;
-        nRateUpdates++;
         ConversionList convs = acg.getConversions();
         int rootNr = root.getNr();
         for (int nr = 0; nr < getNodeCount(); nr++) {
-            Node parent = m_nodes[nr].getParent();
-            if (parent != null && parent.getHeight() < lowestChange)
-                continue;
             double rate = (nr == rootNr) ? 1.0 : computeRate(nr, convs);
             if (Double.doubleToRawLongBits(rate) != Double.doubleToRawLongBits(rates[nr])) {
                 beginModification();
@@ -1092,12 +874,6 @@ public class MarginalTree extends Tree {
     public MarginalNode getNodeForCFNode(Node cfNode) {
         int nr = cfToMarg[cfNode.getNr()];
         return (nr < 0) ? null : (MarginalNode) m_nodes[nr];
-    }
-
-    /** @return the marginal node created by the given conversion, or null. */
-    public MarginalNode getNodeForConversion(Conversion conv) {
-        Integer nr = convToMarg.get(conv.getID());
-        return (nr == null) ? null : (MarginalNode) m_nodes[nr];
     }
 
     /** @return the creator kind of the marginal node with the given number. */
@@ -1188,13 +964,6 @@ public class MarginalTree extends Tree {
             System.arraycopy(sRates, 0, rates, 0, nNodes);
         }
         postCache = null;
-    }
-
-    /**
-     * @return true iff the structure of this tree changed in the current proposal.
-     */
-    public boolean hasStructuralChanges() {
-        return touched;
     }
 
     /**
@@ -1507,7 +1276,6 @@ public class MarginalTree extends Tree {
             throw inconsistency(context, "root has a parent");
 
         if (rateClock != null) {
-            int rootLineage = (nRecords > 0) ? nLeaves + nRecords - 1 : 0;
             for (int lineage = 0; lineage < nLeaves + nRecords; lineage++) {
                 int nr = (lineage < nLeaves) ? lineage
                         : lookupNr(recKind[lineage - nLeaves], recKey[lineage - nLeaves]);
