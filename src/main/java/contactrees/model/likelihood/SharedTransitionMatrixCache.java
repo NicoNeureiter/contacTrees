@@ -1,10 +1,9 @@
 package contactrees.model.likelihood;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.LongAdder;
 
 import beast.base.evolution.datatype.DataType;
 import beast.base.evolution.substitutionmodel.EigenDecomposition;
@@ -39,20 +38,17 @@ public class SharedTransitionMatrixCache {
     public static boolean bypass = false;
 
     static final Map<SubstitutionModel, ThreadLocal<SharedTransitionMatrixCache>> REGISTRY = new IdentityHashMap<>();
-    static final List<SharedTransitionMatrixCache> ALL_CACHES = new ArrayList<>();
+
+    /** Matrices served from a cache, over all caches (for tests). */
+    static final LongAdder HITS = new LongAdder();
 
     /**
      * @return the cache of the given model for the calling thread
      */
     static ThreadLocal<SharedTransitionMatrixCache> forModel(BasicGeneralSubstitutionModel model) {
         synchronized (REGISTRY) {
-            return REGISTRY.computeIfAbsent(model, m -> ThreadLocal.withInitial(() -> {
-                SharedTransitionMatrixCache cache = new SharedTransitionMatrixCache(model);
-                synchronized (REGISTRY) {
-                    ALL_CACHES.add(cache);
-                }
-                return cache;
-            }));
+            return REGISTRY.computeIfAbsent(model,
+                    m -> ThreadLocal.withInitial(() -> new SharedTransitionMatrixCache(model)));
         }
     }
 
@@ -82,19 +78,11 @@ public class SharedTransitionMatrixCache {
 
     /** @return the number of matrices served from a cache (for tests). */
     public static long getHitCount() {
-        long hits = 0;
-        synchronized (REGISTRY) {
-            for (SharedTransitionMatrixCache cache : ALL_CACHES)
-                hits += cache.hits;
-        }
-        return hits;
+        return HITS.sum();
     }
 
     public static void resetStatistics() {
-        synchronized (REGISTRY) {
-            for (SharedTransitionMatrixCache cache : ALL_CACHES)
-                cache.hits = 0;
-        }
+        HITS.reset();
     }
 
     final BasicGeneralSubstitutionModel model;
@@ -104,8 +92,6 @@ public class SharedTransitionMatrixCache {
     final double[] matrices;
     int generation = 1;
     EigenDecomposition eigenDecomposition;
-
-    long hits;
 
     SharedTransitionMatrixCache(BasicGeneralSubstitutionModel model) {
         this.model = model;
@@ -135,7 +121,7 @@ public class SharedTransitionMatrixCache {
 
         if (generations[slot] == generation && keys[slot] == bits) {
             System.arraycopy(matrices, offset, matrix, 0, matrixSize);
-            hits++;
+            HITS.increment();
             return;
         }
 
