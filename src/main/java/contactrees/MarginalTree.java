@@ -24,35 +24,23 @@ import contactrees.model.likelihood.CTreeLikelihood;
  * The marginal tree of one block: the tree that the block's sites evolve along, given the
  * clonal frame (CF) of the conversion graph and the conversions the block moves over.
  *
- * <h2>Creators and stable node numbers</h2>
- * Every internal marginal node is produced by exactly one <i>creator</i>: either a CF
- * coalescence whose two child branches both carry the block, or a conversion the block
- * moves over whose two endpoint branches are both occupied at its height. Leaves are
- * identified with the CF leaves (same node numbers). A creator keeps its marginal node
- * number for as long as it keeps firing, so cached partials of untouched subtrees stay valid
- * across updates. The forward mapping (creator to node number) and the inverse mapping are kept
- * here, per marginal tree.
+ * <h2>Creators and node numbers</h2>
+ * Each internal node has one creator: a CF coalescence where both child branches carry the
+ * block, or a borrowed conversion with both endpoint branches occupied. A creator keeps its
+ * node number while it fires, so cached partials of untouched subtrees stay valid. Leaves keep
+ * their CF numbers.
  *
- * <h2>Heights and branch rates</h2>
- * Marginal node heights are the creator heights (no rolling out of branch rates). Branch
- * rates are supplied to the likelihood by {@link contactrees.model.MarginalClockModel}.
- * For a clock with branch-dependent rates, the tree also records the <i>path</i> of every
- * marginal branch: the CF branches it runs along (bottom to top) and the events where it
- * changes CF branch (a CF node it passes through, or a conversion over which it jumps to an
- * empty branch). Events are stored by identity (CF node nr or conversion ID), not by time, so
- * height-only updates leave the paths valid. The rate of a marginal branch is the time-weighted
- * mean of the CF rates along its path; rates are recomputed from the paths whenever the
- * conversion graph, the block or the clock changed, and a node whose rate changed is flagged dirty.
+ * <h2>Heights and rates</h2>
+ * Node heights are creator heights (no rolled-out branch lengths). Branch rates come from
+ * {@link contactrees.model.MarginalClockModel}: for relaxed clocks, the time-weighted mean CF
+ * rate along the path each marginal branch follows through the CF.
  *
  * <h2>Updates and caching</h2>
- * The structure is (re)derived by {@link #resweep()}: a sweep over the CF events and the block's
- * conversions computes the firing creators, which are then reconciled with the current tree.
- * Only node numbers whose children or height changed are written and flagged dirty. The first
- * modification within an MCMC proposal takes a snapshot, which {@link #restore()} reinstates
- * exactly; {@link #store()} is a no-op because BEAST calls it after the proposal.
- * Trees notice changes of the conversion graph or block through version numbers
- * ({@link ConversionGraph#getVersion()}, {@link Block#getVersion()}); a tree that does not
- * reflect the current versions resweeps itself on demand ({@link #ensureUpToDate()}).
+ * {@link #resweep()} recomputes the firing creators and rewrites (and flags) only nodes whose
+ * children or height changed. The first change in a proposal takes a snapshot that
+ * {@link #restore()} reinstates; {@link #store()} is a no-op since BEAST calls it after the
+ * proposal. Version numbers of the ACG and block tell a tree when it is out of date
+ * ({@link #ensureUpToDate()}).
  *
  * @author Nico Neureiter
  */
