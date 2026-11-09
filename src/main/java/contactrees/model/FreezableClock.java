@@ -1,6 +1,7 @@
 package contactrees.model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import beast.base.core.Input;
 import beast.base.evolution.alignment.Taxon;
@@ -23,14 +24,14 @@ public class FreezableClock extends Base {
             new ArrayList<>());
 
     BranchRateModel clock;
-    ArrayList<String> frozenTaxa;
+    HashSet<String> frozenTaxa;
     boolean anythingFrozen;
 
     @Override
     public void initAndValidate() {
         clock = clockInput.get();
 
-        frozenTaxa = new ArrayList<>();
+        frozenTaxa = new HashSet<>();
         for (final Taxon taxon : frozenTaxaInput.get()) {
             frozenTaxa.add(taxon.getID());
         }

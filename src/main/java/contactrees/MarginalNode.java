@@ -7,24 +7,13 @@ import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 
 /**
- * Adds a field to the Node class specifying whether a given
- * node in a marginal tree corresponds to a node in the clonal frame.
+ * A node of a {@link MarginalTree}. Marginal nodes have a fixed node number for their whole
+ * life; their parent/children links and heights are rewritten by the marginal tree without
+ * any StateNode bookkeeping (the marginal tree tracks dirtiness and snapshots itself).
  *
  * @author Nico Neureiter
  */
 public class MarginalNode extends Node {
-
-    /**
-     * The length of this branch in time, i.e. scaled by the branch-rate.
-     * This is used in the creation of the marginal tree, since scaling
-     * branch lengths is easier than scaling heights.
-     */
-    public double timeLength = 0.0;
-
-    /**
-     *
-     */
-    public double lastEventHeight = 0.0;
 
     /**
      * @return unmodifiable list of children of this node
@@ -34,32 +23,9 @@ public class MarginalNode extends Node {
         return children;
     }
 
-    private ConversionGraph acg;
-
     public MarginalNode() {
         super();
         makeDirty(Tree.IS_FILTHY);
-    }
-
-    public MarginalNode(ConversionGraph acg) {
-        super();
-        this.acg = acg;
-        makeDirty(Tree.IS_FILTHY);
-    }
-
-    public MarginalNode(ConversionGraph acg, int nr, double height) {
-        this(acg);
-        setNr(nr);
-        this.height = height;
-    }
-
-    public MarginalNode(ConversionGraph acg, int nr, double height, MarginalNode child1, MarginalNode child2) {
-        this(acg, nr, height);
-
-        children.add(child1);
-        children.add(child2);
-        child1.parent = this;
-        child2.parent = this;
     }
 
     protected void setTree(MarginalTree tree) {
@@ -108,22 +74,7 @@ public class MarginalNode extends Node {
             node.addChild(child.copy());
         }
 
-        node.acg = acg;
-
         return node;
-    }
-
-    public boolean equalsNode(Node node) {
-        assert node.getID().equals(getID());
-        if (node.getHeight() != height) return false;
-//        if (node.getLength() != getLength()) return false;
-        if (!node.isLeaf()) {
-            if (node.getLeft().getNr() != getLeft().getNr()) return false;
-            if (node.getRight().getNr() != getRight().getNr()) return false;
-        }
-//        if (!node.getChildren().toString().equals(getChildren().toString())) return false;
-//        System.out.println("           " + node + "    |    " + this);
-        return true;
     }
 
 }

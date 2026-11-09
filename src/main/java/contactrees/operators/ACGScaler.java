@@ -27,6 +27,7 @@ import beast.base.inference.Scalable;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import contactrees.Conversion;
+import contactrees.MarginalTree;
 
 @Description("Scaling operator for recombination graphs.")
 public class ACGScaler extends ACGOperator {
@@ -67,7 +68,7 @@ public class ACGScaler extends ACGOperator {
     }
 
     @Override
-    public double proposal() {
+    public double doProposal() {
 
         // Keep track of number of positively scaled elements minus
         // negatively scaled elements.
@@ -138,6 +139,13 @@ public class ACGScaler extends ACGOperator {
         }
 
         assert !acg.isInvalid() : "ACGScaler produced invalid state.";
+
+        // Scaling keeps the order of events along every CF branch, so the marginal trees keep
+        // their topology and only take over the new creator heights.
+        for (MarginalTree tree : acg.getMarginalTrees()) {
+            tree.updateAllHeights();
+            tree.markUpToDate();
+        }
 
         // Return log of Hastings ratio:
         return (count-2)*Math.log(f);

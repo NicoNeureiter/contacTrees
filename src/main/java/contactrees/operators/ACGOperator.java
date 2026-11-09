@@ -1,5 +1,8 @@
 package contactrees.operators;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.naming.directory.InvalidAttributesException;
 
 import beast.base.core.Input;
@@ -7,6 +10,7 @@ import beast.base.inference.Operator;
 import beast.base.evolution.tree.Node;
 import contactrees.Conversion;
 import contactrees.ConversionGraph;
+import contactrees.MarginalTree;
 
 /**
  * Abstract class of operators which act on the ConversionGraph state.
@@ -25,6 +29,82 @@ public abstract class ACGOperator extends Operator {
     @Override
     public void initAndValidate() {
         acg = acgInput.get();
+    }
+
+    /**
+     * Wraps {@link #doProposal()}: marginal trees modified by a proposal that fails directly
+     * (returns -infinity) are rolled back here, since BEAST does not restore calculation nodes
+     * in that case.
+     */
+    @Override
+    public final double proposal() {
+        acg.beginProposal();
+        double logHR;
+        try {
+            logHR = doProposal();
+        } catch (RuntimeException | Error e) {
+            acg.rollbackMarginalTrees();
+            throw e;
+        }
+        if (logHR == Double.NEGATIVE_INFINITY)
+            acg.rollbackMarginalTrees();
+        return logHR;
+    }
+
+    /**
+     * The actual proposal of the operator.
+     *
+     * @return log Hastings ratio, or -infinity if the proposal is rejected directly.
+     */
+    protected abstract double doProposal();
+
+    /*
+     * Operator-driven marginal tree updates.
+     *
+     * After an operator finished all its edits, it may tell the marginal trees directly which of
+     * them are affected. Unaffected trees are marked up to date (O(1)), affected trees are
+     * updated (resweep). Trees that are not handled here update themselves lazily when they are
+     * next used. Declaring a tree unaffected when it is not leads to a stale marginal tree, so
+     * these helpers must only be called once all edits of the proposal are done.
+     */
+
+    /**
+     * @return the marginal trees whose blocks move over any of the given conversions.
+     */
+    protected Set<MarginalTree> treesBorrowing(Conversion... convs) {
+        Set<MarginalTree> trees = new HashSet<>();
+        for (MarginalTree tree : acg.getMarginalTrees()) {
+            for (Conversion conv : convs) {
+                if (tree.block.isAffected(conv)) {
+                    trees.add(tree);
+                    break;
+                }
+            }
+        }
+        return trees;
+    }
+
+    /**
+     * Update the given (affected) marginal trees and mark all others as unaffected. Only for
+     * proposals that change nothing but conversions: a tree whose block follows none of the
+     * changed conversions keeps its structure and its branch rates.
+     */
+    protected void updateMarginalTrees(Set<MarginalTree> affected) {
+        for (MarginalTree tree : acg.getMarginalTrees()) {
+            if (affected.contains(tree))
+                tree.ensureUpToDate();
+            else
+                tree.markUnaffected();
+        }
+    }
+
+    /**
+     * Mark all marginal trees as unaffected, for edits that cannot affect any of them (e.g. adding
+     * a conversion that no block follows).
+     */
+    protected void markAllMarginalTreesUpToDate() {
+        for (MarginalTree tree : acg.getMarginalTrees())
+            tree.markUnaffected();
     }
 
     /**

@@ -25,7 +25,7 @@ public class ConvertedEdgeSlide extends ACGOperator {
     }
     
     @Override
-    public double proposal() {
+    public double doProposal() {
         
         double logHR = 0.0;
         
@@ -100,6 +100,9 @@ public class ConvertedEdgeSlide extends ACGOperator {
         conv.setNode2(newNode2);
 
         assert !acg.isInvalid() : "CESlide produced invalid state";
+
+        // Only the trees following the conversion can change
+        updateMarginalTrees(treesBorrowing(conv));
         
         return logHR;
     }

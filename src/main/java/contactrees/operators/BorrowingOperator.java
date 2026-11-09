@@ -96,45 +96,71 @@ public abstract class BorrowingOperator extends ACGOperator {
 
     /* ****
      * Gibbs sampling for borrowing
+     *
+     * Caching protocol: the Gibbs moves evaluate tree likelihoods inside the proposal, before
+     * BEAST stores the calculation nodes. Every evaluation therefore runs in its own
+     * store()/restore() window of the TreeLikelihood (see evaluateInWindow), so that
+     *  - the likelihood caches are back at the pre-proposal state when BEAST stores them, and
+     *  - no node is recomputed twice between a store() and a restore(): the likelihood cores
+     *    flip between two buffers per node on every recomputation, so a second recomputation
+     *    would overwrite the stored buffer.
+     * The marginal tree itself keeps the changes (and its dirty flags), so the final state is
+     * evaluated once more by the MCMC machinery.
      * ****/
 
+    /**
+     * Compute the log likelihood of the current state of the given tree likelihood, leaving its
+     * caches unchanged.
+     */
+    protected double evaluateLogLikelihood(TreeLikelihood treeLH) {
+        MarginalTree marginalTree = getMarginalTree(treeLH);
+        marginalTree.ensureUpToDate();
+
+        // Tree unchanged since the likelihood was last computed by BEAST: use the cached value
+        if (marginalTree.isLikelihoodCacheCurrent())
+            return treeLH.getCurrentLogP();
+
+        return evaluateInWindow(treeLH);
+    }
+
+    /**
+     * Evaluate the tree likelihood inside its own store()/restore() window.
+     */
+    protected static double evaluateInWindow(TreeLikelihood treeLH) {
+        treeLH.store();
+        try {
+            return treeLH.calculateLogP();
+        } finally {
+            treeLH.restore();
+        }
+    }
 
     /**
      * Utility method for calculating the posterior likelihood of borrowing
      * blocks at the given conversion.
      * @param conv Conversion edge to evaluate.
      * @param treeLH The TreeLikelihood defining the block and used for calculating the likelihood.
-     * @param mtreeChanged Did the marginal tree change before calling the method (relevant for caching)?
      * @return Log posterior probability of the borrowings on the given conversion.
      */
-    public double calcLogBorrowingPosterior(Conversion conv, TreeLikelihood treeLH, boolean mtreeChanged) {
+    public double calcLogBorrowingPosterior(Conversion conv, TreeLikelihood treeLH) {
         double pMove = pMoveInput.get().get();
-        MarginalTree marginalTree = getMarginalTree(treeLH);
-        Block block = marginalTree.block;
+        Block block = getBlock(treeLH);
 
         double prior = block.isAffected(conv) ? pMove : (1 - pMove);
-        double logLH;
-        if (mtreeChanged) {
-            marginalTree.recalculate();
-            logLH = treeLH.calculateLogP();
-        } else {
-            logLH= treeLH.getCurrentLogP();
-        }
-        return Math.log(prior) + logLH;
+        return Math.log(prior) + evaluateLogLikelihood(treeLH);
     }
 
     /**
      * Choose set of blocks to be borrowed on the given
      * conversion according to the posterior distribution.
      * @param conv Conversion edge to evaluate.
-     * @param mtreesChanged Did the marginal trees change before calling the method (relevant for caching)?
      * @return Log probability of the sampled borrowings.
      */
-    public double drawBorrowingsGibbs(Conversion conv, boolean mtreesChanged) {
+    public double drawBorrowingsGibbs(Conversion conv) {
         double logP = 0;
         assert treeLHs.size() > 0;
         for (TreeLikelihood treeLH : treeLHs) {
-            logP += sampleBlockMove(conv, treeLH, mtreesChanged);
+            logP += sampleBlockMove(conv, treeLH);
         }
         return logP;
     }
@@ -143,23 +169,19 @@ public abstract class BorrowingOperator extends ACGOperator {
      * Sample the borrowing of a specific block over a specific conversion.
      * @param conv
      * @param treeLH
-     * @param mtreeChanged
      * @return log-prob. difference between state before and after the move.
      */
-    public double sampleBlockMove(Conversion conv, TreeLikelihood treeLH, boolean mtreeChanged) {
+    public double sampleBlockMove(Conversion conv, TreeLikelihood treeLH) {
         Block block = getBlock(treeLH);
         double logP;
 
-        // Store fat calculation nodes, so that we can restore the old state
-        // before state.storeCalculationNodes() is called in the MCMC object.
-        treeLH.store();
-
         // Get posterior for current block move
-        double logPosteriorOld = calcLogBorrowingPosterior(conv, treeLH, mtreeChanged);
+        double logPosteriorOld = calcLogBorrowingPosterior(conv, treeLH);
+        boolean checkpoint = getMarginalTree(treeLH).isCheckpoint();
 
         // Compute posterior for flipped block move
         flipBorrowing(block, conv);
-        double logPosteriorNew = calcLogBorrowingPosterior(conv, treeLH, true);
+        double logPosteriorNew = calcLogBorrowingPosterior(conv, treeLH);
 
         // Revert flip with probability $p_old / (p_old + p_new)$
         double logPRevert = logPosteriorOld - Util.logAddExp(logPosteriorOld, logPosteriorNew);
@@ -169,15 +191,11 @@ public abstract class BorrowingOperator extends ACGOperator {
         // (We can't just return positive infinity, because of combined moves)
         if (Randomizer.nextDouble() < pRevert) {
             flipBorrowing(block, conv);
+            restoreAfterRevertedFlip(getMarginalTree(treeLH), checkpoint);
             logP = logPRevert;
         } else {
             logP = Math.log(1 - pRevert);
         }
-
-        // Restore fat calculation nodes, so that state.storeCalculationNodes()
-        // (in the MCMC object) stores the correct (old) likelihood.
-        treeLH.restore();
-//        ((MarginalTree) treeLH.treeInput.get()).restore();
 
         return logP;
     }
@@ -189,26 +207,21 @@ public abstract class BorrowingOperator extends ACGOperator {
      * @param conv conversion region is associated with
      * @return log probability density
      */
-    public double getBorrowingsProbGibbs(Conversion conv, boolean mtreesChanged) {
+    public double getBorrowingsProbGibbs(Conversion conv) {
         double logP = 0;
 
         assert treeLHs.size() > 0;
 
         for (TreeLikelihood treeLH : treeLHs) {
-            // Get block corresponding to treeLH
-            MarginalTree marginalTree = getMarginalTree(treeLH);
-            Block block = marginalTree.block;
-
-            // Store fat calculation nodes, so that we can restore the old state
-            // before state.storeCalculationNodes() is called in the MCMC object.
-            treeLH.store();
+            Block block = getBlock(treeLH);
 
             // Get prior and likelihood for current block move
-            double logPosteriorOld = calcLogBorrowingPosterior(conv, treeLH, mtreesChanged);
+            double logPosteriorOld = calcLogBorrowingPosterior(conv, treeLH);
+            boolean checkpoint = getMarginalTree(treeLH).isCheckpoint();
 
             // Compute prior and likelihood for flipped block move
             flipBorrowing(block, conv);
-            double logPosteriorNew = calcLogBorrowingPosterior(conv, treeLH, true);
+            double logPosteriorNew = calcLogBorrowingPosterior(conv, treeLH);
 
             // Revert flip with probability $p_old / (p_old + p_new)$
             double logPRevert = logPosteriorOld - Util.logAddExp(logPosteriorOld, logPosteriorNew);
@@ -216,11 +229,7 @@ public abstract class BorrowingOperator extends ACGOperator {
 
             // Flip the block-move back to its original state
             flipBorrowing(block, conv);
-
-            // Store fat calculation nodes, so that we can restore the old state
-            // before state.storeCalculationNodes() is called in the MCMC object.
-            treeLH.restore();
-//            marginalTree.restore();
+            restoreAfterRevertedFlip(getMarginalTree(treeLH), checkpoint);
         }
 
         return logP;
@@ -250,6 +259,18 @@ public abstract class BorrowingOperator extends ACGOperator {
      * @param block
      * @param conv
      */
+    /**
+     * Bring the marginal tree back in line with its block after a flip was flipped back. If the
+     * tree was unchanged before the flip (a checkpoint), it returns to that state without dirty
+     * flags, so its likelihood is not recomputed; otherwise it is reswept.
+     */
+    protected static void restoreAfterRevertedFlip(MarginalTree tree, boolean checkpoint) {
+        if (checkpoint)
+            tree.revertToCheckpoint();
+        else
+            tree.ensureUpToDate();
+    }
+
     public void flipBorrowing(Block block, Conversion conv) {
         if (block.isAffected(conv)) {
             block.removeMove(conv);

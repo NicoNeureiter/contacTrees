@@ -12,7 +12,7 @@ import beast.base.evolution.tree.Node;
 public class ConvertedEdgeFlip extends ACGOperator {
 
     @Override
-    public double proposal() {
+    public double doProposal() {
 
         if (acg.getConvCount()==0)
             return Double.NEGATIVE_INFINITY;
@@ -26,6 +26,9 @@ public class ConvertedEdgeFlip extends ACGOperator {
         conv.setNode2(node1);
 
         assert !acg.isInvalid() : "CEF produced invalid state.";
+
+        // Only the trees following the conversion can change
+        updateMarginalTrees(treesBorrowing(conv));
         
         return 0.0;
     }

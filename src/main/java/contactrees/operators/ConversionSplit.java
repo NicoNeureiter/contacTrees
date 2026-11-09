@@ -3,6 +3,7 @@ package contactrees.operators;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import beast.base.core.Description;
 import beast.base.core.Input;
@@ -10,6 +11,7 @@ import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import contactrees.Block;
 import contactrees.Conversion;
+import contactrees.MarginalTree;
 
 /**
  * Split: Split one conversion into two conversions between the same branches.
@@ -29,7 +31,7 @@ public class ConversionSplit extends ConversionCreationOperator {
             );
 
     @Override
-    public double proposal() {
+    public double doProposal() {
 
         if (Randomizer.nextBoolean())
             return splitProposal();
@@ -47,6 +49,9 @@ public class ConversionSplit extends ConversionCreationOperator {
 
         // Chose the conversion to split
         Conversion conv = acg.getConversions().getRandomConversion();
+
+        // Only the trees following the split conversion can change
+        Set<MarginalTree> affected = treesBorrowing(conv);
         // Create the duplicate
         Conversion convNew = acg.addDuplicateConversion(conv);
         if (flipInput.get())
@@ -97,6 +102,8 @@ public class ConversionSplit extends ConversionCreationOperator {
             blockSet.removeBlockMove(conv, block);
 
         assert acg.getConvCount() == nConv + 1;
+
+        updateMarginalTrees(affected);
         assert !acg.isInvalid();
 
         return logHGF;
@@ -118,6 +125,9 @@ public class ConversionSplit extends ConversionCreationOperator {
         int iPair = Randomizer.nextInt(convPairs.size());
         Conversion conv1 = convPairs.get(iPair).first();
         Conversion conv2 = convPairs.get(iPair).second();
+
+        // Only the trees following one of the merged conversions can change
+        Set<MarginalTree> affected = treesBorrowing(conv1, conv2);
 
         // Hastings ratio: pick pair (1/|pairs|) vs. reverse split picking conv1 (1/(nConv-1))
         logHGF -= Math.log(1.0 / convPairs.size());
@@ -185,6 +195,8 @@ public class ConversionSplit extends ConversionCreationOperator {
         acg.removeConversion(conv2);
 
         assert acg.getConvCount() == nConv - 1;
+
+        updateMarginalTrees(affected);
         assert !acg.isInvalid();
 
         return logHGF;

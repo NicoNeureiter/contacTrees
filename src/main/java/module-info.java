@@ -41,6 +41,7 @@ open module contactrees {
         contactrees.model.ConversionPrior,
         contactrees.model.ConversionPriorLogger,
         contactrees.model.FreezableClock,
+        contactrees.model.MarginalClockModel,
         contactrees.model.likelihood.CTreeLikelihood,
         contactrees.model.SimulatedACGWithBlocks,
         contactrees.operators.ACGScaler,

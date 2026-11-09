@@ -92,7 +92,7 @@ public abstract class CFOperator extends ConversionCreationOperator {
         for (Conversion conv : toRemove) {
             logP += Math.log(1.0/L);
             if (gibbsSampleBlockMovesInput.get()) {
-                logP += getBorrowingsProbGibbs(conv, true);
+                logP += getBorrowingsProbGibbs(conv);
             } else {
                 logP += getBorrowingsProb(conv);
             }
@@ -196,7 +196,7 @@ public abstract class CFOperator extends ConversionCreationOperator {
             }
 
             if (gibbsSampleBlockMovesInput.get())
-                logP += drawBorrowingsGibbs(conv, true);
+                logP += drawBorrowingsGibbs(conv);
             else
                 logP += drawBorrowings(conv);
         }

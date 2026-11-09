@@ -4,74 +4,61 @@ import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.core.ProgramStatus;
 import beast.base.spec.evolution.branchratemodel.Base;
-import beast.base.spec.evolution.branchratemodel.StrictClockModel;
 import beast.base.spec.evolution.likelihood.TreeLikelihood;
+import beast.base.spec.evolution.substitutionmodel.BasicGeneralSubstitutionModel;
 import contactrees.MarginalTree;
+import contactrees.model.MarginalClockModel;
 
-@Description("Calculates the probability of sequence data on a beast.tree given a site and substitution model using " +
-        "a variant of the 'peeling algorithm'. For details, see" +
-        "Felsenstein, Joseph (1981). Evolutionary trees from DNA sequences: a maximum likelihood approach. J Mol Evol 17 (6): 368-376.")
+@Description("Tree likelihood of a block's marginal tree. A clock model given as branchRateModel is "
+        + "defined on the clonal frame and is wrapped in a MarginalClockModel.")
 public class CTreeLikelihood extends TreeLikelihood {
-	final public Input<MarginalTree> marginalTreeInput = new Input<>("marginalTree", "marginal tree based on actual tree");
+    final public Input<Boolean> shareMatricesInput = new Input<>("shareTransitionMatrices",
+            "share transition probability matrices with all other likelihoods using the same substitution model "
+            + "(only used by the Java likelihood core and for substitution models based on BasicGeneralSubstitutionModel)", true);
 
-    public Base marginalTreeClock;
+    SharedTransitionMatrixCache.CachingSubstitutionModel cachingModel;
 
-//<<<<<<< Updated upstream
-//
-//    @Override
-//    public void initAndValidate() {
-//
-//        if (!isInBeauti()) {
-//
-//            MarginalTree mTree;
-//            if (marginalTreeInput.get() != null) {
-//                mTree = marginalTreeInput.get();
-//                treeInput.set(mTree);
-//            } else {
-//                // If the marginalTreeInput is null, the treeInput has to be a marginal tree
-//                mTree = (MarginalTree) treeInput.get();
-//                marginalTreeInput.set(mTree);
-//            }
-//
-//            marginalTreeClock =  branchRateModelInput.get();
-//            if (marginalTreeClock != null) {
-//                // Forward branchRateModel to the tree and use fixed strict clock model here instead
-//                mTree.setBranchRateModel(marginalTreeClock);
-//                branchRateModelInput.setValue(null, this);
-//            }
-//=======
     boolean isInBeauti(){
         return ProgramStatus.name.equals("BEAUti");
     }
 
     @Override
     public void initAndValidate() {
-    	if (!isInBeauti() && marginalTreeInput.get() != null) {
-            MarginalTree mTree = marginalTreeInput.get();
-            treeInput.set(mTree);
-    	}
-        marginalTreeClock =  branchRateModelInput.get();    		
-        if (!isInBeauti() && marginalTreeClock != null) {
-            // Forward branchRateModel to the tree and use fixed strict clock model here instead
-            ((MarginalTree)treeInput.get()).setBranchRateModel(marginalTreeClock);
-            branchRateModelInput.setValue(new StrictClockModel(), this);
+        if (isInBeauti()) {
+            super.initAndValidate();
+            return;
+        }
+
+        if (!(treeInput.get() instanceof MarginalTree mTree))
+            throw new IllegalArgumentException("CTreeLikelihood " + getID() + " requires a MarginalTree as tree.");
+
+        Base clock = branchRateModelInput.get();
+        if (clock != null && !(clock instanceof MarginalClockModel)) {
+            MarginalClockModel marginalClock = new MarginalClockModel();
+            marginalClock.setID("MarginalClock." + mTree.getID());
+            marginalClock.initByName("clock", clock, "tree", mTree);
+            clock.getOutputs().remove(this);
+            branchRateModelInput.setValue(marginalClock, this);
         }
 
         super.initAndValidate();
 
-        if (isInBeauti() && marginalTreeClock != null) {
-            // Reset branchRateModelInput for XML file
-            branchRateModelInput.setValue(marginalTreeClock, this);
-        }
-
-        // Update the marginal tree with the new model
-        if (!isInBeauti()) {
-            MarginalTree mTree = (MarginalTree) treeInput.get();
-            mTree.recalculate();
-            mTree.makeOutdated();
-            marginalTreeInput.setValue(null, this);
+        if (beagle == null && shareMatricesInput.get() && SharedTransitionMatrixCache.supports(substitutionModel)) {
+            cachingModel = new SharedTransitionMatrixCache.CachingSubstitutionModel(
+                    (BasicGeneralSubstitutionModel) substitutionModel);
+            substitutionModel = cachingModel;
         }
     }
 
+    @Override
+    public double calculateLogP() {
+        if (cachingModel != null)
+            cachingModel.beginEvaluation();
+        return super.calculateLogP();
+    }
+
+    public boolean usesSharedTransitionMatrices() {
+        return cachingModel != null;
+    }
 
 }

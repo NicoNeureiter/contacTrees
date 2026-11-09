@@ -1,5 +1,6 @@
 package contactrees.test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -25,6 +26,8 @@ import contactrees.Conversion;
 import contactrees.ConversionGraph;
 import contactrees.MarginalNode;
 import contactrees.MarginalTree;
+import contactrees.model.MarginalClockModel;
+import contactrees.model.likelihood.CTreeLikelihood;
 
 /**
  * Unit test for marginal tree traversal.
@@ -195,6 +198,46 @@ public class MarginalTreeTest extends ContactreesTest {
         }
     }
 
+    /**
+     * Marginal trees no longer roll out branch rates: a clock on the MarginalTree itself is rejected.
+     */
+    @Test
+    public void testBranchRateModelInputRejected() throws Exception {
+        UCRelaxedClockModel clock = new UCRelaxedClockModel();
+        clock.initByName(
+                "rates", new RealVectorParam<>(new double[] {2., 2., 1., 1.}, PositiveReal.INSTANCE),
+                "distr", new Uniform(),
+                "tree", acg);
+
+        MarginalTree marginalTree = new MarginalTree();
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> marginalTree.initByName(
+                "network", acg,
+                "block", blockSet.getBlocks().get(0),
+                "nodetype", MarginalNode.class.getName(),
+                "branchRateModel", clock));
+        assertTrue(exception.getMessage().contains("branchRateModel input is no longer supported"));
+    }
+
+    /**
+     * A branch-dependent clock needs the marginal tree to compute path-averaged rates.
+     */
+    @Test
+    public void testMarginalClockWithRelaxedClockRequiresTree() throws Exception {
+        UCRelaxedClockModel clock = new UCRelaxedClockModel();
+        clock.initByName(
+                "rates", new RealVectorParam<>(new double[] {2., 2., 1., 1.}, PositiveReal.INSTANCE),
+                "distr", new Uniform(),
+                "tree", acg);
+
+        MarginalClockModel marginalClock = new MarginalClockModel();
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> marginalClock.initByName("clock", clock));
+        assertTrue(exception.getMessage().contains("requires the tree input"));
+    }
+
+    /**
+     * With a relaxed clock, the likelihood of the true-height marginal tree with path-averaged
+     * rates equals the likelihood of the rolled-out tree (branch lengths = expected substitutions).
+     */
     @Test
     public void testBranchRates() throws Exception {
         double[] rates = {2., 2., 1., 1.};
@@ -230,14 +273,12 @@ public class MarginalTreeTest extends ContactreesTest {
             marginalTree.initByName(
                     "network", acg,
                     "block", blocks.get(b),
-                    "nodetype", MarginalNode.class.getName(),
-                    "branchRateModel", clock);
+                    "nodetype", MarginalNode.class.getName());
 
             String newickStr = correctNewickStrings[b];
             Tree correctTree = new TreeParser(newickStr, false, true, false, 1);
 
-            assertTrue(treesEquivalentShifted(marginalTree, correctTree, 1e-15));
-            equalLikelihood(correctTree, marginalTree);
+            equalLikelihoodWithClock(correctTree, marginalTree, clock);
         }
     }
 
@@ -304,6 +345,27 @@ public class MarginalTreeTest extends ContactreesTest {
         });
 
         assertTrue(exception.getMessage().contains("invalid conversion"));
+    }
+
+    /**
+     * Likelihood of the rolled-out tree (no clock) vs the marginal tree with the clock.
+     */
+    void equalLikelihoodWithClock(Tree rolledOutTree, MarginalTree marginalTree, UCRelaxedClockModel clock) {
+        Alignment alignment = getAlignment(rolledOutTree.getLeafNodeCount());
+        JukesCantor jc = new JukesCantor();
+        jc.initByName();
+        SiteModel siteModel = new SiteModel();
+        siteModel.initByName("substModel", jc);
+
+        TreeLikelihood correctLikelihood = new TreeLikelihood();
+        correctLikelihood.initByName("data", alignment, "tree", rolledOutTree, "siteModel", siteModel);
+        CTreeLikelihood derivedLikelihood = new CTreeLikelihood();
+        derivedLikelihood.initByName("data", alignment, "tree", marginalTree, "siteModel", siteModel,
+                "branchRateModel", clock);
+
+        double logPtrue = correctLikelihood.calculateLogP();
+        double logP = derivedLikelihood.calculateLogP();
+        assertEquals(logPtrue, logP, 1e-10 * Math.abs(logPtrue));
     }
 
     public boolean equalLikelihood(Tree correctTree, MarginalTree derivedTree) {

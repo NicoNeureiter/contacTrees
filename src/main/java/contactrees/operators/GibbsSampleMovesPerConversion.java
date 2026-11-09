@@ -24,7 +24,7 @@ public class GibbsSampleMovesPerConversion extends BorrowingOperator {
     protected List<MarginalTree> marginalTrees;
 
     @Override
-    public double proposal() {
+    public double doProposal() {
         double logHGF = 0;
 
         if (acg.getConvCount() == 0)
@@ -34,7 +34,7 @@ public class GibbsSampleMovesPerConversion extends BorrowingOperator {
         Conversion conv = acg.getConversions().getRandomConversion();
 
         // Iterate over all blocks and resample the borrowings at the chosen contact edge
-        logHGF -= drawBorrowingsGibbs(conv, true);
+        logHGF -= drawBorrowingsGibbs(conv);
 
         if (mcmcmcInput.get())
             return logHGF;

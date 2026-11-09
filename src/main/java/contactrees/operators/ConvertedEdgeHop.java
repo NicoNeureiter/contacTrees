@@ -17,7 +17,7 @@ public class ConvertedEdgeHop extends ACGOperator {
     public ConvertedEdgeHop() { }
 
     @Override
-    public double proposal() {
+    public double doProposal() {
 
         if (acg.getConvCount() == 0)
             return Double.NEGATIVE_INFINITY;
@@ -44,6 +44,9 @@ public class ConvertedEdgeHop extends ACGOperator {
             conv.setNode2(newNode);
 
         assert !acg.isInvalid() : "CEHContemp produced invalid state.";
+
+        // Only the trees following the conversion can change
+        updateMarginalTrees(treesBorrowing(conv));
 
         return 0.0;
     }
